@@ -65,6 +65,12 @@ export class AppointmentsService {
     if (!service)
       throw new NotFoundException('No se ha encontrado el servicio');
 
+    // Verifica que el servicio esté activo antes de mostrar los horarios disponibles
+    if (!service.active)
+      throw new BadRequestException(
+        'No se pueden crear citas con un servicio inactivo',
+      );
+
     const targetDate = new Date(date);
     const dayOfWeek = targetDate.getDay();
 
@@ -133,6 +139,12 @@ export class AppointmentsService {
     if (!service) {
       throw new NotFoundException('Servicio no encontrado');
     }
+
+    // Verifica que el servicio esté activo antes de crear la cita
+    if (!service.active)
+      throw new BadRequestException(
+        'No se pueden crear citas con un servicio inactivo',
+      );
 
     const startDate = new Date(appointmentData.startDateTime);
     const isAvailable = await this.isInsideAvailability(
@@ -275,6 +287,11 @@ export class AppointmentsService {
 
     if (!appointment)
       throw new NotFoundException('No se ha encontrado la cita');
+
+    if (!appointment.service.active)
+      throw new BadRequestException(
+        'No se pueden reprogramar citas con un servicio inactivo',
+      );
 
     if (appointment.status !== AppointmentStatus.SCHEDULED)
       throw new BadRequestException(
