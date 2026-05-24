@@ -21,6 +21,11 @@ export class ServicesService {
     });
   }
 
+  // Obtiene todos los servicios, incluyendo los inactivos
+  findAllIncludingInactive() {
+    return this.servicesRepository.find();
+  }
+
   // Crea un nuevo servicio
   create(serviceData: CreateServiceDto) {
     const service = this.servicesRepository.create(serviceData);
@@ -40,6 +45,24 @@ export class ServicesService {
     Object.assign(service, serviceData);
 
     return this.servicesRepository.save(service);
+  }
+
+  // Activa un servicio por su ID (lo marca como activo)
+  async activate(id: number) {
+    const service = await this.servicesRepository.findOne({
+      where: { id },
+    });
+
+    if (!service)
+      throw new NotFoundException('No se ha encontrado el servicio');
+
+    service.active = true;
+
+    await this.servicesRepository.save(service);
+
+    return {
+      message: 'Servicio activado correctamente',
+    };
   }
 
   // Desactiva un servicio por su ID (lo marca como inactivo)

@@ -13,10 +13,16 @@ import { UpdateServiceDto } from './dto/update-service.dto';
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
-  // Endpoint para obtener todos los servicios disponibles
+  // Endpoint para obtener todos los servicios activos
   @Get()
   findAll() {
     return this.servicesService.findAll();
+  }
+
+  // Endpoint para obtener todos los servicios, incluyendo los inactivos
+  @Get('all')
+  findAllIncludingInactive() {
+    return this.servicesService.findAllIncludingInactive();
   }
 
   // Endpoint para crear un nuevo servicio
@@ -32,6 +38,15 @@ export class ServicesController {
     @Body() serviceData: UpdateServiceDto,
   ) {
     return this.servicesService.update(id, serviceData);
+  }
+
+  // Endpoint para activar un servicio por su ID
+  @Patch(':id/activate')
+  activate(
+    @Param('id', ParseIntPipe)
+    id: number,
+  ) {
+    return this.servicesService.activate(id);
   }
 
   // Endpoint para desactivar un servicio por su ID
