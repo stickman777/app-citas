@@ -26,6 +26,7 @@ export class AppointmentsService {
     return this.appointmentsRepository.find();
   }
 
+  // Método para crear una nueva cita
   async create(appointmentData: CreateAppointmentDto) {
     const client = await this.clientsRepository.findOne({
       where: { id: appointmentData.clientId },
@@ -44,7 +45,10 @@ export class AppointmentsService {
     }
 
     const startDate = new Date(appointmentData.startDateTime);
-    const hasOverlap = await this.hasOverlappingAppointment(startDate, service.duration);
+    const hasOverlap = await this.hasOverlappingAppointment(
+      startDate,
+      service.duration,
+    );
 
     if (hasOverlap) {
       throw new BadRequestException(
@@ -64,7 +68,10 @@ export class AppointmentsService {
   }
 
   // Método para verificar si hay citas que se solapan en el mismo día
-  private async hasOverlappingAppointment( startDate: Date, duration: number): Promise<boolean> {
+  private async hasOverlappingAppointment(
+    startDate: Date,
+    duration: number,
+  ): Promise<boolean> {
     const endDate = new Date(startDate);
     endDate.setMinutes(endDate.getMinutes() + duration);
 
@@ -89,5 +96,20 @@ export class AppointmentsService {
 
       return existingStart < endDate && existingEnd > startDate;
     });
+  }
+
+  // Método para cancelar una cita existente
+  async cancel(id: number) {
+    const appointment = await this.appointmentsRepository.findOne({
+      where: { id },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('No se ha encontrado la cita');
+    }
+
+    appointment.status = AppointmentStatus.CANCELLED;
+
+    return this.appointmentsRepository.save(appointment);
   }
 }
