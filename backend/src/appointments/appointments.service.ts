@@ -22,11 +22,33 @@ export class AppointmentsService {
     private servicesRepository: Repository<ServiceEntity>,
   ) {}
 
-  findAll() {
-    return this.appointmentsRepository.find();
+  // Obtiene todas las citas, con opción de filtrar por fecha
+  async findAll(date?: string) {
+    if (!date) {
+      return this.appointmentsRepository.find({
+        order: {
+          startDateTime: 'ASC',
+        },
+      });
+    }
+
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return this.appointmentsRepository.find({
+      where: {
+        startDateTime: Between(startOfDay, endOfDay),
+      },
+      order: {
+        startDateTime: 'ASC',
+      },
+    });
   }
 
-  // Método para crear una nueva cita
+  // Crea una nueva cita
   async create(appointmentData: CreateAppointmentDto) {
     const client = await this.clientsRepository.findOne({
       where: { id: appointmentData.clientId },
@@ -67,7 +89,7 @@ export class AppointmentsService {
     return this.appointmentsRepository.save(appointment);
   }
 
-  // Método para verificar si hay citas que se solapan en el mismo día
+  // Verifica si hay citas que se solapan en el mismo día
   private async hasOverlappingAppointment(
     startDate: Date,
     duration: number,
@@ -98,7 +120,7 @@ export class AppointmentsService {
     });
   }
 
-  // Método para cancelar una cita existente
+  // Cancela una cita existente
   async cancel(id: number) {
     const appointment = await this.appointmentsRepository.findOne({
       where: { id },
@@ -109,6 +131,20 @@ export class AppointmentsService {
     }
 
     appointment.status = AppointmentStatus.CANCELLED;
+
+    return this.appointmentsRepository.save(appointment);
+  }
+
+  // Marca una cita como completada
+  async complete(id: number) {
+    const appointment = await this.appointmentsRepository.findOne({
+      where: { id },
+    });
+
+    if (!appointment)
+      throw new NotFoundException('No se ha encontrado la cita');
+
+    appointment.status = AppointmentStatus.DONE;
 
     return this.appointmentsRepository.save(appointment);
   }
