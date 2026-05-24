@@ -19,6 +19,16 @@ export class AvailabilityService {
     });
   }
 
+  async findByDay(dayOfWeek: number) {
+    return this.availabilityRepository.find({
+      where: { dayOfWeek },
+      order: {
+        startTime: 'ASC',
+      },
+    });
+  }
+
+  // Crea una nueva franja de disponibilidad
   async create(availabilityData: CreateAvailabilityDto) {
     if (availabilityData.startTime >= availabilityData.endTime)
       throw new BadRequestException(

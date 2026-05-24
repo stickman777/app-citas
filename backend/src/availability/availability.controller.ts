@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, Param, ParseIntPipe, } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -15,6 +15,15 @@ export class AvailabilityController {
   @Get()
   findAll() {
     return this.availabilityService.findAll();
+  }
+
+  // Endpoint para obtener franjas de disponibilidad de un día
+  @Get('day/:dayOfWeek')
+  findByDay(
+    @Param('dayOfWeek', ParseIntPipe)
+    dayOfWeek: number,
+  ) {
+    return this.availabilityService.findByDay(dayOfWeek);
   }
 
   // Endpoint crear nueva disponibilidad

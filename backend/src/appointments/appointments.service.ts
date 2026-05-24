@@ -9,6 +9,7 @@ import { Between } from 'typeorm';
 import { AppointmentStatus } from './appointment.entity';
 import { Availability } from '../availability/availability.entity';
 
+
 @Injectable()
 export class AppointmentsService {
   constructor(
@@ -25,6 +26,8 @@ export class AppointmentsService {
     @InjectRepository(Availability)
     private availabilityRepository: Repository<Availability>,
   ) {}
+
+  private readonly SLOT_STEP_MINUTES = 15;
 
   // Obtiene todas las citas, con opción de filtrar por fecha
   async findAll(date?: string) {
@@ -52,6 +55,65 @@ export class AppointmentsService {
     });
   }
 
+  // Obtiene los horarios disponibles para un servicio en una fecha determinada
+  async findAvailableSlots(date: string, serviceId: number) {
+    const service = await this.servicesRepository.findOne({
+      where: { id: serviceId },
+    });
+
+    if (!service)
+      throw new NotFoundException('No se ha encontrado el servicio');
+
+    const targetDate = new Date(date);
+    const dayOfWeek = targetDate.getDay();
+
+    const availabilities = await this.availabilityRepository.find({
+      where: { dayOfWeek },
+      order: {
+        startTime: 'ASC',
+      },
+    });
+
+    if (availabilities.length === 0) return [];
+
+    const slots: string[] = [];
+
+    // Para cada franja de disponibilidad, se generan los posibles horarios de cita
+    for (const availability of availabilities) {
+      const availabilityStart = this.buildDateWithTime(
+        targetDate,
+        availability.startTime,
+      );
+
+      const availabilityEnd = this.buildDateWithTime(
+        targetDate,
+        availability.endTime,
+      );
+
+      const currentSlot = new Date(availabilityStart);
+
+      // Se generan los horarios disponibles en intervalos de 15 minutos
+      while (currentSlot < availabilityEnd) {
+        const slotEnd = new Date(currentSlot);
+        slotEnd.setMinutes(slotEnd.getMinutes() + service.duration);
+
+        if (slotEnd <= availabilityEnd) {
+          const hasOverlap = await this.hasOverlappingAppointment(
+            currentSlot,
+            service.duration,
+          );
+
+          if (!hasOverlap)
+            slots.push(currentSlot.toTimeString().slice(0, 5));
+        }
+
+        currentSlot.setMinutes(currentSlot.getMinutes() + this.SLOT_STEP_MINUTES);
+      }
+    }
+
+    return slots;
+  }
+
   // Crea una nueva cita
   async create(appointmentData: CreateAppointmentDto) {
     const client = await this.clientsRepository.findOne({
@@ -71,7 +133,10 @@ export class AppointmentsService {
     }
 
     const startDate = new Date(appointmentData.startDateTime);
-    const isAvailable = await this.isInsideAvailability(startDate, service.duration);
+    const isAvailable = await this.isInsideAvailability(
+      startDate,
+      service.duration,
+    );
 
     // Verifica si el horario de la cita está dentro de la disponibilidad
     if (!isAvailable)
@@ -155,6 +220,16 @@ export class AppointmentsService {
         startTime >= availability.startTime && endTime <= availability.endTime
       );
     });
+  }
+
+  // Construye un objeto Date combinando la fecha y la hora
+  private buildDateWithTime(date: Date, time: string): Date {
+    const [hours, minutes] = time.split(':').map(Number);
+
+    const result = new Date(date);
+    result.setHours(hours, minutes, 0, 0);
+
+    return result;
   }
 
   // Cancela una cita existente

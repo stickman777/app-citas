@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards, Param, Patch, ParseIntPipe, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, Param, Patch, ParseIntPipe, Query, BadRequestException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -16,6 +16,18 @@ export class AppointmentsController {
   @Get()
   findAll(@Query('date') date?: string) {
     return this.appointmentsService.findAll(date);
+  }
+
+  // Endpoint para obtener los horarios disponibles para un servicio en una fecha determinada
+  @Get('available-slots')
+  findAvailableSlots(
+    @Query('date') date: string,
+    @Query('serviceId', ParseIntPipe)
+    serviceId: number,
+  ) {
+    if (!date) throw new BadRequestException('Debe indicar una fecha');
+
+    return this.appointmentsService.findAvailableSlots(date, serviceId);
   }
 
   // Endpoint para crear una nueva cita
