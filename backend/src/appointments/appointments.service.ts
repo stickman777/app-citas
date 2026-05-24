@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
-import { NotFoundException } from '@nestjs/common';
+import { Between } from 'typeorm';
+import { AppointmentStatus } from './appointment.entity';
 
 @Injectable()
 export class AppointmentsService {
@@ -42,6 +43,16 @@ export class AppointmentsService {
       throw new NotFoundException('Servicio no encontrado');
     }
 
+    const startDate = new Date(appointmentData.startDateTime);
+    const hasOverlap = await this.hasOverlappingAppointment(startDate, service.duration);
+
+    if (hasOverlap) {
+      throw new BadRequestException(
+        'El horario seleccionado no está disponible',
+      );
+    }
+
+    // Si todo es correcto, se crea la cita
     const appointment = this.appointmentsRepository.create({
       startDateTime: appointmentData.startDateTime,
       duration: service.duration,
@@ -50,5 +61,33 @@ export class AppointmentsService {
     });
 
     return this.appointmentsRepository.save(appointment);
+  }
+
+  // Método para verificar si hay citas que se solapan en el mismo día
+  private async hasOverlappingAppointment( startDate: Date, duration: number): Promise<boolean> {
+    const endDate = new Date(startDate);
+    endDate.setMinutes(endDate.getMinutes() + duration);
+
+    const dayStart = new Date(startDate);
+    dayStart.setHours(0, 0, 0, 0);
+
+    const dayEnd = new Date(startDate);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const appointmentsSameDay = await this.appointmentsRepository.find({
+      where: {
+        startDateTime: Between(dayStart, dayEnd),
+        status: AppointmentStatus.SCHEDULED,
+      },
+    });
+
+    return appointmentsSameDay.some((appointment) => {
+      const existingStart = new Date(appointment.startDateTime);
+
+      const existingEnd = new Date(existingStart);
+      existingEnd.setMinutes(existingEnd.getMinutes() + appointment.duration);
+
+      return existingStart < endDate && existingEnd > startDate;
+    });
   }
 }
