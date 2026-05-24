@@ -3,7 +3,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from './user.entity';
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { User } from './user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -20,9 +20,9 @@ export class UsersController {
     return this.usersService.findAll();
   }
   
-  // Endpoint para crear un nuevo usuario (registro) - se espera un JSON con email, password y rol
+  // Endpoint para crear un nuevo usuario
   @Post()
-  create(@Body() userData: Partial<User>) {
+  create(@Body() userData: CreateUserDto) {
     return this.usersService.create(userData);
   }
 }

@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { User } from './user.entity';
 
 @Injectable()
 export class UsersService {
@@ -21,11 +22,11 @@ export class UsersService {
     });
   }
 
-  async create(userData: Partial<User>) {
+  async create(userData: CreateUserDto) {
     if (!userData.password) throw new Error('Password is required');
-    // Hash the password before saving
+    // Hash del password antes de guardarla en la BBDD
     const hashedPassword = await bcrypt.hash(userData.password, 10);
-    // Create a new user entity
+    // Crea la entidad User a partir del DTO y el password hasheado
     const user = this.usersRepository.create({
       ...userData,
       password: hashedPassword,
