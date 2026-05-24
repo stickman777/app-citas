@@ -21,6 +21,9 @@ export class Client {
   @Column({ nullable: true })
   email?: string;
 
+  @Column({ default: true })
+  active: boolean;
+
   @Column({ nullable: true })
   notes?: string;
 

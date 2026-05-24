@@ -18,10 +18,21 @@ export class ClientsService {
     private appointmentsRepository: Repository<Appointment>,
   ) {}
 
-  findAll() {
+  // Obtiene todos los clientes, incluyendo los inactivos
+  findAllIncludingInactive() {
     return this.clientsRepository.find();
   }
 
+  // Obtiene todos los clientes activos
+  findAll() {
+    return this.clientsRepository.find({
+      where: {
+        active: true,
+      },
+    });
+  }
+
+  // Crea un nuevo cliente
   create(clientData: CreateClientDto) {
     const client = this.clientsRepository.create(clientData);
     return this.clientsRepository.save(client);
@@ -40,31 +51,37 @@ export class ClientsService {
     return this.clientsRepository.save(client);
   }
 
-  // Elimina un cliente por su ID, verificando que no tenga citas asociadas
-  async remove(id: number) {
+  // Activa un cliente por su ID (lo marca como activo)
+  async activate(id: number) {
     const client = await this.clientsRepository.findOne({
       where: { id },
     });
 
     if (!client) throw new NotFoundException('No se ha encontrado el cliente');
 
-    const hasAppointments = await this.appointmentsRepository.exists({
-      where: {
-        client: {
-          id,
-        },
-      },
-    });
+    client.active = true;
 
-    if (hasAppointments)
-      throw new BadRequestException(
-        'No se puede eliminar un cliente con citas asociadas',
-      );
-
-    await this.clientsRepository.remove(client);
+    await this.clientsRepository.save(client);
 
     return {
-      message: 'Cliente eliminado correctamente',
+      message: 'Cliente activado correctamente',
+    };
+  }
+
+  // Desactiva un cliente por su ID (lo marca como inactivo)
+  async deactivate(id: number) {
+    const client = await this.clientsRepository.findOne({
+      where: { id },
+    });
+
+    if (!client) throw new NotFoundException('No se ha encontrado el cliente');
+
+    client.active = false;
+
+    await this.clientsRepository.save(client);
+
+    return {
+      message: 'Cliente desactivado correctamente',
     };
   }
 }

@@ -13,10 +13,16 @@ import { UpdateClientDto } from './dto/update-client.dto';
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
-  // Endpoint para obtener todos los clientes
+  // Endpoint para obtener todos los clientes activos
   @Get()
   findAll() {
     return this.clientsService.findAll();
+  }
+
+  // Endpoint para obtener todos los clientes, incluyendo los inactivos
+  @Get('all')
+  findAllIncludingInactive() {
+    return this.clientsService.findAllIncludingInactive();
   }
 
   // Endpoint para crear un nuevo cliente
@@ -34,12 +40,21 @@ export class ClientsController {
     return this.clientsService.update(id, clientData);
   }
 
-  // Endpoint para eliminar un cliente por su ID, verificando que no tenga citas asociadas
-  @Delete(':id')
-  remove(
+  // Endpoint para activar un cliente por su ID (lo marca como activo)
+  @Patch(':id/activate')
+  activate(
     @Param('id', ParseIntPipe)
     id: number,
   ) {
-    return this.clientsService.remove(id);
+    return this.clientsService.activate(id);
+  }
+
+  // Endpoint para desactivar un cliente por su ID, verificando que no tenga citas asociadas
+  @Delete(':id')
+  deactivate(
+    @Param('id', ParseIntPipe)
+    id: number,
+  ) {
+    return this.clientsService.deactivate(id);
   }
 }
