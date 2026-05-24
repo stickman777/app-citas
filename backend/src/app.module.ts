@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { ClientsModule } from './clients/clients.module';
 import { ServicesModule } from './services/services.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { AvailabilityModule } from './availability/availability.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
     ClientsModule,
     ServicesModule,
     AppointmentsModule,
+    AvailabilityModule,
   ],
   controllers: [AppController],
   providers: [AppService],
