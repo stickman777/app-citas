@@ -8,6 +8,7 @@ import { ServiceEntity } from '../services/service.entity';
 import { Between } from 'typeorm';
 import { AppointmentStatus } from './appointment.entity';
 import { Availability } from '../availability/availability.entity';
+import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
 
 @Injectable()
@@ -103,11 +104,12 @@ export class AppointmentsService {
             service.duration,
           );
 
-          if (!hasOverlap)
-            slots.push(currentSlot.toTimeString().slice(0, 5));
+          if (!hasOverlap) slots.push(currentSlot.toTimeString().slice(0, 5));
         }
 
-        currentSlot.setMinutes(currentSlot.getMinutes() + this.SLOT_STEP_MINUTES);
+        currentSlot.setMinutes(
+          currentSlot.getMinutes() + this.SLOT_STEP_MINUTES,
+        );
       }
     }
 
@@ -171,6 +173,7 @@ export class AppointmentsService {
   private async hasOverlappingAppointment(
     startDate: Date,
     duration: number,
+    appointmentIdToExclude?: number,
   ): Promise<boolean> {
     const endDate = new Date(startDate);
     endDate.setMinutes(endDate.getMinutes() + duration);
@@ -189,9 +192,12 @@ export class AppointmentsService {
     });
 
     return appointmentsSameDay.some((appointment) => {
-      const existingStart = new Date(appointment.startDateTime);
+      // Si se proporciona un ID de cita para excluir, se omite esa cita en la verificación
+      if (appointment.id === appointmentIdToExclude) return false;
 
+      const existingStart = new Date(appointment.startDateTime);
       const existingEnd = new Date(existingStart);
+
       existingEnd.setMinutes(existingEnd.getMinutes() + appointment.duration);
 
       return existingStart < endDate && existingEnd > startDate;
@@ -257,6 +263,48 @@ export class AppointmentsService {
       throw new NotFoundException('No se ha encontrado la cita');
 
     appointment.status = AppointmentStatus.DONE;
+
+    return this.appointmentsRepository.save(appointment);
+  }
+
+  // Reprograma una cita existente
+  async reschedule(id: number, appointmentData: RescheduleAppointmentDto) {
+    const appointment = await this.appointmentsRepository.findOne({
+      where: { id },
+    });
+
+    if (!appointment)
+      throw new NotFoundException('No se ha encontrado la cita');
+
+    if (appointment.status !== AppointmentStatus.SCHEDULED)
+      throw new BadRequestException(
+        'Solo se pueden reprogramar citas pendientes',
+      );
+
+    const startDate = new Date(appointmentData.startDateTime);
+
+    const isAvailable = await this.isInsideAvailability(
+      startDate,
+      appointment.duration,
+    );
+
+    if (!isAvailable)
+      throw new BadRequestException(
+        'La cita está fuera del horario disponible',
+      );
+
+    const hasOverlap = await this.hasOverlappingAppointment(
+      startDate,
+      appointment.duration,
+      appointment.id,
+    );
+
+    if (hasOverlap)
+      throw new BadRequestException(
+        'El horario seleccionado no está disponible',
+      );
+
+    appointment.startDateTime = startDate;
 
     return this.appointmentsRepository.save(appointment);
   }

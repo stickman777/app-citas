@@ -5,6 +5,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/user.entity';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN, UserRole.GESTOR)
@@ -49,5 +50,14 @@ export class AppointmentsController {
   @Patch(':id/complete')
   complete(@Param('id', ParseIntPipe) id: number) {
     return this.appointmentsService.complete(id);
+  }
+
+  // Endpoint para reprogramar una cita existente
+  @Patch(':id/reschedule')
+  reschedule(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() appointmentData: RescheduleAppointmentDto,
+  ) {
+    return this.appointmentsService.reschedule(id, appointmentData);
   }
 }
