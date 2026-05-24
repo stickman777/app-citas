@@ -132,6 +132,11 @@ export class AppointmentsService {
       throw new NotFoundException('Cliente no encontrado');
     }
 
+    if (!client.active)
+      throw new BadRequestException(
+        'No se pueden crear citas para un cliente inactivo',
+      );
+
     const service = await this.servicesRepository.findOne({
       where: { id: appointmentData.serviceId },
     });
