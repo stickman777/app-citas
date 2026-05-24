@@ -5,6 +5,7 @@ import { AppointmentsService } from './appointments.service';
 import { AppointmentsController } from './appointments.controller';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
+import { Availability } from '../availability/availability.entity';
 
 @Module({
   imports: [
@@ -12,8 +13,9 @@ import { ServiceEntity } from '../services/service.entity';
     TypeOrmModule.forFeature([
       Appointment,
       Client,
-      ServiceEntity
-    ])
+      ServiceEntity,
+      Availability,
+    ]),
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],

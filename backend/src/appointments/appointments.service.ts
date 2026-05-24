@@ -7,6 +7,7 @@ import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
 import { Between } from 'typeorm';
 import { AppointmentStatus } from './appointment.entity';
+import { Availability } from '../availability/availability.entity';
 
 @Injectable()
 export class AppointmentsService {
@@ -20,6 +21,9 @@ export class AppointmentsService {
 
     @InjectRepository(ServiceEntity)
     private servicesRepository: Repository<ServiceEntity>,
+
+    @InjectRepository(Availability)
+    private availabilityRepository: Repository<Availability>,
   ) {}
 
   // Obtiene todas las citas, con opción de filtrar por fecha
@@ -67,6 +71,15 @@ export class AppointmentsService {
     }
 
     const startDate = new Date(appointmentData.startDateTime);
+    const isAvailable = await this.isInsideAvailability(startDate, service.duration);
+
+    // Verifica si el horario de la cita está dentro de la disponibilidad
+    if (!isAvailable)
+      throw new BadRequestException(
+        'La cita está fuera del horario disponible',
+      );
+
+    // Verifica si hay citas que se solapan en el mismo día
     const hasOverlap = await this.hasOverlappingAppointment(
       startDate,
       service.duration,
@@ -117,6 +130,30 @@ export class AppointmentsService {
       existingEnd.setMinutes(existingEnd.getMinutes() + appointment.duration);
 
       return existingStart < endDate && existingEnd > startDate;
+    });
+  }
+
+  // Verifica si el horario de la cita está dentro de la disponibilidad
+  private async isInsideAvailability(
+    startDate: Date,
+    duration: number,
+  ): Promise<boolean> {
+    const endDate = new Date(startDate);
+    endDate.setMinutes(endDate.getMinutes() + duration);
+
+    const dayOfWeek = startDate.getDay();
+
+    const availabilities = await this.availabilityRepository.find({
+      where: { dayOfWeek },
+    });
+
+    const startTime = startDate.toTimeString().slice(0, 5);
+    const endTime = endDate.toTimeString().slice(0, 5);
+
+    return availabilities.some((availability) => {
+      return (
+        startTime >= availability.startTime && endTime <= availability.endTime
+      );
     });
   }
 
