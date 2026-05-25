@@ -1,0 +1,105 @@
+{
+    "data":[
+  {
+    "img":"doctor-01.jpg",
+    "name": "Dr. Mick Thompson",
+    "designation": "Cardiologist",
+    "department": "Cardiology",
+    "phone": "+1 54554 54584",
+    "email": "mick@example.com",
+    "fees": "$458",
+    "status": "Available"
+  },
+  {
+    "img":"doctor-02.jpg",
+    "name": "Dr. Sarah Johnson",
+    "designation": "Orthopedic Surgeon",
+    "department": "Orthopedics",
+    "phone": "+1 43554 54584",
+    "email": "sarah@example.com",
+    "fees": "$512",
+    "status": "Available"
+  },
+  {
+    "img":"doctor-03.jpg",
+    "name": "Dr. Emily Carter",
+    "designation": "Pediatrician",
+    "department": "Pediatrics",
+    "phone": "+1 47554 54585",
+    "email": "emily@example.com",
+    "fees": "$635",
+    "status": "Available"
+  },
+  {
+    "img":"doctor-04.jpg",
+    "name": "Dr. David Lee",
+    "designation": "Gynecologist",
+    "department": "Gynecology",
+    "phone": "+1 54114 54586",
+    "email": "david@example.com",
+    "fees": "$478",
+    "status": "Available"
+  },
+  {
+    "img":"doctor-05.jpg",
+    "name": "Dr. Anna Kim",
+    "designation": "Psychiatrist",
+    "department": "Psychiatry",
+    "phone": "+1 51247 54587",
+    "email": "anna@example.com",
+    "fees": "$550",
+    "status": "Available"
+  },
+  {
+    "img":"doctor-06.jpg",
+    "name": "Dr. John Smith",
+    "designation": "Neurosurgeon",
+    "department": "Neurology",
+    "phone": "+1 41452 54588",
+    "email": "john@example.com",
+    "fees": "$703",
+    "status": "Unavailable"
+  },
+  {
+    "img":"doctor-07.jpg",
+    "name": "Dr. Lisa White",
+    "designation": "Oncologist",
+    "department": "Oncology",
+    "phone": "+1 51425 54589",
+    "email": "lisa@example.com",
+    "fees": "$420",
+    "status": "Available"
+  },
+  {
+    "img":"doctor-08.jpg",
+    "name": "Dr. Patricia Brown",
+    "designation": "Pulmonologist",
+    "department": "Pulmonology",
+    "phone": "+1 42565 54590",
+    "email": "patricia@example.com",
+    "fees": "$590",
+    "status": "Available"
+  },
+  {
+    "img":"doctor-09.jpg",
+    "name": "Dr. Rachel Green",
+    "designation": "Urologist",
+    "department": "Urology",
+    "phone": "+1 45214 54591",
+    "email": "racheal@example.com",
+    "fees": "$670",
+    "status": "Available"
+  },
+  {
+    "img":"doctor-10.jpg",
+    "name": "Dr. Michael Smith",
+    "designation": "Cardiologist",
+    "department": "Cardiology",
+    "phone": "+1 41245 54592",
+    "email": "micheal@example.com",
+    "fees": "$530",
+    "status": "Available"
+  }
+],
+"totalData":10
+}

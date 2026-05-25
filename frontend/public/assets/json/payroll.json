@@ -1,0 +1,96 @@
+{
+     "data" : [
+  {
+    "employee": "James Adair",
+    "image": "user-08.jpg",
+    "email": "james@gmail.com",
+    "joiningDate": "01 Jan 2024",
+    "role": "Admin",
+    "salary": "$1200",
+    "status": "Generate Slip"
+  },
+  {
+    "employee": "Adam Milne",
+    "image": "user-03.jpg",
+    "email": "esther@gmail.com",
+    "joiningDate": "04 Jan 2023",
+    "role": "Reception",
+    "salary": "$2000",
+    "status": "Generate Slip"
+  },
+  {
+    "employee": "Richard Clark",
+    "image": "user-04.jpg",
+    "email": "judi@gmail.com",
+    "joiningDate": "26 Jan 2022",
+    "role": "Admin",
+    "salary": "$1500",
+    "status": "Generate Slip"
+  },
+  {
+    "employee": "Robert Reid",
+    "image": "user-05.jpg",
+    "email": "robert@gmail.com",
+    "joiningDate": "04 Feb 2022",
+    "role": "Admin",
+    "salary": "$1200",
+    "status": "Generate Slip"
+  },
+  {
+    "employee": "Dottie Jeny",
+    "image": "user-06.jpg",
+    "email": "dottie@gmail.com",
+    "joiningDate": "03 Mar 2021",
+    "role": "Nurse",
+    "salary": "$1500",
+    "status": "Generate Slip"
+  },
+  {
+    "employee": "Cheryl Bilodeau",
+    "image": "user-07.jpg",
+    "email": "cheryl@gmail.com",
+    "joiningDate": "08 May 2021",
+    "role": "Nurse (RN)",
+    "salary": "$2500",
+    "status": "Generate Slip"
+  },
+  {
+    "employee": "Valerie Padgett",
+    "image": "user-02.jpg",
+    "email": "valerie@gmail.com",
+    "joiningDate": "29 Mar 2021",
+    "role": "Nurse Practitioner",
+    "salary": "$1000",
+    "status": "Generate Slip"
+  },
+  {
+    "employee": "Diane Nash",
+    "image": "user-25.jpg",
+    "email": "diane@gmail.com",
+    "joiningDate": "01 Apr 2020",
+    "role": "Nurse",
+    "salary": "$1250",
+    "status": "Generate Slip"
+  },
+  {
+    "employee": "Sally Cavazos",
+    "image": "user-29.jpg",
+    "email": "sally@gmail.com",
+    "joiningDate": "01 May 2020",
+    "role": "Nurse",
+    "salary": "$1550",
+    "status": "Generate Slip"
+  },
+  {
+    "employee": "Forest Heath",
+    "image": "user-12.jpg",
+    "email": "forest@gmail.com",
+    "joiningDate": "27 May 2020",
+    "role": "Reception",
+    "salary": "$1250",
+    "status": "Generate Slip"
+  }
+],
+"totalData":10
+
+}

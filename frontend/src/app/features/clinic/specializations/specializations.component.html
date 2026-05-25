@@ -1,0 +1,208 @@
+            <!-- Start Content -->
+            <div class="content">
+
+                <!-- Start Page Header -->
+                <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+                    <div class="flex-grow-1">
+                        <h4 class="fw-bold mb-0">Specializations<span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total Specializations : 33</span></h4>
+                    </div>
+                    <div class="text-end d-flex">
+                        <a href="javascript:void(0);" class="btn btn-primary ms-2 fs-13 btn-md" data-bs-toggle="modal" data-bs-target="#add_specialization"><i class="ti ti-plus me-1"></i>Add New Specialization</a>
+                    </div>
+				</div>
+				<!-- End Page Header -->
+
+                <div class=" d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+                    <div class="search-set mb-3">
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <div class="table-search d-flex align-items-center mb-0">
+                                <div class="search-input">
+                    <a href="javascript:void(0);" class="btn-searchset"><i class="isax isax-search-normal fs-12"></i></a>
+                    <div id="DataTables_Table_0_filter" class="dataTables_filter">
+                      <label> 
+                      <input type="search" [(ngModel)]="searchDataValue" [ngModelOptions]="{ standalone: true }" type="search" (ngModelChange)="searchData(searchDataValue)" class="form-control form-control-sm" placeholder="Search" aria-controls="DataTables_Table_0">
+                    </label>
+                  </div>
+                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap row-gap-3">
+                         <div class="dropdown me-2">
+                            <a href="javascript:void(0);" class="bg-white border rounded btn btn-md text-dark fs-14 py-1 align-items-center d-flex fw-normal" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                <i class="ti ti-filter text-gray-5 me-1"></i>Filters
+                            </a>
+                            <div class="dropdown-menu dropdown-lg dropdown-menu-end filter-dropdown p-0" id="filter-dropdown">
+                                <div class="d-flex align-items-center justify-content-between border-bottom filter-header">
+                                    <h4 class="mb-0 fw-bold">Filter</h4>
+                                    <div class="d-flex align-items-center">
+                                        <a href="javascript:void(0);" class="link-danger text-decoration-underline">Clear All</a>
+                                    </div>
+                                </div>
+                                <form >
+                                    <div class="filter-body pb-0">
+                                        <div class="mb-3">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label">Specialization</label>
+                                                <a href="javascript:void(0);" class="link-primary mb-1">Reset</a>
+                                            </div>
+                                            <div class="custom-multiselect">
+                                                <p-multiselect [options]="designation" [(ngModel)]="selectedDesignation" [ngModelOptions]="{standalone:true}" optionLabel="data" display="chip" styleClass="w-full md:w-80"  />
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label mb-1 text-dark fs-14 fw-medium">Date<span class="text-danger">*</span></label>
+                                            <div class="input-icon-end position-relative ngxdate100">  
+                                                <input type="text" class="form-control datetimepicker" bsDatepicker container=".ngxdate100" placement="top" placeholder="dd/mm/yyyy">
+                                                <span class="input-icon-addon">
+                                                    <i class="ti ti-calendar"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label">Status</label>
+                                                <a href="javascript:void(0);" class="link-primary mb-1">Reset</a>
+                                            </div>
+                                            <div class="custom-multiselect">
+                                                <p-multiselect [options]="status" [(ngModel)]="selectedStatus" [ngModelOptions]="{standalone:true}" optionLabel="data" display="chip" styleClass="w-full md:w-80"  />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="filter-footer d-flex align-items-center justify-content-end border-top">
+                                        <a href="javascript:void(0);" class="btn btn-light btn-md me-2 fw-medium" id="close-filter">Close</a>
+                                        <button type="submit" class="btn btn-primary btn-md fw-medium">Filter</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <a href="javascript:void(0);" class="dropdown-toggle btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" data-bs-toggle="dropdown">
+                               <span  class="me-1"> Sort By : </span>  Recent
+                            </a>
+                            <ul class="dropdown-menu  dropdown-menu-end p-2">
+                                <li>
+                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Recent</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Oldest</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table matSort (matSortChange)="sortData($event)" class="table table-nowrap dataTable datatable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th mat-sort-header="specialization">Specialization</th>
+                                <th mat-sort-header="date">Created Date</th>
+                                <th mat-sort-header="doctor">No of Doctor</th>
+                                <th mat-sort-header="status">Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (data of tableData;track data){
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <a href="javascript:void(0);" class="avatar me-2" data-bs-toggle="modal" data-bs-target="#view_staff">
+                                            <img src="assets/img/doctors/{{data.img}}" alt="Doctor" class="rounded-circle">
+                                        </a>
+                                        <div>
+                                            <h6 class="mb-0 fs-14 fw-semibold"><a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#view_staff">{{data.specialization}}</a></h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{data.createdDate}}</td>
+                                <td>{{data.noOfDoctor}}</td>
+                                <td><span class="badge border px-2 py-1 fs-13 fw-medium"
+                                    [ngClass]="data.status==='Inactive'?'badge-soft-danger border-danger':'badge-soft-success border-success'">{{data.status}}</span></td>
+                                <td>
+                                    <div class="action-item">
+                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                            <i class="ti ti-dots-vertical"></i>
+                                        </a>
+                                        <ul class="dropdown-menu p-2">
+                                            <li>
+                                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#edit_specialization">Edit</a>
+                                            </li>
+                                            <li>
+                                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_modal">Delete</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }@if(tableData.length === 0){
+                <tr>
+                  <td colspan="12" class="text-center text-dark">No matching records found</td>
+                </tr>
+              }
+                        </tbody>
+                    </table>
+                </div>
+                    <app-custom-pagination *ngIf="row"/>            
+            </div>
+            <!-- End Content -->
+
+
+                    <!-- Start Add Modal -->
+        <div id="add_specialization" class="modal fade">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="text-dark modal-title fw-bold">Add New Specialization</h4>
+                        <button type="button" class="btn-close btn-close-modal custom-btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="ti ti-x"></i></button>
+                    </div>
+                    <form>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Specialization<span class="text-danger ms-1">*</span></label>
+                                <input type="text" class="form-control">
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer d-flex align-items-center gap-1">
+                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add Specialization</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- End Add Modal -->
+
+        <!-- Start Add Modal -->
+        <div id="edit_specialization" class="modal fade">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="text-dark modal-title fw-bold">Edit Specialization</h4>
+                        <button type="button" class="btn-close btn-close-modal custom-btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="ti ti-x"></i></button>
+                    </div>
+                    <form>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Specialization<span class="text-danger ms-1">*</span></label>
+                                <input type="text" class="form-control" value="Cardiologist">
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" rows="3">Focuses on heart conditions in children.</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer d-flex align-items-center gap-1">
+                            <button type="button" class="btn btn-white border" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- End Add Modal -->

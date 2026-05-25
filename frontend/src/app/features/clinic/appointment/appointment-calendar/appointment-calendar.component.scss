@@ -1,0 +1,29 @@
+.margin-drop {
+  margin-right: 5px;
+}
+.fc-header-toolbar.fc-toolbar .fc-button {
+  background-color: #eeeeee;
+  border: 1px solid #eeeeee;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  opacity: 0.8;
+  background-color: #7638ff;
+  border: 1px solid #7638ff;
+  color:white !important
+}
+.fc .fc-button:disabled {
+  opacity: .8;
+  background-color: #7638ff;
+  border: 1px solid #7638ff;
+  color:white !important
+}
+
+#drop-remove
+{
+    margin: 1;
+}
+.fc-daygrid-day-events{
+  display: flex;
+}

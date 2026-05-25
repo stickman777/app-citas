@@ -1,0 +1,65 @@
+{
+    "data":[
+{
+    "img":"user-14.jpg",
+    "prescriptionId": "#PRE0025",
+    "patient": "John Richard",
+    "prescribedOn": "19 Jan 2025"
+  },
+  {
+    "img":"user-15.jpg",
+    "prescriptionId": "#PRE0024",
+    "patient": "Susan Babin",
+    "prescribedOn": "12 Mar 2025"
+  },
+  {
+    "img":"user-16.jpg",
+    "prescriptionId": "#PRE0023",
+    "patient": "Marsha Noland",
+    "prescribedOn": "27 Mar 2025"
+  },
+  {
+    "img":"user-17.jpg",
+    "prescriptionId": "#PRE0022",
+    "patient": "Irma Armstrong",
+    "prescribedOn": "12 Mar 2025"
+  },
+  {
+    "img":"user-18.jpg",
+    "prescriptionId": "#PRE0021",
+    "patient": "Ezra Belcher",
+    "prescribedOn": "24 Feb 2025"
+  },
+  {
+    "img":"user-19.jpg",
+    "prescriptionId": "#PRE0020",
+    "patient": "Glen Lentz",
+    "prescribedOn": "16 Feb 2025"
+  },
+  {
+    "img":"user-01.jpg",
+    "prescriptionId": "#PRE0019",
+    "patient": "Bernard Griffith",
+    "prescribedOn": "30 Apr 2025"
+  },
+  {
+    "img":"user-21.jpg",
+    "prescriptionId": "#PRE0018",
+    "patient": "John Elsass",
+    "prescribedOn": "30 Apr 2025"
+  },
+  {
+    "img":"user-22.jpg",
+    "prescriptionId": "#PRE0017",
+    "patient": "Carol Lam",
+    "prescribedOn": "10 Jan 2025"
+  },
+  {
+    "img":"user-23.jpg",
+    "prescriptionId": "#PRE0016",
+    "patient": "Alberto Ripley",
+    "prescribedOn": "25 Jan 2025"
+  }
+],
+"totalData":10
+}

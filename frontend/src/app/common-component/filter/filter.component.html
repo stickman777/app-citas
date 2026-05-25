@@ -1,0 +1,85 @@
+
+                        <div class="dropdown me-2">
+                            <a href="javascript:void(0);" class="bg-white border rounded btn btn-md text-dark fs-14 py-1 align-items-center d-flex fw-normal" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                <i class="ti ti-filter text-gray-5 me-1"></i>Filters
+                            </a>
+                            <div class="dropdown-menu dropdown-lg dropdown-menu-end filter-dropdown p-0" id="filter-dropdown">
+                                <div class="d-flex align-items-center justify-content-between border-bottom filter-header">
+                                    <h4 class="mb-0 fw-bold">Filter</h4>
+                                    <div class="d-flex align-items-center">
+                                        <a href="javascript:void(0);" class="link-danger text-decoration-underline">Clear All</a>
+                                    </div>
+                                </div>
+                                <form >
+                                    <div class="filter-body pb-0">
+                                        <div class="mb-3">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label mb-1">Doctor</label>
+                                                <a href="javascript:void(0);" class="link-primary mb-1">Reset</a>
+                                            </div>
+                                            <div class="custom-multiselect">
+                                                <p-multiselect [options]="doctor" [(ngModel)]="selectedDoctors" [ngModelOptions]="{standalone:true}" optionLabel="data" display="chip" styleClass="w-full md:w-80"  />
+                                            </div>
+                                           <!-- <select class="select2" multiple [(ngModel)]="selectedDoctors" name="doctors">
+                                            <option value="m-1" selected>Dr. Mick Thompson</option>
+                                            <option value="m-2">Dr. Sarah Johnson</option>
+                                            <option value="m-3">Dr. Emily Carter</option>
+                                            <option value="m-4">Dr. David Lee</option>
+                                            <option value="m-5">Dr. Anna Kim</option>
+                                            </select> -->
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label">Designation</label>
+                                                <a href="javascript:void(0);" class="link-primary mb-1">Reset</a>
+                                            </div>
+                                            <div class="custom-multiselect">
+                                                <p-multiselect [options]="designation" [(ngModel)]="selectedDesignation" [ngModelOptions]="{standalone:true}" optionLabel="data" display="chip" styleClass="w-full md:w-80"  />
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label">Department</label>
+                                                <a href="javascript:void(0);" class="link-primary mb-1">Reset</a>
+                                            </div>
+                                           <div class="custom-multiselect">
+                                                <p-multiselect [options]="department" [(ngModel)]="selectedDepartment" [ngModelOptions]="{standalone:true}" optionLabel="data" display="chip" styleClass="w-full md:w-80"  />
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label mb-1 text-dark fs-14 fw-medium">Date<span class="text-danger">*</span></label>
+                                            <div class="input-icon-end position-relative ngxdate100">  
+                                                <input type="text" class="form-control datetimepicker" bsDatepicker container=".ngxdate100" placement="top" placeholder="dd/mm/yyyy">
+                                                <span class="input-icon-addon">
+                                                    <i class="ti ti-calendar"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label">Amount</label>
+                                                <a href="javascript:void(0);" class="link-primary mb-1">Reset</a>
+                                            </div>
+                                           <div class="custom-multiselect">
+                                                <p-multiselect [options]="amount" [(ngModel)]="selectedAmount" [ngModelOptions]="{standalone:true}" optionLabel="data" display="chip" styleClass="w-full md:w-80"  />
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label">Status</label>
+                                                <a href="javascript:void(0);" class="link-primary mb-1">Reset</a>
+                                            </div>
+                                            <div class="custom-multiselect">
+                                                <p-multiselect [options]="status" [(ngModel)]="selectedStatus" [ngModelOptions]="{standalone:true}" optionLabel="data" display="chip" styleClass="w-full md:w-80"  />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="filter-footer d-flex align-items-center justify-content-end border-top">
+                                        <a href="javascript:void(0);" class="btn btn-light btn-md me-2 fw-medium" id="close-filter">Close</a>
+                                        <button type="submit" class="btn btn-primary btn-md fw-medium">Filter</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+

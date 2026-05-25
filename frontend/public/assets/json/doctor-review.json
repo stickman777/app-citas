@@ -1,0 +1,78 @@
+{
+
+ 
+    "data":[
+  {
+"star":5,
+    "img":"user-33.jpg",
+    "reviewedBy": "Alberto Ripley",
+    "review": "The clinic was well-organized, and I didn’t have to wait long.",
+    "date": "30 Apr 2025"
+  },
+  {
+"star":4,
+    "img":"user-01.jpg",
+    "reviewedBy": "Susan Babin",
+    "review": "Dr. Mick explained everything in simple terms and made sure I understood my condition and treatm.",
+    "date": "15 Apr 2025"
+  },
+  {
+"star":4,
+    "img":"user-02.jpg",
+    "reviewedBy": "Carol Lam",
+    "review": "From the front desk to the consultation, everything was smooth. Dr. Mick and his staff were friend.",
+    "date": "02 Apr 2025"
+  },
+  {
+"star":2,
+    "img":"user-04.jpg",
+    "reviewedBy": "Marsha Noland",
+    "review": "While the doctor was knowledgeable, I felt a bit rushed during my visit. I would’ve appreciated.",
+    "date": "27 Mar 2025"
+  },
+  {
+"star":3,
+    "img":"user-05.jpg",
+    "reviewedBy": "Irma Armstrong",
+    "review": "This is helpful information! If anyone has ongoing symptoms, don’t hesitate to speak to a licensed",
+    "date": "12 Mar 2025"
+  },
+  {
+"star":5,
+    "img":"user-07.jpg",
+    "reviewedBy": "Jesus Adams",
+    "review": "Very professional and caring staff. I felt heard and understood throughout my treatment.",
+    "date": "05 Mar 2025"
+  },
+  {
+"star":5,
+    "img":"user-08.jpg",
+    "reviewedBy": "Ezra Belcher",
+    "review": "The doctors took time to explain everything clearly. I left feeling informed and reassured.",
+    "date": "19 Feb 2025"
+  },
+  {
+"star":4,
+    "img":"user-10.jpg",
+    "reviewedBy": "Glen Lentz",
+    "review": "Exceptional care from start to finish. The clinic is clean, organized, and patient-focused.",
+    "date": "16 Feb 2025"
+  },
+  {
+"star":5,
+    "img":"user-12.jpg",
+    "reviewedBy": "Bernard Griffith",
+    "review": "Booking was easy, the team was punctual, and I received excellent medical attention..",
+    "date": "01 Feb 2025"
+  },
+  {
+"star":5,
+    "img":"user-14.jpg",
+    "reviewedBy": "John Elsass",
+    "review": "Great experience! The doctor truly listened and provided personalized advice.",
+    "date": "20 Jan 2025"
+  }
+]
+,
+    "totalData":10
+}

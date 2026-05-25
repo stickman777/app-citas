@@ -1,0 +1,45 @@
+{
+    "data": [
+        {
+            "Email": "ruth@gmail.com",
+            "CreatedOn": "30 Apr 2025"
+        },
+        {
+            "Email": "john@gmail.com",
+            "CreatedOn": "15 Apr 2025"
+        },
+        {
+            "Email": "mary@gmail.com",
+            "CreatedOn": "02 Apr 2025"
+        },
+        {
+            "Email": "emma@gmail.com",
+            "CreatedOn": "27 Mar 2025"
+        },
+        {
+            "Email": "kelly@gmail.com",
+            "CreatedOn": "30 Apr 2025"
+        },
+        {
+            "Email": "oscar@gmail.com",
+            "CreatedOn": "12 Mar 2025"
+        },
+        {
+            "Email": "daniel@gmail.com",
+            "CreatedOn": "05 Mar 2025"
+        },
+        {
+            "Email": "chris@gmail.com",
+            "CreatedOn": "24 Feb 2025"
+        },
+        {
+            "Email": "steve@gmail.com",
+            "CreatedOn": "16 Feb 2025"
+        },
+        {
+            "Email": "charles@gmail.com",
+            "CreatedOn": "01 Feb 2025"
+        }
+    ],
+    "totalData": 6
+}

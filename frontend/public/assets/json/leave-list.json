@@ -1,0 +1,106 @@
+{
+    "data" : [
+  {
+    "id": "#EMP020",
+    "employee": "James Adair",
+    "image": "user-08.jpg",
+    "leaveType": "Sick Leave",
+    "date": "30 Apr 2025 - 30 Apr 2025",
+    "day": "01 Day",
+    "appliedOn": "22 Apr 2025",
+    "status": "Approved"
+  },
+  {
+    "id": "#EMP019",
+    "employee": "Adam Milne",
+    "image": "user-03.jpg",
+    "leaveType": "Casual Leave",
+    "date": "15 Apr 2025 - 15 Apr 2025",
+    "day": "02 Days",
+    "appliedOn": "12 Apr 2025",
+    "status": "Rejected"
+  },
+  {
+    "id": "#EMP018",
+    "employee": "Richard Clark",
+    "image": "user-04.jpg",
+    "leaveType": "Emergency",
+    "date": "02 Apr 2025 - 03 Apr 2025",
+    "day": "03 Days",
+    "appliedOn": "01 Apr 2025",
+    "status": "Approved"
+  },
+  {
+    "id": "#EMP017",
+    "employee": "Robert Reid",
+    "image": "user-05.jpg",
+    "leaveType": "Vacation",
+    "date": "12 Mar 2025 - 13 Mar 2025",
+    "day": "01 Day",
+    "appliedOn": "05 Mar 2025",
+    "status": "Rejected"
+  },
+  {
+    "id": "#EMP016",
+    "employee": "Dottie Jeny",
+    "image": "user-06.jpg",
+    "leaveType": "Maternity",
+    "date": "27 Mar 2025 - 29 Mar 2025",
+    "day": "02 Days",
+    "appliedOn": "20 Mar 2025",
+    "status": "Approved"
+  },
+  {
+    "id": "#EMP015",
+    "employee": "Cheryl Bilodeau",
+    "image": "user-07.jpg",
+    "leaveType": "Paternity",
+    "date": "05 Mar 2025 - 05 Mar 2025",
+    "day": "01 Day",
+    "appliedOn": "01 Mar 2025",
+    "status": "Rejected"
+  },
+  {
+    "id": "#EMP014",
+    "employee": "Valerie Padgett",
+    "image": "user-02.jpg",
+    "leaveType": "Sick Leave",
+    "date": "24 Feb 2025 - 25 Feb 2025",
+    "day": "02 Days",
+    "appliedOn": "15 Feb 2025",
+    "status": "Rejected"
+  },
+  {
+    "id": "#EMP013",
+    "employee": "Diane Nash",
+    "image": "user-25.jpg",
+    "leaveType": "Casual Leave",
+    "date": "16 Feb 2025 - 17 Feb 2025",
+    "day": "01 Day",
+    "appliedOn": "09 Feb 2025",
+    "status": "Approved"
+  },
+  {
+    "id": "#EMP012",
+    "employee": "Sally Cavazos",
+    "image": "user-29.jpg",
+    "leaveType": "Emergency",
+    "date": "01 Feb 2025 - 01 Feb 2025",
+    "day": "02 Days",
+    "appliedOn": "01 Feb 2025",
+    "status": "Approved"
+  },
+  {
+    "id": "#EMP011",
+    "employee": "Forest Heath",
+    "image": "user-12.jpg",
+    "leaveType": "Vacation",
+    "date": "25 Jan 2025 - 29 Jan 2025",
+    "day": "05 Days",
+    "appliedOn": "12 Jan 2025",
+    "status": "Rejected"
+  }
+],
+"totalData":10
+
+}

@@ -1,0 +1,65 @@
+{
+    "data" : [
+  {
+    "department": "Nursing",
+    "createdDate": "22 Apr 2025",
+    "noOfDoctor": "40",
+    "status": "Active"
+  },
+  {
+    "department": "Pharmacy",
+    "createdDate": "12 Apr 2025",
+    "noOfDoctor": "15",
+    "status": "Inactive"
+  },
+  {
+    "department": "Laboratory",
+    "createdDate": "01 Apr 2025",
+    "noOfDoctor": "10",
+    "status": "Active"
+  },
+  {
+    "department": "Billing",
+    "createdDate": "05 Mar 2025",
+    "noOfDoctor": "13",
+    "status": "Active"
+  },
+  {
+    "department": "Anesthesia",
+    "createdDate": "20 Mar 2025",
+    "noOfDoctor": "17",
+    "status": "Active"
+  },
+  {
+    "department": "Administration",
+    "createdDate": "01 Mar 2025",
+    "noOfDoctor": "20",
+    "status": "Active"
+  },
+  {
+    "department": "Counseling",
+    "createdDate": "15 Feb 2025",
+    "noOfDoctor": "25",
+    "status": "Inactive"
+  },
+  {
+    "department": "Research",
+    "createdDate": "09 Feb 2025",
+    "noOfDoctor": "15",
+    "status": "Active"
+  },
+  {
+    "department": "Biomedical",
+    "createdDate": "01 Feb 2025",
+    "noOfDoctor": "19",
+    "status": "Active"
+  },
+  {
+    "department": "Rehabilitation",
+    "createdDate": "12 Jan 2025",
+    "noOfDoctor": "24",
+    "status": "Active"
+  }
+],
+"totalData":10
+}

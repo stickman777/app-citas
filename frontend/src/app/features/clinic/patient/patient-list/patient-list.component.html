@@ -1,0 +1,146 @@
+            <!-- Start Content -->
+            <div class="content">
+
+                <!-- Start Page Header -->
+                <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-1 border-bottom">
+                    <div class="flex-grow-1">
+                        <h4 class="fw-bold mb-0">Patients List <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">Total Patients : 565</span></h4>
+                    </div>
+                    <div class="text-end d-flex">
+                        <!-- dropdown-->
+                        <div class="dropdown me-1">
+							<a href="javascript:void(0);" class="btn btn-md fs-14 fw-normal border bg-white rounded text-dark d-inline-flex align-items-center"  data-bs-toggle="dropdown">
+								Export<i class="ti ti-chevron-down ms-2"></i>
+							</a>
+							<ul class="dropdown-menu p-2">
+								<li>
+									<a class="dropdown-item" href="javascript:void(0);">Download as PDF</a>
+								</li>
+								<li>
+									<a class="dropdown-item" href="javascript:void(0);">Download as Excel</a>
+								</li>
+							</ul>
+						</div>
+                        <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
+                            <a [routerLink]="routes.patientList" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-dark"></i></a>
+                            <a [routerLink]="routes.patientGrid" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-layout-grid fs-14 text-body"></i> </a>
+                        </div>
+
+                        <a [routerLink]="routes.createPatient" class="btn btn-primary ms-2 fs-13 btn-md"><i class="ti ti-plus me-1"></i>New Patient</a>
+                    </div>
+				</div>
+				<!-- End Page Header -->
+
+                <!--  Start Filter -->
+                <div class=" d-flex align-items-center justify-content-between flex-wrap">
+                    <div>
+                        <div class="search-set mb-3">
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <div class="table-search d-flex align-items-center mb-0">
+                                    <div class="search-input">
+                    <a href="javascript:void(0);" class="btn-searchset"><i class="isax isax-search-normal fs-12"></i></a>
+                    <div id="DataTables_Table_0_filter" class="dataTables_filter">
+                      <label> 
+                      <input type="search" [(ngModel)]="searchDataValue" [ngModelOptions]="{ standalone: true }" type="search" (ngModelChange)="searchData(searchDataValue)" class="form-control form-control-sm" placeholder="Search" aria-controls="DataTables_Table_0">
+                    </label>
+                  </div>
+                 </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex table-dropdown mb-3 right-content align-items-center flex-wrap row-gap-3">
+                        <app-filter></app-filter>
+                        <div class="dropdown">
+                            <a href="javascript:void(0);" class="dropdown-toggle btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" data-bs-toggle="dropdown">
+                               <span  class="me-1"> Sort By : </span>  Recent
+                            </a>
+                            <ul class="dropdown-menu  dropdown-menu-end p-2">
+                                <li>
+                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Recent</a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Oldest</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!--  End Filter -->
+
+                <!--  Start Table -->
+                <div class="table-responsive">
+                    <table matSort (matSortChange)="sortData($event)" class="table table-nowrap dataTable datatable">
+                        <thead class="">
+                            <tr>
+                                <th mat-sort-header="patient">Patient</th>
+                                <th mat-sort-header="phone">Phone</th>
+                                <th mat-sort-header="doctor">Doctor</th>
+                                <th mat-sort-header="address">Address</th>
+                                <th mat-sort-header="lastvisti">Last Visit</th>
+                                <th mat-sort-header="status">Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (data of tableData;track data){
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <a [routerLink]="routes.patientDetails" class="avatar avatar-md me-2">
+                                            <img src="assets/img/users/{{data.img2}}" alt="product" class="rounded-circle">
+                                        </a>
+                                        <a [routerLink]="routes.patientDetails" class="text-dark fw-semibold">{{data.name2}}<span class="text-body fs-13 fw-normal d-block"> {{data.age}}, {{data.gender}} </span>  </a>
+                                    </div>
+                                </td>
+                                <td>{{data.phone}}</td>                                
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <a [routerLink]="routes.doctorDetails" class="avatar me-2 flex-shrink-0">
+                                            <img src="assets/img/doctors/{{data.img}}" alt="img" class="rounded-circle">
+                                        </a>
+                                        <div>
+                                          <h6 class="fs-14 mb-1"><a [routerLink]="routes.doctorDetails" class="fw-semibold">{{data.name}}</a></h6>
+                                          <p class="mb-0 fs-13">{{data.designation}}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{data.address}}</td>
+                                <td>{{data.lastVisit}}</td>
+                                <td><span class="badge rounded  border  fs-13 fw-medium"
+                                    [ngClass]="data.status==='Unavailable'?'badge-soft-danger border-danger text-danger':'badge-soft-success border-success text-success'">{{data.status}}</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <a [routerLink]="routes.appointmentList" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                            <i class="ti ti-calendar-cog"></i>
+                                        </a>
+                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                            <i class="ti ti-dots-vertical"></i>
+                                        </a>
+                                        <ul class="dropdown-menu p-2">
+                                            <li>
+                                                <a [routerLink]="routes.editPatient" class="dropdown-item d-flex align-items-center">Edit</a>
+                                            </li>
+                                            <li>
+                                                <a [routerLink]="routes.patientDetails" class="dropdown-item d-flex align-items-center">View</a>
+                                            </li>
+                                            <li>
+                                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_modal">Delete</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }@if(tableData.length === 0){
+                                <tr>
+                                <td colspan="12" class="text-center text-dark">No matching records found</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <!--  End Table -->
+                <app-custom-pagination *ngIf="row"/>
+            </div>
+            <!-- End Content -->

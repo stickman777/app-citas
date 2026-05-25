@@ -1,0 +1,450 @@
+<!-- Sidenav Menu Start -->
+<div class="sidebar" id="sidebar" (mouseover)="miniSideBarMouseHover('over')" (mouseout)="miniSideBarMouseHover('out')"
+    (focus)="miniSideBarMouseHover('over')" (blur)="miniSideBarMouseHover('out')" tabindex="0">
+
+    <!-- Start Logo -->
+    <div class="sidebar-logo">
+        <div>
+            <!-- Logo Normal -->
+            <a [routerLink]="routes.index" class="logo logo-normal">
+                <img src="assets/img/logo.svg" alt="Logo">
+            </a>
+
+            <!-- Logo Small -->
+            <a [routerLink]="routes.index" class="logo-small">
+                <img src="assets/img/logo-small.svg" alt="Logo">
+            </a>
+
+            <!-- Logo Dark -->
+            <a [routerLink]="routes.index" class="dark-logo">
+                <img src="assets/img/logo-white.svg" alt="Logo">
+            </a>
+        </div>
+
+        <button *ngIf="base==='layout-hidden'  || dataLayoutHidden" class="sidenav-toggle-btn btn border-0 p-0 active"
+            id="toggle_btn" (click)="settings.togglehidden()">
+            <i class="ti ti-arrow-right"></i>
+        </button>
+
+        <!-- Show this when layout is not hidden -->
+        <button *ngIf="!(base === 'layout-hidden' || dataLayoutHidden)"
+            class="sidenav-toggle-btn btn border-0 p-0 active" id="toggle_btn" (click)="toggleSidebarmini()">
+            <i class="ti ti-arrow-left"></i>
+        </button>
+
+
+
+
+        <!-- Sidebar Menu Close -->
+        <a href="javascript:void(0);" class="sidebar-close" (click)="toggleSidebar()">
+            <i class="ti ti-x align-middle"></i>
+        </a>
+    </div>
+    <!-- End Logo -->
+    <div class="dropdown-menu dropdown-menu-lg" [ngClass]="{'show':sidebartop}">
+        <div class="p-2">
+            <label class="dropdown-item d-flex align-items-center justify-content-between p-1">
+                <span class="d-flex align-items-center">
+                    <span class="me-2"><img src="assets/img/icons/clinic-01.svg" alt=""></span>
+                    <span class="fw-semibold text-dark">CureWell Medical Hub<small
+                            class="d-block text-muted fw-normal fs-13">Ohio</small></span>
+                </span>
+                <input class="form-check-input m-0 me-2" type="checkbox">
+            </label>
+            <label class="dropdown-item d-flex align-items-center justify-content-between p-1">
+                <span class="d-flex align-items-center">
+                    <span class="me-2"><img src="assets/img/icons/clinic-02.svg" alt=""></span>
+                    <span class="fw-semibold text-dark">Trustcare Clinic<small
+                            class="d-block text-muted fw-normal fs-13">Lasvegas</small></span>
+                </span>
+                <input class="form-check-input m-0 me-2" type="checkbox">
+            </label>
+            <label class="dropdown-item d-flex align-items-center justify-content-between p-1">
+                <span class="d-flex align-items-center">
+                    <span class="me-2"><img src="assets/img/icons/clinic-03.svg" alt=""></span>
+                    <span class="fw-semibold text-dark">NovaCare Medical<small
+                            class="d-block text-muted fw-normal fs-13">Washington</small></span>
+                </span>
+                <input class="form-check-input m-0 me-2" type="checkbox">
+            </label>
+            <label class="dropdown-item d-flex align-items-center justify-content-between p-1">
+                <span class="d-flex align-items-center">
+                    <span class="me-2"><img src="assets/img/icons/clinic-04.svg" alt=""></span>
+                    <span class="fw-semibold text-dark">Greeny Medical Clinic<small
+                            class="d-block text-muted fw-normal fs-13">Illinios</small></span>
+                </span>
+                <input class="form-check-input m-0 me-2" type="checkbox">
+            </label>
+        </div>
+    </div>
+    <!-- Sidenav Menu -->
+    <div class="sidebar-inner" data-simplebar>
+        <ng-scrollbar>
+
+            <div id="sidebar-menu" class="sidebar-menu">
+                <div class="sidebar-top shadow-sm p-2 rounded-1 mb-3 dropend">
+                    <a href="javascript:void(0);" class="drop-arrow-none" data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside" data-bs-offset="0,22" aria-haspopup="false"
+                        [ngClass]="{'show subdrop':sidebartop}" (click)="togglesidebartop()">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <span class="avatar rounded-circle flex-shrink-0 p-2"><img
+                                        src="./assets/img/icons/trustcare.svg" alt="img"></span>
+                                <div class="ms-2">
+                                    <h6 class="fs-14 fw-semibold mb-0">Trustcare Clinic</h6>
+                                    <p class="fs-13 mb-0">Lasvegas</p>
+                                </div>
+                            </div>
+                            <i class="ti ti-arrows-transfer-up"></i>
+                        </div>
+                    </a>
+
+                </div>
+                <ul>
+                    <ng-container *ngFor="let mainMenu of sidebarData">
+
+                        <li class="menu-title"><span>{{mainMenu.tittle}}</span></li>
+                        <ng-container *ngFor="let menu of mainMenu.menu">
+                            <li>
+                                <ul>
+                                    <ng-container *ngIf="menu.hasSubRoute===true">
+                                        <li class="submenu">
+                                            <a href="javascript:void(0);" (click)="expandSubMenus(menu)" [class.active]="base===menu.base || (base.includes('layout') && menu.base === 'layout')"
+                                                [ngClass]="{ subdrop: menu.showSubRoute === true }">
+                                                <i class="ti"
+                                                    [class]="'ti-'+ menu.icon"></i><span>{{menu.menuValue}}</span>
+                                                <span class="menu-arrow"></span>
+                                            </a>
+                                            <ng-container *ngFor="let subMenu of menu.subMenus">
+                                                <ul [ngClass]="
+                                                menu.showSubRoute === true
+                                                ? 'd-block'
+                                                : 'd-none'
+                                            ">
+                                                    <li>
+                                                    @if(subMenu.hasSubRouteTwo2===true){
+                                                    <li class="submenu submenu-two">
+                                                        <a [routerLink]="subMenu.route" [class.active]="page===subMenu.base"
+                                                            (click)="openSubmenuOne(subMenu)"
+                                                            [ngClass]="{ subdrop: openSubmenuOneItem === subMenu }">{{subMenu.menuValue}}<span
+                                                                class="menu-arrow inside-submenu"></span></a>
+                                                        <ul [ngClass]="openSubmenuOneItem === subMenu ? 'd-block' : 'd-none'">
+                                                            @for(subMenu2 of subMenu.subMenus;track subMenu2){
+                                                            <li><a [routerLink]="subMenu2.route"
+                                                                    [class.active]="last===subMenu2.base" >{{subMenu2.menuValue}}</a>
+                                                            </li>
+
+                                                            }
+                                                        </ul>
+                                                    </li>
+                                                    }
+                                                    @else{
+                                                    <a [routerLink]="subMenu.route" 
+                                                        [class.active]="page===subMenu.base">{{subMenu.menuValue}}</a>
+                                                    }
+
+
+                                        </li>
+                                </ul>
+                        </ng-container>
+                        </li>
+                    </ng-container>
+                    <ng-container *ngIf="menu.hasSubRoute=== false">
+                        <li [class.active]="base===menu.base">
+                            <a [routerLink]="menu.route" (click)="expandSubMenus(menu)">
+                                <i class="ti" [class]="'ti-'+ menu.icon" ></i><span>{{menu.menuValue}}</span>
+                            </a>
+                        </li>
+                    </ng-container>
+                </ul>
+
+                </li>
+
+                </ng-container>
+                </ng-container>
+                </ul>
+            </div>
+        </ng-scrollbar>
+    </div>
+
+</div>
+<!-- Sidenav Menu End -->
+
+
+<!-- Start Add modal -->
+<div class="modal fade" id="add_modal">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-dark fw-bold">New Location</h5>
+                <button type="button" class="btn-close custom-btn-close opacity-100" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body pb-0">
+
+                <!-- start row -->
+                <div class="row">
+
+                    <div class="col-lg-12">
+                        <div class="mb-3 d-flex align-items-center">
+                            <label class="form-label mb-0">Image</label>
+                            <div
+                                class="drag-upload-btn avatar avatar-xxl rounded-circle bg-light text-muted position-relative overflow-hidden z-1 mb-2 ms-4 p-0">
+                                <i class="ti ti-user-plus fs-16"></i>
+                                <input type="file" class="form-control image-sign" multiple="">
+                                <div
+                                    class="position-absolute bottom-0 end-0 star-0 w-100 h-25 bg-dark d-flex align-items-center justify-content-center z-n1">
+                                    <a href="javascript:void(0);"
+                                        class="text-white d-flex align-items-center justify-content-center">
+                                        <i class="ti ti-photo fs-14"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Name<span class="text-danger ms-1">*</span></label>
+                            <input type="text" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Location Type<span class="text-danger ms-1">*</span></label>
+                            <mat-select class="custom-mat-select select" placeholder="Select">
+                                <mat-option value="1">Select</mat-option>
+                                <mat-option value="1">In Person</mat-option>
+                                <mat-option value="1">Video Consultation</mat-option>
+                                <mat-option value="1">Both</mat-option>
+                            </mat-select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Email Address<span class="text-danger ms-1">*</span></label>
+                            <input type="email" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Phone Number<span class="text-danger ms-1">*</span></label>
+                            <input type="tel" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Address 1<span class="text-danger ms-1">*</span></label>
+                            <input type="text" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Address 2<span class="text-danger ms-1">*</span></label>
+                            <input type="text" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Country<span class="text-danger ms-1">*</span></label>
+                            <mat-select class="custom-mat-select select" placeholder="Select">
+                                <mat-option value="1">Select</mat-option>
+                                <mat-option value="1">United States</mat-option>
+                                <mat-option value="1">Canada</mat-option>
+                                <mat-option value="1">UK</mat-option>
+                                <mat-option value="1">Germany</mat-option>
+                                <mat-option value="1">France</mat-option>
+                            </mat-select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">State<span class="text-danger ms-1">*</span></label>
+                            <mat-select class="custom-mat-select select" placeholder="Select">
+                                <mat-option value="1">Select</mat-option>
+                                <mat-option value="1">California</mat-option>
+                                <mat-option value="1">Ontario</mat-option>
+                                <mat-option value="1">Bavaria</mat-option>
+                                <mat-option value="1">Wellington</mat-option>
+                                <mat-option value="1">Le-de-France</mat-option>
+                            </mat-select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">City<span class="text-danger ms-1">*</span></label>
+                            <mat-select class="custom-mat-select select" placeholder="Select">
+                                <mat-option value="1">Select</mat-option>
+                                <mat-option value="1">Los Angeles</mat-option>
+                                <mat-option value="1">Toronto</mat-option>
+                                <mat-option value="1">London</mat-option>
+                                <mat-option value="1">Munich</mat-option>
+                                <mat-option value="1">Sydney</mat-option>
+                            </mat-select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Pincode<span class="text-danger ms-1">*</span></label>
+                            <input type="text" class="form-control">
+                        </div>
+                    </div>
+
+                </div>
+                <!-- end row -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-sm me-2 fs-13 fw-medium"
+                    data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm fs-13 fw-medium">Add New Location</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Add modal  -->
+
+<!-- Start edit modal -->
+<div class="modal fade" id="edit_modal">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-dark fw-bold">Edit Location</h5>
+                <button type="button" class="btn-close custom-btn-close opacity-100" data-bs-dismiss="modal"
+                    aria-label="Close"><i class="ti ti-x bg-white fs-16 text-dark"></i></button>
+            </div>
+            <div class="modal-body pb-0">
+
+                <!-- start row -->
+                <div class="row">
+
+                    <div class="col-lg-12">
+                        <div class="mb-3 d-flex align-items-center">
+                            <label class="form-label mb-0">Image</label>
+                            <div
+                                class="drag-upload-btn avatar avatar-xxl rounded-circle bg-light text-muted position-relative overflow-hidden z-1 mb-2 ms-4 p-0">
+                                <img src="assets/img/icons/clinic-08.svg" class="position-relative z-n1" alt="img">
+                                <input type="file" class="form-control image-sign" multiple="">
+                                <div
+                                    class="position-absolute bottom-0 end-0 star-0 w-100 h-25 bg-dark d-flex align-items-center justify-content-center z-n1">
+                                    <a href="javascript:void(0);"
+                                        class="text-white d-flex align-items-center justify-content-center">
+                                        <i class="ti ti-photo fs-14"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Name<span class="text-danger ms-1">*</span></label>
+                            <input type="text" class="form-control" value="James Carter">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Location Type<span class="text-danger ms-1">*</span></label>
+                            <mat-select class="custom-mat-select select" placeholder="Select">
+                                <mat-option value="1">In Person</mat-option>
+                                <mat-option value="1">Video Consultation</mat-option>
+                                <mat-option value="1">Both</mat-option>
+                            </mat-select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Email Address<span class="text-danger ms-1">*</span></label>
+                            <input type="email" class="form-control" value="james@example.com">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Phone Number<span class="text-danger ms-1">*</span></label>
+                            <input type="tel" class="form-control" value="+1 43554 54584">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Address 1<span class="text-danger ms-1">*</span></label>
+                            <input type="text" class="form-control" value="123 Main Street">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Address 2<span class="text-danger ms-1">*</span></label>
+                            <input type="text" class="form-control" value=" Apartment 4B">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Country<span class="text-danger ms-1">*</span></label>
+                            <mat-select class="custom-mat-select select" placeholder="Select">
+                                <mat-option value="1">USA</mat-option>
+                                <mat-option value="1">Canada</mat-option>
+                                <mat-option value="1">UK</mat-option>
+                                <mat-option value="1">Germany</mat-option>
+                                <mat-option value="1">France</mat-option>
+                            </mat-select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">State<span class="text-danger ms-1">*</span></label>
+                            <mat-select class="custom-mat-select select" placeholder="Select">
+                                <mat-option value="1">California</mat-option>
+                                <mat-option value="1">Ontario</mat-option>
+                                <mat-option value="1">Bavaria</mat-option>
+                                <mat-option value="1">Wellington</mat-option>
+                                <mat-option value="1">Le-de-France</mat-option>
+                            </mat-select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">City<span class="text-danger ms-1">*</span></label>
+                            <mat-select class="custom-mat-select select" placeholder="Select">
+                                <mat-option value="1">Los Angeles</mat-option>
+                                <mat-option value="1">Toronto</mat-option>
+                                <mat-option value="1">London</mat-option>
+                                <mat-option value="1">Munich</mat-option>
+                                <mat-option value="1">Sydney</mat-option>
+                            </mat-select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Pincode<span class="text-danger ms-1">*</span></label>
+                            <input type="text" class="form-control" value="90001">
+                        </div>
+                    </div>
+
+                </div>
+                <!-- end row -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-sm me-2 fs-13 fw-medium"
+                    data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm fs-13 fw-medium">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End edit modal  -->

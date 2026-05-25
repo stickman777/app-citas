@@ -1,0 +1,56 @@
+{
+    "data": [
+  {
+    "designation": "Nurse",
+    "createdDate": "22 Apr 2025",
+    "status": "Active"
+  },
+  {
+    "designation": "Pharmacist",
+    "createdDate": "12 Apr 2025",
+    "status": "Inactive"
+  },
+  {
+    "designation": "Receptionist",
+    "createdDate": "01 Apr 2025",
+    "status": "Active"
+  },
+  {
+    "designation": "Technician",
+    "createdDate": "05 Mar 2025",
+    "status": "Active"
+  },
+  {
+    "designation": "Medical Assistant",
+    "createdDate": "20 Mar 2025",
+    "status": "Active"
+  },
+  {
+    "designation": "Phlebotomist",
+    "createdDate": "01 Mar 2025",
+    "status": "Active"
+  },
+  {
+    "designation": "Dialysis Technician",
+    "createdDate": "15 Feb 2025",
+    "status": "Inactive"
+  },
+  {
+    "designation": "Medical Coder",
+    "createdDate": "09 Feb 2025",
+    "status": "Active"
+  },
+  {
+    "designation": "Chiropractor",
+    "createdDate": "01 Feb 2025",
+    "status": "Active"
+  },
+  {
+    "designation": "Acupuncturist",
+    "createdDate": "12 Jan 2025",
+    "status": "Active"
+  }
+],
+"totalData":10
+
+}

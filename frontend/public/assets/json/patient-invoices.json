@@ -1,0 +1,85 @@
+{
+    "data":[
+  {
+    "invoiceId": "#INV0025",
+    "description": "General Consultation",
+    "createdDate": "30 Apr 2025",
+    "dueDate": "30 Apr 2025",
+    "amount": "$800",
+    "status": "Paid"
+  },
+  {
+    "invoiceId": "#INV0024",
+    "description": "Dental Cleaning",
+    "createdDate": "15 Apr 2025",
+    "dueDate": "15 Apr 2025",
+    "amount": "$930",
+    "status": "Partially Paid"
+  },
+  {
+    "invoiceId": "#INV0023",
+    "description": "Eye Checkup",
+    "createdDate": "02 Apr 2025",
+    "dueDate": "02 Apr 2025",
+    "amount": "$850",
+    "status": "Paid"
+  },
+  {
+    "invoiceId": "#INV0022",
+    "description": "X-Ray",
+    "createdDate": "27 Mar 2025",
+    "dueDate": "27 Mar 2025",
+    "amount": "$700",
+    "status": "Paid"
+  },
+  {
+    "invoiceId": "#INV0021",
+    "description": "Physiotherapy Session",
+    "createdDate": "12 Mar 2025",
+    "dueDate": "12 Mar 2025",
+    "amount": "$650",
+    "status": "Partially Paid"
+  },
+  {
+    "invoiceId": "#INV0020",
+    "description": "Cardiac Screening",
+    "createdDate": "05 Mar 2025",
+    "dueDate": "05 Mar 2025",
+    "amount": "$430",
+    "status": "UnPaid"
+  },
+  {
+    "invoiceId": "#INV0019",
+    "description": "Skin Allergy Test",
+    "createdDate": "24 Feb 2025",
+    "dueDate": "24 Feb 2025",
+    "amount": "$300",
+    "status": "Paid"
+  },
+  {
+    "invoiceId": "#INV0018",
+    "description": "Blood Test",
+    "createdDate": "16 Feb 2025",
+    "dueDate": "16 Feb 2025",
+    "amount": "$450",
+    "status": "Partially Paid"
+  },
+  {
+    "invoiceId": "#INV0017",
+    "description": "ENT Consultation",
+    "createdDate": "01 Feb 2025",
+    "dueDate": "01 Feb 2025",
+    "amount": "$750",
+    "status": "Paid"
+  },
+  {
+    "invoiceId": "#INV0016",
+    "description": "Nutrition Counseling",
+    "createdDate": "25 Jan 2025",
+    "dueDate": "25 Jan 2025",
+    "amount": "$800",
+    "status": "UnPaid"
+  }
+],
+"totalData":10
+}

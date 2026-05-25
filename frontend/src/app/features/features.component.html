@@ -1,0 +1,26 @@
+<div class="main-wrapper" [ngClass]="{
+    'expand-menu': expandMenu === 'true' && miniSidebar === 'true',
+    'mini-sidebar': miniSidebar === 'true',
+    'slide-nav': mobileSidebar === 'true'
+}">
+    <app-header></app-header>
+    <app-sidebar></app-sidebar>
+
+    <div class="page-wrapper">
+        <router-outlet></router-outlet>
+        <!-- Footer Start -->
+        <div class="footer text-center bg-white p-2 border-top">
+            <p class="text-dark mb-0">2026 &copy; <a href="javascript:void(0);" class="link-primary">Preclinic</a>, All
+                Rights Reserved</p>
+        </div>
+        <!-- Footer End -->
+    </div>
+    <div class="sidebar-overlay" [ngClass]="{
+  opened: mobileSidebar === 'true',
+  'd-none':mobileSidebar === 'false'
+}"></div>
+
+    <app-layout
+        [hidden]="base==='layout-default'||base==='layout-hidden'||base==='layout-mini'||base==='layout-full-width'||base==='layout-rtl'||base==='layout-dark'"></app-layout>
+    <app-modal></app-modal>
+</div>

@@ -1,0 +1,75 @@
+{
+    "data":[
+  {
+    "img":"doctor-01.jpg",
+    "prescriptionId": "#PRE0025",
+    "doctorName": "Dr. Mick Thompson ",
+    "designation":"Cardiologist",
+    "prescribedOn": "30 Apr 2025"
+  },
+  {
+    "img":"doctor-02.jpg",
+    "prescriptionId": "#PRE0024",
+    "doctorName": "Dr. Sarah Johnson Orthopedic ",
+    "designation":"Surgeon",
+    "prescribedOn": "15 Apr 2025"
+  },
+  {
+    "img":"doctor-03.jpg",
+    "prescriptionId": "#PRE0023",
+    "doctorName": "Dr. Emily Carter ",
+    "designation":"Pediatrician",
+    "prescribedOn": "02 Apr 2025"
+  },
+  {
+    "img":"doctor-04.jpg",
+    "prescriptionId": "#PRE0022",
+    "doctorName": "Dr. David Lee ",
+    "designation":"Gynecologist",
+    "prescribedOn": "27 Mar 2025"
+  },
+  {
+    "img":"doctor-05.jpg",
+    "prescriptionId": "#PRE0021",
+    "doctorName": "Dr. Anna Kim ",
+    "designation":"Psychiatrist",
+    "prescribedOn": "12 Mar 2025"
+  },
+  {
+    "img":"doctor-06.jpg",
+    "prescriptionId": "#PRE0020",
+    "doctorName": "Dr. John Smith ",
+    "designation":"Neurosurgeon",
+    "prescribedOn": "05 Mar 2025"
+  },
+  {
+    "img":"doctor-07.jpg",
+    "prescriptionId": "#PRE0019",
+    "doctorName": "Dr. Lisa White ",
+    "designation":"Oncologist",
+    "prescribedOn": "24 Feb 2025"
+  },
+  {
+    "img":"doctor-08.jpg",
+    "prescriptionId": "#PRE0018",
+    "doctorName": "Dr. Patricia Brown ",
+    "designation":"Pulmonologist",
+    "prescribedOn": "16 Feb 2025"
+  },
+  {
+    "img":"doctor-09.jpg",
+    "prescriptionId": "#PRE0017",
+    "doctorName": "Dr. Rachel Green ",
+    "designation":"Urologist",
+    "prescribedOn": "01 Feb 2025"
+  },
+  {
+    "img":"doctor-10.jpg",
+    "prescriptionId": "#PRE0016",
+    "doctorName": "Dr. Michael Smith ",
+    "designation":"Cardiologist",
+    "prescribedOn": "25 Jan 2025"
+  }
+],
+"totalData":10
+}
