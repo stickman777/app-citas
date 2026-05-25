@@ -270,9 +270,9 @@ export class AppointmentsService {
       throw new NotFoundException('No se ha encontrado la cita');
     }
 
-    // Evita cambiar citas que están finalizadas o canceladas
+    // Evita cambiar citas que están completadas o canceladas
     if (appointment.status !== AppointmentStatus.SCHEDULED)
-      throw new BadRequestException('Solo se pueden cancelar citas pendientes');
+      throw new BadRequestException('Solo se pueden cancelar citas programadas');
 
     appointment.status = AppointmentStatus.CANCELLED;
 
@@ -288,11 +288,11 @@ export class AppointmentsService {
     if (!appointment)
       throw new NotFoundException('No se ha encontrado la cita');
 
-    // Evita completar citas que no están agendadas
+    // Evita completar citas que no están programadas
     if (appointment.status !== AppointmentStatus.SCHEDULED)
-      throw new BadRequestException('Solo se pueden completar citas pendientes');
+      throw new BadRequestException('Solo se pueden completar citas programadas');
 
-    appointment.status = AppointmentStatus.DONE;
+    appointment.status = AppointmentStatus.COMPLETED;
 
     return this.appointmentsRepository.save(appointment);
   }
@@ -313,7 +313,7 @@ export class AppointmentsService {
 
     if (appointment.status !== AppointmentStatus.SCHEDULED)
       throw new BadRequestException(
-        'Solo se pueden reprogramar citas pendientes',
+        'Solo se pueden reprogramar citas programadas',
       );
 
     const startDate = new Date(appointmentData.startDateTime);

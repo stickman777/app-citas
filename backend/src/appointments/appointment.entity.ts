@@ -4,8 +4,8 @@ import { ServiceEntity } from '../services/service.entity';
 
 export enum AppointmentStatus {
   SCHEDULED = 'SCHEDULED',
+  COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
-  DONE = 'DONE',
 }
 
 @Entity()
