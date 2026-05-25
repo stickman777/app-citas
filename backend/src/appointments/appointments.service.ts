@@ -8,6 +8,7 @@ import { ServiceEntity } from '../services/service.entity';
 import { AppointmentStatus } from './appointment.entity';
 import { Availability } from '../availability/availability.entity';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -56,18 +57,7 @@ export class AppointmentsService {
 
   // Obtiene los horarios disponibles para un servicio en una fecha determinada
   async findAvailableSlots(date: string, serviceId: number) {
-    const service = await this.servicesRepository.findOne({
-      where: { id: serviceId },
-    });
-
-    if (!service)
-      throw new NotFoundException('No se ha encontrado el servicio');
-
-    // Verifica que el servicio esté activo antes de mostrar los horarios disponibles
-    if (!service.active)
-      throw new BadRequestException(
-        'No se pueden crear citas con un servicio inactivo',
-      );
+    const service = await this.getActiveService(serviceId);
 
     const targetDate = this.buildDateFromDateQuery(date);
     const dayOfWeek = targetDate.getDay();
@@ -122,56 +112,11 @@ export class AppointmentsService {
 
   // Crea una nueva cita
   async create(appointmentData: CreateAppointmentDto) {
-    const client = await this.clientsRepository.findOne({
-      where: { id: appointmentData.clientId },
-    });
-
-    if (!client) {
-      throw new NotFoundException('Cliente no encontrado');
-    }
-
-    if (!client.active)
-      throw new BadRequestException(
-        'No se pueden crear citas para un cliente inactivo',
-      );
-
-    const service = await this.servicesRepository.findOne({
-      where: { id: appointmentData.serviceId },
-    });
-
-    if (!service) {
-      throw new NotFoundException('Servicio no encontrado');
-    }
-
-    // Verifica que el servicio esté activo antes de crear la cita
-    if (!service.active)
-      throw new BadRequestException(
-        'No se pueden crear citas con un servicio inactivo',
-      );
-
+    const client = await this.getActiveClient(appointmentData.clientId);
+    const service = await this.getActiveService(appointmentData.serviceId);
     const startDate = new Date(appointmentData.startDateTime);
-    const isAvailable = await this.isInsideAvailability(
-      startDate,
-      service.duration,
-    );
 
-    // Verifica si el horario de la cita está dentro de la disponibilidad
-    if (!isAvailable)
-      throw new BadRequestException(
-        'La cita está fuera del horario disponible',
-      );
-
-    // Verifica si hay citas que se solapan en el mismo día
-    const hasOverlap = await this.hasOverlappingAppointment(
-      startDate,
-      service.duration,
-    );
-
-    if (hasOverlap) {
-      throw new BadRequestException(
-        'El horario seleccionado no está disponible',
-      );
-    }
+    await this.validateAppointmentSlot(startDate, service.duration);
 
     // Si todo es correcto, se crea la cita
     const appointment = this.appointmentsRepository.create({
@@ -182,6 +127,127 @@ export class AppointmentsService {
     });
 
     return this.appointmentsRepository.save(appointment);
+  }
+
+  // Actualiza una cita existente
+  async update(id: number, appointmentData: UpdateAppointmentDto) {
+    const appointment = await this.findScheduledAppointment(
+      id,
+      'Solo se pueden actualizar citas programadas',
+    );
+
+    const client = appointmentData.clientId
+      ? await this.getActiveClient(appointmentData.clientId)
+      : appointment.client;
+
+    const service = appointmentData.serviceId
+      ? await this.getActiveService(appointmentData.serviceId)
+      : appointment.service;
+
+    const startDate = appointmentData.startDateTime
+      ? new Date(appointmentData.startDateTime)
+      : new Date(appointment.startDateTime);
+
+    await this.validateAppointmentSlot(
+      startDate,
+      service.duration,
+      appointment.id,
+    );
+
+    appointment.startDateTime = startDate;
+    appointment.duration = service.duration;
+    appointment.client = client;
+    appointment.service = service;
+
+    return this.appointmentsRepository.save(appointment);
+  }
+
+  // Elimina una cita existente
+  async remove(id: number) {
+    const appointment = await this.findAppointment(id);
+    const appointmentToReturn = { ...appointment };
+
+    await this.appointmentsRepository.remove(appointment);
+
+    return appointmentToReturn;
+  }
+
+  private async getActiveClient(id: number): Promise<Client> {
+    const client = await this.clientsRepository.findOne({
+      where: { id },
+    });
+
+    if (!client) throw new NotFoundException('Cliente no encontrado');
+
+    if (!client.active)
+      throw new BadRequestException(
+        'No se pueden crear citas para un cliente inactivo',
+      );
+
+    return client;
+  }
+
+  private async getActiveService(id: number): Promise<ServiceEntity> {
+    const service = await this.servicesRepository.findOne({
+      where: { id },
+    });
+
+    if (!service)
+      throw new NotFoundException('No se ha encontrado el servicio');
+
+    if (!service.active)
+      throw new BadRequestException(
+        'No se pueden crear citas con un servicio inactivo',
+      );
+
+    return service;
+  }
+
+  private async findAppointment(id: number): Promise<Appointment> {
+    const appointment = await this.appointmentsRepository.findOne({
+      where: { id },
+    });
+
+    if (!appointment)
+      throw new NotFoundException('No se ha encontrado la cita');
+
+    return appointment;
+  }
+
+  private async findScheduledAppointment(
+    id: number,
+    invalidStatusMessage: string,
+  ): Promise<Appointment> {
+    const appointment = await this.findAppointment(id);
+
+    if (appointment.status !== AppointmentStatus.SCHEDULED)
+      throw new BadRequestException(invalidStatusMessage);
+
+    return appointment;
+  }
+
+  private async validateAppointmentSlot(
+    startDate: Date,
+    duration: number,
+    appointmentIdToExclude?: number,
+  ): Promise<void> {
+    const isAvailable = await this.isInsideAvailability(startDate, duration);
+
+    if (!isAvailable)
+      throw new BadRequestException(
+        'La cita está fuera del horario disponible',
+      );
+
+    const hasOverlap = await this.hasOverlappingAppointment(
+      startDate,
+      duration,
+      appointmentIdToExclude,
+    );
+
+    if (hasOverlap)
+      throw new BadRequestException(
+        'El horario seleccionado no está disponible',
+      );
   }
 
   // Verifica si hay citas que se solapan en el mismo día
@@ -262,17 +328,10 @@ export class AppointmentsService {
 
   // Cancela una cita existente
   async cancel(id: number) {
-    const appointment = await this.appointmentsRepository.findOne({
-      where: { id },
-    });
-
-    if (!appointment) {
-      throw new NotFoundException('No se ha encontrado la cita');
-    }
-
-    // Evita cambiar citas que están completadas o canceladas
-    if (appointment.status !== AppointmentStatus.SCHEDULED)
-      throw new BadRequestException('Solo se pueden cancelar citas programadas');
+    const appointment = await this.findScheduledAppointment(
+      id,
+      'Solo se pueden cancelar citas programadas',
+    );
 
     appointment.status = AppointmentStatus.CANCELLED;
 
@@ -281,16 +340,10 @@ export class AppointmentsService {
 
   // Marca una cita como completada
   async complete(id: number) {
-    const appointment = await this.appointmentsRepository.findOne({
-      where: { id },
-    });
-
-    if (!appointment)
-      throw new NotFoundException('No se ha encontrado la cita');
-
-    // Evita completar citas que no están programadas
-    if (appointment.status !== AppointmentStatus.SCHEDULED)
-      throw new BadRequestException('Solo se pueden completar citas programadas');
+    const appointment = await this.findScheduledAppointment(
+      id,
+      'Solo se pueden completar citas programadas',
+    );
 
     appointment.status = AppointmentStatus.COMPLETED;
 
@@ -299,45 +352,23 @@ export class AppointmentsService {
 
   // Reprograma una cita existente
   async reschedule(id: number, appointmentData: RescheduleAppointmentDto) {
-    const appointment = await this.appointmentsRepository.findOne({
-      where: { id },
-    });
-
-    if (!appointment)
-      throw new NotFoundException('No se ha encontrado la cita');
+    const appointment = await this.findScheduledAppointment(
+      id,
+      'Solo se pueden reprogramar citas programadas',
+    );
 
     if (!appointment.service.active)
       throw new BadRequestException(
         'No se pueden reprogramar citas con un servicio inactivo',
       );
 
-    if (appointment.status !== AppointmentStatus.SCHEDULED)
-      throw new BadRequestException(
-        'Solo se pueden reprogramar citas programadas',
-      );
-
     const startDate = new Date(appointmentData.startDateTime);
 
-    const isAvailable = await this.isInsideAvailability(
-      startDate,
-      appointment.duration,
-    );
-
-    if (!isAvailable)
-      throw new BadRequestException(
-        'La cita está fuera del horario disponible',
-      );
-
-    const hasOverlap = await this.hasOverlappingAppointment(
+    await this.validateAppointmentSlot(
       startDate,
       appointment.duration,
       appointment.id,
     );
-
-    if (hasOverlap)
-      throw new BadRequestException(
-        'El horario seleccionado no está disponible',
-      );
 
     appointment.startDateTime = startDate;
 

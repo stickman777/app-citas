@@ -1,4 +1,16 @@
-import { Body, Controller, Get, Post, UseGuards, Param, Patch, ParseIntPipe, Query, BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -6,6 +18,7 @@ import { UserRole } from '../users/user.entity';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN, UserRole.GESTOR)
@@ -46,6 +59,21 @@ export class AppointmentsController {
     appointmentData: CreateAppointmentDto,
   ) {
     return this.appointmentsService.create(appointmentData);
+  }
+
+  // Endpoint para actualizar una cita existente por su ID
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() appointmentData: UpdateAppointmentDto,
+  ) {
+    return this.appointmentsService.update(id, appointmentData);
+  }
+
+  // Endpoint para eliminar una cita existente por su ID
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.appointmentsService.remove(id);
   }
 
   // Endpoint para cancelar una cita existente
