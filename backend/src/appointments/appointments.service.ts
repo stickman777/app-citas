@@ -243,7 +243,7 @@ export class AppointmentsService {
     });
   }
 
-  // Construye un objeto Date combinando la fecha y la hora
+  // Construye un objeto Date combinando fecha y hora
   private buildDateWithTime(date: Date, time: string): Date {
     const [hours, minutes] = time.split(':').map(Number);
 
@@ -270,6 +270,10 @@ export class AppointmentsService {
       throw new NotFoundException('No se ha encontrado la cita');
     }
 
+    // Evita cambiar citas que están finalizadas o canceladas
+    if (appointment.status !== AppointmentStatus.SCHEDULED)
+      throw new BadRequestException('Solo se pueden cancelar citas pendientes');
+
     appointment.status = AppointmentStatus.CANCELLED;
 
     return this.appointmentsRepository.save(appointment);
@@ -283,6 +287,10 @@ export class AppointmentsService {
 
     if (!appointment)
       throw new NotFoundException('No se ha encontrado la cita');
+
+    // Evita completar citas que no están agendadas
+    if (appointment.status !== AppointmentStatus.SCHEDULED)
+      throw new BadRequestException('Solo se pueden completar citas pendientes');
 
     appointment.status = AppointmentStatus.DONE;
 
