@@ -94,6 +94,21 @@ export class UsersService {
     return this.removePassword(savedUser);
   }
 
+  // Elimina un usuario existente por su ID
+  async remove(id: number) {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+    });
+
+    if (!user) throw new NotFoundException('No se ha encontrado el usuario');
+
+    const userWithoutPassword = this.removePassword(user);
+
+    await this.usersRepository.remove(user);
+
+    return userWithoutPassword;
+  }
+
   private removePassword(user: User) {
     const { password, ...userWithoutPassword } = user;
 

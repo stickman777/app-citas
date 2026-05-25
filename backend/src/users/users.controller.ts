@@ -1,7 +1,7 @@
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from './user.entity';
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UseGuards } from '@nestjs/common';
@@ -36,5 +36,14 @@ export class UsersController {
     userData: UpdateUserDto,
   ) {
     return this.usersService.update(id, userData);
+  }
+
+  // Endpoint para eliminar un usuario por su ID
+  @Delete(':id')
+  remove(
+    @Param('id', ParseIntPipe)
+    id: number,
+  ) {
+    return this.usersService.remove(id);
   }
 }
