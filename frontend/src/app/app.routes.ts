@@ -40,22 +40,23 @@ export const routes: Routes = [
         loadComponent: () => import('./features/clinic/appointment/appointment-calendar/appointment-calendar.component').then(m => m.AppointmentCalendarComponent),
       },
       {
+        path: 'appointment/appointment-list',
+        redirectTo: 'appointment',
+        pathMatch: 'full',
+      },
+      {
+        path: 'appointment/new-appointment',
+        redirectTo: 'appointment',
+        pathMatch: 'full',
+      },
+      {
+        path: 'appointment/appointment-calendar',
+        redirectTo: 'appointment',
+        pathMatch: 'full',
+      },
+      {
         path: 'appointment',
         loadComponent: () => import('./features/clinic/appointment/appointment.component').then(m => m.AppointmentComponent),
-        children: [
-          {
-            path: 'appointment-list',
-            loadComponent: () => import('./features/clinic/appointment/appointment-list/appointment-list.component').then(m => m.AppointmentListComponent),
-          },
-          {
-            path: 'new-appointment',
-            loadComponent: () => import('./features/clinic/appointment/new-appointment/new-appointment.component').then(m => m.NewAppointmentComponent),
-          },
-          {
-            path: 'appointment-calendar',
-            loadComponent: () => import('./features/clinic/appointment/appointment-calendar/appointment-calendar.component').then(m => m.AppointmentCalendarComponent),
-          },
-        ],
       },
       {
         path: 'users',

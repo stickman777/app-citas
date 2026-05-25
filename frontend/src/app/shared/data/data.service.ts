@@ -65,28 +65,12 @@ export class DataService {
         menu: [
           {
             menuValue: 'Citas',
-            hasSubRoute: true,
+            hasSubRoute: false,
             showSubRoute: false,
             route: routes.appointment,
             base: 'appointment',
             icon: 'calendar',
-            subMenus: [
-              {
-                menuValue: 'Listado',
-                route: routes.appointmentList,
-                base: 'appointment-list',
-              },
-              {
-                menuValue: 'Nueva cita',
-                route: routes.newAppointment,
-                base: 'new-appointment',
-              },
-              {
-                menuValue: 'Calendario',
-                route: routes.appointmentCalendar,
-                base: 'appointment-calendar',
-              },
-            ],
+            subMenus: [],
           },
           {
             menuValue: 'Usuarios',
