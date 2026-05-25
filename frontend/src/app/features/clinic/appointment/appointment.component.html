@@ -1,1 +1,199 @@
-<router-outlet></router-outlet>
+<div class="content">
+  <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+    <div class="flex-grow-1">
+      <h4 class="fw-bold mb-0">
+        Citas
+        <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">
+          Total Citas : {{ appointments.length }}
+        </span>
+      </h4>
+    </div>
+    <div class="text-end d-flex">
+      <button type="button" class="btn btn-primary ms-2 fs-13 btn-md" (click)="openCreateModal()">
+        <i class="ti ti-plus me-1"></i>Nueva cita
+      </button>
+    </div>
+  </div>
+
+  @if(errorMessage){
+  <div class="alert alert-danger py-2" role="alert">{{ errorMessage }}</div>
+  }
+  @if(successMessage){
+  <div class="alert alert-success py-2" role="alert">{{ successMessage }}</div>
+  }
+
+  <div class="d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+    <div class="search-set mb-3">
+      <div class="d-flex align-items-center flex-wrap gap-2">
+        <div class="table-search d-flex align-items-center mb-0">
+          <div class="search-input">
+            <a href="javascript:void(0);" class="btn-searchset">
+              <i class="isax isax-search-normal fs-12"></i>
+            </a>
+            <div class="dataTables_filter">
+              <label>
+                <input
+                  type="search"
+                  [(ngModel)]="searchTerm"
+                  (ngModelChange)="applySearch()"
+                  class="form-control form-control-sm"
+                  placeholder="Buscar cita"
+                >
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap row-gap-3">
+      <button type="button" class="btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" (click)="loadAppointments()">
+        <i class="ti ti-refresh me-1"></i>Actualizar
+      </button>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-nowrap dataTable datatable">
+      <thead class="thead-light">
+        <tr>
+          <th>ID</th>
+          <th>Cliente</th>
+          <th>Servicio</th>
+          <th>Fecha y hora</th>
+          <th>Duración</th>
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if(isLoading){
+        <tr>
+          <td colspan="7" class="text-center text-dark py-4">Cargando citas...</td>
+        </tr>
+        } @else {
+          @for(appointment of filteredAppointments; track trackByAppointmentId($index, appointment)){
+          <tr>
+            <td class="fw-medium">#{{ appointment.id }}</td>
+            <td>
+              <div class="d-flex align-items-center">
+                <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">
+                  <i class="ti ti-user text-dark"></i>
+                </span>
+                <div>
+                  <span class="text-dark fw-semibold d-block">{{ appointment.client.name }}</span>
+                  <span class="text-body fs-13">{{ appointment.client.phone }}</span>
+                </div>
+              </div>
+            </td>
+            <td>{{ appointment.service.name }}</td>
+            <td>{{ appointment.startDateTime | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ appointment.duration }} min</td>
+            <td>
+              <span class="badge border px-2 py-1 fs-13 fw-medium" [ngClass]="statusBadgeClass(appointment.status)">
+                {{ appointment.status }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center justify-content-end gap-1">
+                <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white" (click)="openEditModal(appointment)" aria-label="Editar cita">
+                  <i class="ti ti-edit"></i>
+                </button>
+                <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white text-danger" (click)="openDeleteModal(appointment)" aria-label="Eliminar cita">
+                  <i class="ti ti-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="7" class="text-center text-dark py-4">No hay citas para mostrar</td>
+          </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if(isFormModalOpen){
+<div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="text-dark modal-title fw-bold">{{ editingAppointment ? 'Editar cita' : 'Nueva cita' }}</h4>
+        <button type="button" class="btn-close btn-close-modal custom-btn-close" aria-label="Cerrar" (click)="closeFormModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <form #appointmentForm="ngForm" (ngSubmit)="saveAppointment()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Cliente<span class="text-danger ms-1">*</span></label>
+            <select name="clientId" [(ngModel)]="form.clientId" class="form-select" required>
+              <option [ngValue]="null">Seleccionar cliente</option>
+              @for(client of clients; track client.id){
+              <option [ngValue]="client.id">{{ client.name }} - {{ client.phone }}</option>
+              }
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Servicio<span class="text-danger ms-1">*</span></label>
+            <select name="serviceId" [(ngModel)]="form.serviceId" class="form-select" required>
+              <option [ngValue]="null">Seleccionar servicio</option>
+              @for(service of services; track service.id){
+              <option [ngValue]="service.id">{{ service.name }} ({{ service.duration }} min)</option>
+              }
+            </select>
+          </div>
+          <div class="mb-0">
+            <label class="form-label">Fecha y hora<span class="text-danger ms-1">*</span></label>
+            <input
+              type="datetime-local"
+              name="startDateTime"
+              [(ngModel)]="form.startDateTime"
+              class="form-control"
+              required
+            >
+          </div>
+        </div>
+        <div class="modal-footer d-flex align-items-center gap-1">
+          <button type="button" class="btn btn-white border" (click)="closeFormModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="appointmentForm.invalid || isSaving">
+            {{ isSaving ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+}
+
+@if(isDeleteModalOpen){
+<div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="text-dark modal-title fw-bold">Eliminar cita</h4>
+        <button type="button" class="btn-close btn-close-modal custom-btn-close" aria-label="Cerrar" (click)="closeDeleteModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">
+          ¿Seguro que quieres eliminar la cita de
+          <span class="fw-semibold text-dark">{{ appointmentToDelete?.client?.name }}</span>?
+        </p>
+      </div>
+      <div class="modal-footer d-flex align-items-center gap-1">
+        <button type="button" class="btn btn-white border" (click)="closeDeleteModal()">Cancelar</button>
+        <button type="button" class="btn btn-danger" [disabled]="isDeleting" (click)="deleteAppointment()">
+          {{ isDeleting ? 'Eliminando...' : 'Eliminar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+}
