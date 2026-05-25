@@ -7,6 +7,7 @@ import { SettingsService } from '../../shared/settings/settings.service';
 import { SideBarService } from '../../shared/sidebar/sidebar.service';
 import { NgScrollbarModule } from 'ngx-scrollbar';
 import { CommonService } from '../../shared/common/common.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
     selector: 'app-header',
@@ -22,7 +23,13 @@ export class HeaderComponent {
  base = '';
  themeColor: 'light' | 'dark' = 'light';
   mobileSidebar=false;
-  constructor(public router: Router,public sideBar: SideBarService,public settings:SettingsService,public common:CommonService) {
+  constructor(
+    public router: Router,
+    public sideBar: SideBarService,
+    public settings: SettingsService,
+    public common: CommonService,
+    private authService: AuthService
+  ) {
     this.common.baseRoute
     this.sideBar.toggleSideBar.subscribe((res: string) => {
       if (res == 'true') {
@@ -88,6 +95,10 @@ export class HeaderComponent {
     this.themeColor = this.themeColor === 'dark' ? 'light' : 'dark';
     localStorage.setItem('themeColor', this.themeColor);
     this.sideBar.changeThemeColor(this.themeColor);
+  }
+
+  public logout(): void {
+    this.authService.logout();
   }
 
   }
