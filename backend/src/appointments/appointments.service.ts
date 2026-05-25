@@ -1,15 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
-import { Between } from 'typeorm';
 import { AppointmentStatus } from './appointment.entity';
 import { Availability } from '../availability/availability.entity';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
-
 
 @Injectable()
 export class AppointmentsService {
@@ -40,10 +38,10 @@ export class AppointmentsService {
       });
     }
 
-    const startOfDay = new Date(date);
+    const startOfDay = this.buildDateFromDateQuery(date);
     startOfDay.setHours(0, 0, 0, 0);
 
-    const endOfDay = new Date(date);
+    const endOfDay = this.buildDateFromDateQuery(date);
     endOfDay.setHours(23, 59, 59, 999);
 
     return this.appointmentsRepository.find({
@@ -71,7 +69,7 @@ export class AppointmentsService {
         'No se pueden crear citas con un servicio inactivo',
       );
 
-    const targetDate = new Date(date);
+    const targetDate = this.buildDateFromDateQuery(date);
     const dayOfWeek = targetDate.getDay();
 
     const availabilities = await this.availabilityRepository.find({
@@ -177,7 +175,7 @@ export class AppointmentsService {
 
     // Si todo es correcto, se crea la cita
     const appointment = this.appointmentsRepository.create({
-      startDateTime: appointmentData.startDateTime,
+      startDateTime: startDate,
       duration: service.duration,
       client,
       service,
@@ -253,6 +251,13 @@ export class AppointmentsService {
     result.setHours(hours, minutes, 0, 0);
 
     return result;
+  }
+
+  // Construye un objeto Date a partir de una cadena con formato YYYY-MM-DD
+  private buildDateFromDateQuery(date: string): Date {
+    const [year, month, day] = date.split('-').map(Number);
+
+    return new Date(year, month - 1, day);
   }
 
   // Cancela una cita existente

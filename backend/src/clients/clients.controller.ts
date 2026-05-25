@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -40,7 +40,7 @@ export class ClientsController {
     return this.clientsService.update(id, clientData);
   }
 
-  // Endpoint para activar un cliente por su ID (lo marca como activo)
+  // Endpoint para activar un cliente por su ID
   @Patch(':id/activate')
   activate(
     @Param('id', ParseIntPipe)
@@ -49,8 +49,8 @@ export class ClientsController {
     return this.clientsService.activate(id);
   }
 
-  // Endpoint para desactivar un cliente por su ID, verificando que no tenga citas asociadas
-  @Delete(':id')
+  // Endpoint para desactivar un cliente por su ID
+  @Patch(':id/deactivate')
   deactivate(
     @Param('id', ParseIntPipe)
     id: number,

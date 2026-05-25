@@ -16,6 +16,11 @@ export class AppointmentsController {
   // Endpoint para obtener todas las citas, con opción de filtrar por fecha
   @Get()
   findAll(@Query('date') date?: string) {
+    if (date !== undefined) {
+      if (!date) throw new BadRequestException('Debe indicar una fecha');
+
+      this.validateDateQuery(date);
+    }
     return this.appointmentsService.findAll(date);
   }
 
@@ -26,7 +31,10 @@ export class AppointmentsController {
     @Query('serviceId', ParseIntPipe)
     serviceId: number,
   ) {
-    if (!date) throw new BadRequestException('Debe indicar una fecha');
+    if (!date)
+      throw new BadRequestException('Debe indicar una fecha');
+
+    this.validateDateQuery(date);
 
     return this.appointmentsService.findAvailableSlots(date, serviceId);
   }
@@ -59,5 +67,21 @@ export class AppointmentsController {
     @Body() appointmentData: RescheduleAppointmentDto,
   ) {
     return this.appointmentsService.reschedule(id, appointmentData);
+  }
+
+  // Validación del formato de fecha
+  private validateDateQuery(date: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
+      throw new BadRequestException('La fecha debe tener formato YYYY-MM-DD');
+
+    const [year, month, day] = date.split('-').map(Number);
+    const parsedDate = new Date(year, month - 1, day);
+
+    if (
+      parsedDate.getFullYear() !== year ||
+      parsedDate.getMonth() !== month - 1 ||
+      parsedDate.getDate() !== day
+    )
+      throw new BadRequestException('Fecha no válida');
   }
 }

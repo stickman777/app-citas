@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards, Param, ParseIntPipe, Delete, Patch, } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, UseGuards, Param, ParseIntPipe, Delete, Patch, } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -25,6 +25,9 @@ export class AvailabilityController {
     @Param('dayOfWeek', ParseIntPipe)
     dayOfWeek: number,
   ) {
+    if (dayOfWeek < 0 || dayOfWeek > 6)
+      throw new BadRequestException('El día de la semana debe estar entre el Lunes y el Domingo (0-6)');
+
     return this.availabilityService.findByDay(dayOfWeek);
   }
 

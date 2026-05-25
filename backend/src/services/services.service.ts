@@ -58,11 +58,7 @@ export class ServicesService {
 
     service.active = true;
 
-    await this.servicesRepository.save(service);
-
-    return {
-      message: 'Servicio activado correctamente',
-    };
+    return this.servicesRepository.save(service);
   }
 
   // Desactiva un servicio por su ID (lo marca como inactivo)

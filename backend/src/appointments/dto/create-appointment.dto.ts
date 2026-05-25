@@ -2,7 +2,7 @@ import { IsDateString, IsInt, Min } from 'class-validator';
 
 export class CreateAppointmentDto {
   @IsDateString()
-  startDateTime: Date;
+  startDateTime: string;
 
   @IsInt()
   @Min(1)

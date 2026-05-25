@@ -14,8 +14,10 @@ export class UsersService {
   ) {}
 
   // Obtiene todos los usuarios registrados
-  findAll() {
-    return this.usersRepository.find();
+  async findAll() {
+    const users = await this.usersRepository.find();
+
+    return users.map((user) => this.removePassword(user));
   }
 
   // Busca un usuario por su email
@@ -49,7 +51,9 @@ export class UsersService {
       password: hashedPassword,
     });
 
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+
+    return this.removePassword(savedUser);
   }
 
   // Actualiza un usuario existente por su ID
@@ -85,6 +89,14 @@ export class UsersService {
 
     Object.assign(user, userData);
 
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+
+    return this.removePassword(savedUser);
+  }
+
+  private removePassword(user: User) {
+    const { password, ...userWithoutPassword } = user;
+
+    return userWithoutPassword;
   }
 }

@@ -14,12 +14,12 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
 
     if (!user)
-      throw new UnauthorizedException('Invalid credentials - User not found');
+      throw new UnauthorizedException('Credenciales inválidas');
 
     const passwordMatches = await bcrypt.compare(password, user.password);
 
     if (!passwordMatches)
-      throw new UnauthorizedException('Invalid credentials - Password wrong');
+      throw new UnauthorizedException('Credenciales inválidas');
 
     // Se genera el JWT con la información del usuario
     const payload = {
