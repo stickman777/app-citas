@@ -16,7 +16,7 @@ export class DataService {
   private buildProjectSidebar(): SideBarData[] {
     return [
       {
-        tittle: 'Principal',
+        tittle: '',
         showAsTab: false,
         separateRoute: false,
         menu: [
@@ -56,13 +56,6 @@ export class DataService {
             icon: 'calendar-time',
             subMenus: [],
           },
-        ],
-      },
-      {
-        tittle: 'Gestión',
-        showAsTab: false,
-        separateRoute: false,
-        menu: [
           {
             menuValue: 'Citas',
             hasSubRoute: false,

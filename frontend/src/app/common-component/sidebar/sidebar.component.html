@@ -103,7 +103,7 @@
                 <ul>
                     <ng-container *ngFor="let mainMenu of sidebarData">
 
-                        <li class="menu-title"><span>{{mainMenu.tittle}}</span></li>
+                        <li *ngIf="mainMenu.tittle" class="menu-title"><span>{{mainMenu.tittle}}</span></li>
                         <ng-container *ngFor="let menu of mainMenu.menu">
                             <li>
                                 <ul>
