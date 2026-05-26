@@ -22,6 +22,7 @@ export class DataService {
         menu: [
           {
             menuValue: 'Dashboard',
+            labelKey: 'sidebar.dashboard',
             hasSubRoute: false,
             showSubRoute: false,
             route: routes.index,
@@ -31,6 +32,7 @@ export class DataService {
           },
           {
             menuValue: 'Clientes',
+            labelKey: 'sidebar.clients',
             hasSubRoute: false,
             showSubRoute: false,
             route: routes.clients,
@@ -40,6 +42,7 @@ export class DataService {
           },
           {
             menuValue: 'Servicios',
+            labelKey: 'sidebar.services',
             hasSubRoute: false,
             showSubRoute: false,
             route: routes.services,
@@ -49,6 +52,7 @@ export class DataService {
           },
           {
             menuValue: 'Disponibilidad',
+            labelKey: 'sidebar.availability',
             hasSubRoute: false,
             showSubRoute: false,
             route: routes.availability,
@@ -58,6 +62,7 @@ export class DataService {
           },
           {
             menuValue: 'Citas',
+            labelKey: 'sidebar.appointments',
             hasSubRoute: false,
             showSubRoute: false,
             route: routes.appointment,
@@ -67,6 +72,7 @@ export class DataService {
           },
           {
             menuValue: 'Usuarios',
+            labelKey: 'sidebar.users',
             hasSubRoute: false,
             showSubRoute: false,
             route: routes.users,

@@ -112,7 +112,7 @@
                                             <a href="javascript:void(0);" (click)="expandSubMenus(menu)" [class.active]="base===menu.base || (base.includes('layout') && menu.base === 'layout')"
                                                 [ngClass]="{ subdrop: menu.showSubRoute === true }">
                                                 <i class="ti"
-                                                    [class]="'ti-'+ menu.icon"></i><span>{{menu.menuValue}}</span>
+                                                    [class]="'ti-'+ menu.icon"></i><span>{{ (menu.labelKey || menu.menuValue) | translate }}</span>
                                                 <span class="menu-arrow"></span>
                                             </a>
                                             <ng-container *ngFor="let subMenu of menu.subMenus">
@@ -126,12 +126,12 @@
                                                     <li class="submenu submenu-two">
                                                         <a [routerLink]="subMenu.route" [class.active]="page===subMenu.base"
                                                             (click)="openSubmenuOne(subMenu)"
-                                                            [ngClass]="{ subdrop: openSubmenuOneItem === subMenu }">{{subMenu.menuValue}}<span
+                                                            [ngClass]="{ subdrop: openSubmenuOneItem === subMenu }">{{ subMenu.menuValue | translate }}<span
                                                                 class="menu-arrow inside-submenu"></span></a>
                                                         <ul [ngClass]="openSubmenuOneItem === subMenu ? 'd-block' : 'd-none'">
                                                             @for(subMenu2 of subMenu.subMenus;track subMenu2){
                                                             <li><a [routerLink]="subMenu2.route"
-                                                                    [class.active]="last===subMenu2.base" >{{subMenu2.menuValue}}</a>
+                                                                    [class.active]="last===subMenu2.base" >{{ subMenu2.menuValue | translate }}</a>
                                                             </li>
 
                                                             }
@@ -140,7 +140,7 @@
                                                     }
                                                     @else{
                                                     <a [routerLink]="subMenu.route" 
-                                                        [class.active]="page===subMenu.base">{{subMenu.menuValue}}</a>
+                                                        [class.active]="page===subMenu.base">{{ subMenu.menuValue | translate }}</a>
                                                     }
 
 
@@ -152,7 +152,7 @@
                     <ng-container *ngIf="menu.hasSubRoute=== false">
                         <li [class.active]="base===menu.base">
                             <a [routerLink]="menu.route" (click)="expandSubMenus(menu)">
-                                <i class="ti" [class]="'ti-'+ menu.icon" ></i><span>{{menu.menuValue}}</span>
+                                <i class="ti" [class]="'ti-'+ menu.icon" ></i><span>{{ (menu.labelKey || menu.menuValue) | translate }}</span>
                             </a>
                         </li>
                     </ng-container>

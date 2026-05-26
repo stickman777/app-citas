@@ -554,6 +554,7 @@ subMenus?: SubMenu[];
 }
 export interface MenuItem {
   menuValue: string;
+  labelKey?: string;
   hasSubRoute: boolean;
   showSubRoute: boolean;
   hasSubRouteTwo2?:boolean;
@@ -574,4 +575,3 @@ export interface SideBarData {
   menu: MenuItem[];
 } 
   
-

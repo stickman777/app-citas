@@ -9,12 +9,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { CommonModule } from '@angular/common';
 import { NgScrollbarModule } from 'ngx-scrollbar';
 import { CommonService } from '../../shared/common/common.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
     selector: 'app-sidebar',
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss'],
-    imports: [CommonModule,RouterLink,MatSelectModule,NgScrollbarModule]
+    imports: [CommonModule,RouterLink,MatSelectModule,NgScrollbarModule,TranslatePipe]
 })
 export class SidebarComponent {
   base = '';
