@@ -98,9 +98,14 @@
               </span>
             </td>
             <td>
-              <span class="badge rounded border fs-13 fw-medium" [ngClass]="statusBadgeClass(client)">
+              <button
+                type="button"
+                class="badge rounded border fs-13 fw-medium bg-transparent"
+                [ngClass]="statusBadgeClass(client)"
+                (click)="openStatusModal(client)"
+              >
                 {{ client.active ? 'Activo' : 'Inactivo' }}
-              </span>
+              </button>
             </td>
             <td>
               <div class="d-flex align-items-center justify-content-end gap-1">
@@ -178,35 +183,29 @@
 
 @if(isStatusModalOpen){
 <div class="modal fade show d-block client-modal" tabindex="-1" role="dialog" aria-modal="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="text-dark modal-title fw-bold">
-          {{ clientToChangeStatus?.active ? 'Desactivar cliente' : 'Activar cliente' }}
-        </h4>
+        <h4 class="text-dark modal-title fw-bold">Editar estado</h4>
         <button type="button" class="btn-close btn-close-modal custom-btn-close" aria-label="Cerrar" (click)="closeStatusModal()">
           <i class="ti ti-x"></i>
         </button>
       </div>
-      <div class="modal-body">
-        <p class="mb-0">
-          Seguro que quieres
-          {{ clientToChangeStatus?.active ? 'desactivar' : 'activar' }}
-          <span class="fw-semibold text-dark">{{ clientToChangeStatus?.name }}</span>?
-        </p>
-      </div>
-      <div class="modal-footer d-flex align-items-center gap-1">
-        <button type="button" class="btn btn-white border" (click)="closeStatusModal()">Cancelar</button>
-        <button
-          type="button"
-          class="btn"
-          [ngClass]="clientToChangeStatus?.active ? 'btn-danger' : 'btn-success'"
-          [disabled]="isChangingStatus"
-          (click)="changeClientStatus()"
-        >
-          {{ isChangingStatus ? 'Guardando...' : (clientToChangeStatus?.active ? 'Desactivar' : 'Activar') }}
-        </button>
-      </div>
+      <form (ngSubmit)="changeClientStatus()">
+        <div class="modal-body">
+          <label class="form-label">Estado de {{ clientToChangeStatus?.name }}</label>
+          <select name="selectedStatus" [(ngModel)]="selectedStatus" class="form-select">
+            <option [ngValue]="true">Activo</option>
+            <option [ngValue]="false">Inactivo</option>
+          </select>
+        </div>
+        <div class="modal-footer d-flex align-items-center gap-1">
+          <button type="button" class="btn btn-white border" (click)="closeStatusModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="isChangingStatus">
+            {{ isChangingStatus ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

@@ -35,6 +35,7 @@ export class PatientListComponent {
   public isStatusModalOpen = false;
   public editingClient: Client | null = null;
   public clientToChangeStatus: Client | null = null;
+  public selectedStatus = true;
   public form: ClientForm = this.getEmptyForm();
 
   constructor(private readonly clientsService: ClientsService) {}
@@ -117,6 +118,7 @@ export class PatientListComponent {
   public openStatusModal(client: Client): void {
     this.clearMessages();
     this.clientToChangeStatus = client;
+    this.selectedStatus = client.active;
     this.isStatusModalOpen = true;
   }
 
@@ -129,19 +131,26 @@ export class PatientListComponent {
   public changeClientStatus(): void {
     if (!this.clientToChangeStatus) return;
 
+    const client = this.clientToChangeStatus;
+
+    if (client.active === this.selectedStatus) {
+      this.isStatusModalOpen = false;
+      this.clientToChangeStatus = null;
+      return;
+    }
+
     this.isChangingStatus = true;
     this.clearMessages();
 
-    const client = this.clientToChangeStatus;
-    const request = client.active
-      ? this.clientsService.deactivateClient(client.id)
-      : this.clientsService.activateClient(client.id);
+    const request = this.selectedStatus
+      ? this.clientsService.activateClient(client.id)
+      : this.clientsService.deactivateClient(client.id);
 
     request.subscribe({
       next: () => {
-        this.successMessage = client.active
-          ? 'Cliente desactivado correctamente.'
-          : 'Cliente activado correctamente.';
+        this.successMessage = this.selectedStatus
+          ? 'Cliente activado correctamente.'
+          : 'Cliente desactivado correctamente.';
         this.isChangingStatus = false;
         this.isStatusModalOpen = false;
         this.clientToChangeStatus = null;
