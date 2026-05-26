@@ -9,6 +9,8 @@ import {
   UserRole,
   UsersService,
 } from '../../../core/users/users.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface UserForm {
   email: string;
@@ -20,7 +22,7 @@ interface UserForm {
   selector: 'app-users',
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.scss'],
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
 })
 export class UsersComponent {
   public readonly roleOptions: UserRole[] = ['ADMIN', 'GESTOR', 'CLIENT'];
@@ -38,7 +40,10 @@ export class UsersComponent {
   public userToDelete: User | null = null;
   public form: UserForm = this.getEmptyForm();
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly i18nService: I18nService
+  ) {}
 
   ngOnInit(): void {
     this.loadUsers();
@@ -58,7 +63,7 @@ export class UsersComponent {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'No se han podido cargar los usuarios.';
+        this.errorMessage = this.translate('users.errors.load');
         this.isLoading = false;
       },
     });
@@ -99,14 +104,14 @@ export class UsersComponent {
     request.subscribe({
       next: () => {
         this.successMessage = this.editingUser
-          ? 'Usuario actualizado correctamente.'
-          : 'Usuario creado correctamente.';
+          ? this.translate('users.success.updated')
+          : this.translate('users.success.created');
         this.isSaving = false;
         this.isFormModalOpen = false;
         this.loadUsers(false);
       },
       error: () => {
-        this.errorMessage = 'No se ha podido guardar el usuario.';
+        this.errorMessage = this.translate('users.errors.save');
         this.isSaving = false;
       },
     });
@@ -132,14 +137,14 @@ export class UsersComponent {
 
     this.usersService.deleteUser(this.userToDelete.id).subscribe({
       next: () => {
-        this.successMessage = 'Usuario eliminado correctamente.';
+        this.successMessage = this.translate('users.success.deleted');
         this.isDeleting = false;
         this.isDeleteModalOpen = false;
         this.userToDelete = null;
         this.loadUsers(false);
       },
       error: () => {
-        this.errorMessage = 'No se ha podido eliminar el usuario.';
+        this.errorMessage = this.translate('users.errors.delete');
         this.isDeleting = false;
       },
     });
@@ -201,6 +206,10 @@ export class UsersComponent {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private translate(key: string): string {
+    return this.i18nService.translate(key);
   }
 
 }
