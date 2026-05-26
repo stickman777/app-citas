@@ -8,6 +8,8 @@ import {
   ServicePayload,
   ServicesService,
 } from '../../../core/services/services.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface ServiceForm {
   name: string;
@@ -20,7 +22,7 @@ interface ServiceForm {
   selector: 'app-services',
   templateUrl: './services.component.html',
   styleUrls: ['./services.component.scss'],
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
 })
 export class ServicesComponent {
   public services: Service[] = [];
@@ -39,7 +41,10 @@ export class ServicesComponent {
   public selectedStatus = true;
   public form: ServiceForm = this.getEmptyForm();
 
-  constructor(private readonly servicesService: ServicesService) {}
+  constructor(
+    private readonly servicesService: ServicesService,
+    private readonly i18nService: I18nService
+  ) {}
 
   ngOnInit(): void {
     this.loadServices();
@@ -62,7 +67,7 @@ export class ServicesComponent {
         this.applySearch();
       },
       error: () => {
-        this.errorMessage = 'No se han podido cargar los servicios.';
+        this.errorMessage = this.translate('services.errors.load');
       },
     });
   }
@@ -99,7 +104,7 @@ export class ServicesComponent {
 
   public saveService(): void {
     if (!this.isFormValid()) {
-      this.errorMessage = 'Completa los campos obligatorios correctamente.';
+      this.errorMessage = this.translate('services.errors.form');
       return;
     }
 
@@ -114,13 +119,13 @@ export class ServicesComponent {
     request.pipe(finalize(() => (this.isSaving = false))).subscribe({
       next: () => {
         this.successMessage = this.editingService
-          ? 'Servicio actualizado correctamente.'
-          : 'Servicio creado correctamente.';
+          ? this.translate('services.success.updated')
+          : this.translate('services.success.created');
         this.isFormModalOpen = false;
         this.loadServices(false);
       },
       error: () => {
-        this.errorMessage = 'No se ha podido guardar el servicio.';
+        this.errorMessage = this.translate('services.errors.save');
       },
     });
   }
@@ -159,14 +164,14 @@ export class ServicesComponent {
     request.pipe(finalize(() => (this.isChangingStatus = false))).subscribe({
       next: () => {
         this.successMessage = this.selectedStatus
-          ? 'Servicio activado correctamente.'
-          : 'Servicio desactivado correctamente.';
+          ? this.translate('services.success.activated')
+          : this.translate('services.success.deactivated');
         this.isStatusModalOpen = false;
         this.serviceToChangeStatus = null;
         this.loadServices(false);
       },
       error: () => {
-        this.errorMessage = 'No se ha podido cambiar el estado del servicio.';
+        this.errorMessage = this.translate('services.errors.status');
       },
     });
   }
@@ -234,5 +239,9 @@ export class ServicesComponent {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private translate(key: string): string {
+    return this.i18nService.translate(key);
   }
 }
