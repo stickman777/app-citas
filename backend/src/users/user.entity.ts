@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Center } from '../centers/center.entity';
 
 export enum UserRole {
   ADMIN = 'ADMIN',
@@ -23,4 +30,8 @@ export class User {
     default: UserRole.CLIENT,
   })
   role: UserRole;
+
+  @ManyToMany(() => Center)
+  @JoinTable()
+  centers?: Center[];
 }
