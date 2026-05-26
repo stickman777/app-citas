@@ -183,6 +183,24 @@ export class AppointmentComponent {
     return appointment.id;
   }
 
+  public get clientOptions(): AppointmentClient[] {
+    return this.withCurrentOption(this.clients, this.editingAppointment?.client);
+  }
+
+  public get serviceOptions(): AppointmentServiceOption[] {
+    return this.withCurrentOption(this.services, this.editingAppointment?.service);
+  }
+
+  public clientOptionLabel(client: AppointmentClient): string {
+    return `${client.name} - ${client.phone}${client.active ? '' : ' (inactivo)'}`;
+  }
+
+  public serviceOptionLabel(service: AppointmentServiceOption): string {
+    const status = service.active ? '' : ' (inactivo)';
+
+    return `${service.name} (${service.durationMinutes} min)${status}`;
+  }
+
   private loadReferenceData(): void {
     forkJoin({
       clients: this.appointmentsService.getClients(),
@@ -248,6 +266,17 @@ export class AppointmentComponent {
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  private withCurrentOption<T extends { id: number }>(
+    options: T[],
+    current?: T,
+  ): T[] {
+    if (!current || options.some(option => option.id === current.id)) {
+      return options;
+    }
+
+    return [current, ...options];
   }
 
   private clearMessages(): void {

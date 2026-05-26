@@ -81,12 +81,22 @@
                   <i class="ti ti-user text-dark"></i>
                 </span>
                 <div>
-                  <span class="text-dark fw-semibold d-block">{{ appointment.client.name }}</span>
+                  <span class="text-dark fw-semibold d-block">
+                    {{ appointment.client.name }}
+                    @if(!appointment.client.active){
+                    <span class="badge badge-soft-danger border border-danger text-danger ms-1">Inactivo</span>
+                    }
+                  </span>
                   <span class="text-body fs-13">{{ appointment.client.phone }}</span>
                 </div>
               </div>
             </td>
-            <td>{{ appointment.service.name }}</td>
+            <td>
+              {{ appointment.service.name }}
+              @if(!appointment.service.active){
+              <span class="badge badge-soft-danger border border-danger text-danger ms-1">Inactivo</span>
+              }
+            </td>
             <td>{{ appointment.startDateTime | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>{{ appointment.duration }} min</td>
             <td>
@@ -132,8 +142,8 @@
             <label class="form-label">Cliente<span class="text-danger ms-1">*</span></label>
             <select name="clientId" [(ngModel)]="form.clientId" class="form-select" required>
               <option [ngValue]="null">Seleccionar cliente</option>
-              @for(client of clients; track client.id){
-              <option [ngValue]="client.id">{{ client.name }} - {{ client.phone }}</option>
+              @for(client of clientOptions; track client.id){
+              <option [ngValue]="client.id">{{ clientOptionLabel(client) }}</option>
               }
             </select>
           </div>
@@ -141,8 +151,8 @@
             <label class="form-label">Servicio<span class="text-danger ms-1">*</span></label>
             <select name="serviceId" [(ngModel)]="form.serviceId" class="form-select" required>
               <option [ngValue]="null">Seleccionar servicio</option>
-              @for(service of services; track service.id){
-              <option [ngValue]="service.id">{{ service.name }} ({{ service.durationMinutes }} min)</option>
+              @for(service of serviceOptions; track service.id){
+              <option [ngValue]="service.id">{{ serviceOptionLabel(service) }}</option>
               }
             </select>
           </div>
