@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 
 import {
   Service,
   ServicePayload,
   ServicesService,
 } from '../../../core/services/services.service';
+import { ActiveCenterService } from '../../../core/centers/active-center.service';
 import { Center, CentersService } from '../../../core/centers/centers.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -26,7 +27,7 @@ interface ServiceForm {
   styleUrls: ['./services.component.scss'],
   imports: [CommonModule, FormsModule, TranslatePipe],
 })
-export class ServicesComponent {
+export class ServicesComponent implements OnInit, OnDestroy {
   public services: Service[] = [];
   public filteredServices: Service[] = [];
   public centers: Center[] = [];
@@ -41,18 +42,36 @@ export class ServicesComponent {
   public isStatusModalOpen = false;
   public editingService: Service | null = null;
   public serviceToChangeStatus: Service | null = null;
+  public activeCenter: Center | null = null;
   public selectedStatus = true;
   public form: ServiceForm = this.getEmptyForm();
+  private activeCenterSubscription?: Subscription;
+  private loadedCenterId?: number | null;
 
   constructor(
     private readonly servicesService: ServicesService,
     private readonly centersService: CentersService,
+    private readonly activeCenterService: ActiveCenterService,
     private readonly i18nService: I18nService
   ) {}
 
   ngOnInit(): void {
     this.loadCenters();
-    this.loadServices();
+    this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
+      center => {
+        const centerId = center?.id ?? null;
+
+        if (centerId === this.loadedCenterId) return;
+
+        this.activeCenter = center;
+        this.loadedCenterId = centerId;
+        this.loadServices();
+      }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.activeCenterSubscription?.unsubscribe();
   }
 
   public loadServices(clearMessages = true): void {
@@ -63,8 +82,8 @@ export class ServicesComponent {
     }
 
     const request = this.showAll
-      ? this.servicesService.getAllServices()
-      : this.servicesService.getServices();
+      ? this.servicesService.getAllServices(this.activeCenter?.id)
+      : this.servicesService.getServices(this.activeCenter?.id);
 
     request.pipe(finalize(() => (this.isLoading = false))).subscribe({
       next: services => {
@@ -97,7 +116,7 @@ export class ServicesComponent {
       description: service.description ?? '',
       durationMinutes: service.durationMinutes,
       price: service.price == null ? null : Number(service.price),
-      centerId: service.center?.id ?? null,
+      centerId: service.center?.id ?? this.activeCenter?.id ?? null,
     };
     this.isFormModalOpen = true;
   }
@@ -232,6 +251,7 @@ export class ServicesComponent {
     this.centersService.getCenters().subscribe({
       next: centers => {
         this.centers = centers;
+        this.activeCenterService.setAvailableCenters(centers);
       },
       error: () => {
         this.errorMessage = this.translate('centers.errors.load');
@@ -259,7 +279,8 @@ export class ServicesComponent {
       !!this.form.name.trim() &&
       Number.isFinite(duration) &&
       duration > 0 &&
-      (price == null || Number(price) >= 0)
+      (price == null || Number(price) >= 0) &&
+      !!this.form.centerId
     );
   }
 
@@ -269,7 +290,7 @@ export class ServicesComponent {
       description: '',
       durationMinutes: null,
       price: null,
-      centerId: null,
+      centerId: this.activeCenter?.id ?? null,
     };
   }
 

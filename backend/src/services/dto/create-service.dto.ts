@@ -17,8 +17,7 @@ export class CreateServiceDto {
   @Min(0)
   price?: number | null;
 
-  @IsOptional()
   @IsInt()
   @Min(1)
-  centerId?: number;
+  centerId: number;
 }

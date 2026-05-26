@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -33,12 +33,16 @@ export class ServicesService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getServices(): Observable<Service[]> {
-    return this.http.get<Service[]>(this.apiUrl);
+  getServices(centerId?: number | null): Observable<Service[]> {
+    return this.http.get<Service[]>(this.apiUrl, {
+      params: this.getCenterParams(centerId),
+    });
   }
 
-  getAllServices(): Observable<Service[]> {
-    return this.http.get<Service[]>(`${this.apiUrl}/all`);
+  getAllServices(centerId?: number | null): Observable<Service[]> {
+    return this.http.get<Service[]>(`${this.apiUrl}/all`, {
+      params: this.getCenterParams(centerId),
+    });
   }
 
   createService(payload: ServicePayload): Observable<Service> {
@@ -55,5 +59,9 @@ export class ServicesService {
 
   deactivateService(id: number): Observable<Service> {
     return this.http.patch<Service>(`${this.apiUrl}/${id}/deactivate`, {});
+  }
+
+  private getCenterParams(centerId?: number | null): HttpParams {
+    return centerId ? new HttpParams().set('centerId', centerId) : new HttpParams();
   }
 }

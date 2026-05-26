@@ -148,9 +148,8 @@
             <input type="number" name="price" [(ngModel)]="form.price" class="form-control" min="0" step="0.01">
           </div>
           <div class="mb-3">
-            <label class="form-label">{{ 'common.center' | translate }}</label>
+            <label class="form-label">{{ 'common.center' | translate }}<span class="text-danger ms-1">*</span></label>
             <select name="centerId" [(ngModel)]="form.centerId" class="form-select">
-              <option [ngValue]="null">{{ 'centers.none' | translate }}</option>
               @for(center of centerOptions; track trackByCenterId($index, center)){
               <option [ngValue]="center.id">{{ center.name }}</option>
               }
