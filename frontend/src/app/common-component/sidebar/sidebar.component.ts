@@ -10,6 +10,8 @@ import { CommonModule } from '@angular/common';
 import { NgScrollbarModule } from 'ngx-scrollbar';
 import { CommonService } from '../../shared/common/common.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { ActiveCenterService } from '../../core/centers/active-center.service';
+import { Center, CentersService } from '../../core/centers/centers.service';
 
 @Component({
     selector: 'app-sidebar',
@@ -24,6 +26,8 @@ export class SidebarComponent {
   currentUrl = '';
   sidebartop = false;
   sidebarfooter=false;
+  public centers: Center[] = [];
+  public activeCenter: Center | null = null;
    openSubmenuOneItem: any = null;
   togglesidebartop():void{
     this.sidebartop=!this.sidebartop
@@ -46,7 +50,9 @@ export class SidebarComponent {
     private router: Router,
     public sideBar: SideBarService,
     public settings:SettingsService,
-    public common:CommonService
+    public common:CommonService,
+    private centersService: CentersService,
+    private activeCenterService: ActiveCenterService
   ) {
         router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -57,6 +63,9 @@ export class SidebarComponent {
 
       this.data.getSideBarData.subscribe((res:SideBarData[]) => {
         this.sidebarData = res;
+    });
+    this.activeCenterService.activeCenter$.subscribe(center => {
+      this.activeCenter = center;
     });
     this.getRoutes(this.router);
   }
@@ -184,7 +193,30 @@ ngOnInit(): void {
   this.dataLayoutHidden = dataLayout === 'hidden';
 
   this.expandSubMenusActive();
+  this.loadCenters();
 
+}
+
+public selectCenter(center: Center): void {
+  this.activeCenterService.setActiveCenter(center);
+  this.sidebartop = false;
+}
+
+public centerLogo(center: Center | null): string {
+  return center?.logoUrl || 'assets/img/icons/trustcare.svg';
+}
+
+public centerCity(center: Center | null): string {
+  return center?.city || '';
+}
+
+private loadCenters(): void {
+  this.centersService.getCenters().subscribe({
+    next: centers => {
+      this.centers = centers;
+      this.activeCenterService.setAvailableCenters(centers);
+    },
+  });
 }
 
 }

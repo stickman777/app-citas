@@ -7,6 +7,8 @@ import { environment } from '../../../environments/environment';
 export interface Center {
   id: number;
   name: string;
+  city?: string | null;
+  logoUrl?: string | null;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -14,6 +16,8 @@ export interface Center {
 
 export interface CenterPayload {
   name: string;
+  city?: string | null;
+  logoUrl?: string | null;
 }
 
 @Injectable({
