@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { routes } from '../../shared/routes/routes';
@@ -22,7 +23,8 @@ export class LoginComponent {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private toastr: ToastrService
   ) {
     if (this.authService.isAuthenticated()) {
       void this.router.navigate([routes.index]);
@@ -41,7 +43,10 @@ export class LoginComponent {
       .login({ email: this.email, password: this.password })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: () => void this.router.navigate([routes.index]),
+        next: () => {
+          this.toastr.success('Login correcto.');
+          void this.router.navigate([routes.index]);
+        },
         error: () => {
           this.errorMessage = 'Email o password incorrectos.';
         },

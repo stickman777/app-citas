@@ -8,6 +8,7 @@ import { SideBarService } from '../../shared/sidebar/sidebar.service';
 import { NgScrollbarModule } from 'ngx-scrollbar';
 import { CommonService } from '../../shared/common/common.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
     selector: 'app-header',
@@ -28,7 +29,8 @@ export class HeaderComponent {
     public sideBar: SideBarService,
     public settings: SettingsService,
     public common: CommonService,
-    private authService: AuthService
+    private authService: AuthService,
+    private toastr: ToastrService
   ) {
     this.common.baseRoute
     this.sideBar.toggleSideBar.subscribe((res: string) => {
@@ -98,6 +100,7 @@ export class HeaderComponent {
   }
 
   public logout(): void {
+    this.toastr.error('Sesión cerrada.');
     this.authService.logout();
   }
 
