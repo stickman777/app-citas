@@ -80,6 +80,27 @@
                         </button>
                     </div>
                 }
+
+                    <!-- Language Selector -->
+                    <div class="header-item d-none d-sm-flex me-2">
+                        <div class="dropdown">
+                            <button class="topbar-link btn btn-icon dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown" data-bs-offset="0,24" type="button" aria-haspopup="false" aria-expanded="false" [attr.aria-label]="'Idioma actual: ' + currentLanguage.toUpperCase()">
+                                <span class="fw-semibold fs-13">{{ currentLanguage.toUpperCase() }}</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end p-2">
+                                @for(language of languageOptions; track language){
+                                <button
+                                    type="button"
+                                    class="dropdown-item rounded-1"
+                                    [class.active]="language === currentLanguage"
+                                    (click)="setLanguage(language)"
+                                >
+                                    {{ language.toUpperCase() }}
+                                </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
 					
 					<!-- Notification Dropdown -->
                     <div class="header-item">

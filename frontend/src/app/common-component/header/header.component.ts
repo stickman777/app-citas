@@ -9,6 +9,8 @@ import { NgScrollbarModule } from 'ngx-scrollbar';
 import { CommonService } from '../../shared/common/common.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ToastrService } from 'ngx-toastr';
+import { I18nService } from '../../core/i18n/i18n.service';
+import { Language, SUPPORTED_LANGUAGES } from '../../core/i18n/translations';
 
 @Component({
     selector: 'app-header',
@@ -17,6 +19,7 @@ import { ToastrService } from 'ngx-toastr';
     imports: [CommonModule,RouterLink,MatSelectModule,NgScrollbarModule]
 })
 export class HeaderComponent {
+  public readonly languageOptions = SUPPORTED_LANGUAGES;
   public routes = routes;
   public openBox = false;
   public miniSidebar  = false;
@@ -30,7 +33,8 @@ export class HeaderComponent {
     public settings: SettingsService,
     public common: CommonService,
     private authService: AuthService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private i18nService: I18nService
   ) {
     this.common.baseRoute
     this.sideBar.toggleSideBar.subscribe((res: string) => {
@@ -97,6 +101,14 @@ export class HeaderComponent {
     this.themeColor = this.themeColor === 'dark' ? 'light' : 'dark';
     localStorage.setItem('themeColor', this.themeColor);
     this.sideBar.changeThemeColor(this.themeColor);
+  }
+
+  public get currentLanguage(): Language {
+    return this.i18nService.currentLanguage;
+  }
+
+  public setLanguage(language: Language): void {
+    this.i18nService.setLanguage(language);
   }
 
   public logout(): void {
