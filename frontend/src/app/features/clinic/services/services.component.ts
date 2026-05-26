@@ -8,6 +8,7 @@ import {
   ServicePayload,
   ServicesService,
 } from '../../../core/services/services.service';
+import { Center, CentersService } from '../../../core/centers/centers.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -16,6 +17,7 @@ interface ServiceForm {
   description: string;
   durationMinutes: number | null;
   price: number | null;
+  centerId: number | null;
 }
 
 @Component({
@@ -27,6 +29,7 @@ interface ServiceForm {
 export class ServicesComponent {
   public services: Service[] = [];
   public filteredServices: Service[] = [];
+  public centers: Center[] = [];
   public searchTerm = '';
   public errorMessage = '';
   public successMessage = '';
@@ -43,10 +46,12 @@ export class ServicesComponent {
 
   constructor(
     private readonly servicesService: ServicesService,
+    private readonly centersService: CentersService,
     private readonly i18nService: I18nService
   ) {}
 
   ngOnInit(): void {
+    this.loadCenters();
     this.loadServices();
   }
 
@@ -92,6 +97,7 @@ export class ServicesComponent {
       description: service.description ?? '',
       durationMinutes: service.durationMinutes,
       price: service.price == null ? null : Number(service.price),
+      centerId: service.center?.id ?? null,
     };
     this.isFormModalOpen = true;
   }
@@ -187,7 +193,7 @@ export class ServicesComponent {
 
     this.filteredServices = search
       ? this.services.filter(service =>
-          `${service.id} ${service.name} ${service.description ?? ''} ${service.durationMinutes} ${service.price ?? ''}`
+          `${service.id} ${service.name} ${service.description ?? ''} ${service.durationMinutes} ${service.price ?? ''} ${service.center?.name ?? ''}`
             .toLowerCase()
             .includes(search)
         )
@@ -210,6 +216,29 @@ export class ServicesComponent {
     return service.id;
   }
 
+  public get centerOptions(): Center[] {
+    return this.withCurrentOption(this.centers, this.editingService?.center);
+  }
+
+  public trackByCenterId(_: number, center: Center): number {
+    return center.id;
+  }
+
+  public centerName(service: Service): string {
+    return service.center?.name ?? this.translate('centers.none');
+  }
+
+  private loadCenters(): void {
+    this.centersService.getCenters().subscribe({
+      next: centers => {
+        this.centers = centers;
+      },
+      error: () => {
+        this.errorMessage = this.translate('centers.errors.load');
+      },
+    });
+  }
+
   private getPayload(): ServicePayload {
     const description = this.form.description.trim();
 
@@ -218,6 +247,7 @@ export class ServicesComponent {
       description: description || null,
       durationMinutes: Number(this.form.durationMinutes),
       price: this.form.price == null ? null : Number(this.form.price),
+      centerId: this.form.centerId ?? undefined,
     };
   }
 
@@ -239,7 +269,19 @@ export class ServicesComponent {
       description: '',
       durationMinutes: null,
       price: null,
+      centerId: null,
     };
+  }
+
+  private withCurrentOption<T extends { id: number }>(
+    options: T[],
+    current?: T | null,
+  ): T[] {
+    if (!current || options.some(option => option.id === current.id)) {
+      return options;
+    }
+
+    return [current, ...options];
   }
 
   private clearMessages(): void {

@@ -62,6 +62,7 @@
         <tr>
           <th>ID</th>
           <th>{{ 'services.title' | translate }}</th>
+          <th>{{ 'common.center' | translate }}</th>
           <th>{{ 'services.fields.duration' | translate }}</th>
           <th>{{ 'services.fields.price' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
@@ -71,7 +72,7 @@
       <tbody>
         @if(isLoading){
         <tr>
-          <td colspan="6" class="text-center text-dark py-4">{{ 'services.loading' | translate }}</td>
+          <td colspan="7" class="text-center text-dark py-4">{{ 'services.loading' | translate }}</td>
         </tr>
         } @else {
           @for(service of filteredServices; track trackByServiceId($index, service)){
@@ -90,6 +91,7 @@
                 </div>
               </div>
             </td>
+            <td>{{ centerName(service) }}</td>
             <td>{{ service.durationMinutes }} min</td>
             <td>{{ formatPrice(service.price) }}</td>
             <td>
@@ -112,7 +114,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="6" class="text-center text-dark py-4">{{ 'services.empty' | translate }}</td>
+            <td colspan="7" class="text-center text-dark py-4">{{ 'services.empty' | translate }}</td>
           </tr>
           }
         }
@@ -144,6 +146,15 @@
           <div class="mb-3">
             <label class="form-label">{{ 'services.fields.price' | translate }}</label>
             <input type="number" name="price" [(ngModel)]="form.price" class="form-control" min="0" step="0.01">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ 'common.center' | translate }}</label>
+            <select name="centerId" [(ngModel)]="form.centerId" class="form-select">
+              <option [ngValue]="null">{{ 'centers.none' | translate }}</option>
+              @for(center of centerOptions; track trackByCenterId($index, center)){
+              <option [ngValue]="center.id">{{ center.name }}</option>
+              }
+            </select>
           </div>
           <div class="mb-0">
             <label class="form-label">{{ 'services.fields.description' | translate }}</label>
