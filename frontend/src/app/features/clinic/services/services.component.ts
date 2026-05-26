@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
@@ -141,6 +141,12 @@ export class ServicesComponent {
     if (this.isChangingStatus) return;
 
     this.isStatusModalOpen = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  public closeOpenModal(): void {
+    if (this.isFormModalOpen) this.closeFormModal();
+    if (this.isStatusModalOpen) this.closeStatusModal();
   }
 
   public changeServiceStatus(): void {

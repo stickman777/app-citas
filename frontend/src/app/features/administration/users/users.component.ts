@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -127,6 +127,12 @@ export class UsersComponent {
     if (this.isDeleting) return;
 
     this.isDeleteModalOpen = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  public closeOpenModal(): void {
+    if (this.isFormModalOpen) this.closeFormModal();
+    if (this.isDeleteModalOpen) this.closeDeleteModal();
   }
 
   public deleteUser(): void {
