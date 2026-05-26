@@ -4,12 +4,16 @@ import { Repository } from 'typeorm';
 import { ServiceEntity } from './service.entity';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { Center } from '../centers/center.entity';
 
 @Injectable()
 export class ServicesService {
   constructor(
     @InjectRepository(ServiceEntity)
     private servicesRepository: Repository<ServiceEntity>,
+
+    @InjectRepository(Center)
+    private centersRepository: Repository<Center>,
   ) {}
 
   // Obtiene todos los servicios activos
@@ -38,8 +42,13 @@ export class ServicesService {
   }
 
   // Crea un nuevo servicio
-  create(serviceData: CreateServiceDto) {
-    const service = this.servicesRepository.create(serviceData);
+  async create(serviceData: CreateServiceDto) {
+    const { centerId, ...servicePayload } = serviceData;
+    const center = await this.getCenter(centerId);
+    const service = this.servicesRepository.create({
+      ...servicePayload,
+      center,
+    });
 
     return this.servicesRepository.save(service);
   }
@@ -47,10 +56,26 @@ export class ServicesService {
   // Actualiza un servicio existente por su ID
   async update(id: number, serviceData: UpdateServiceDto) {
     const service = await this.findOne(id);
+    const { centerId, ...servicePayload } = serviceData;
+    const center = await this.getCenter(centerId);
 
-    Object.assign(service, serviceData);
+    Object.assign(service, servicePayload);
+    service.center = center ?? service.center;
 
     return this.servicesRepository.save(service);
+  }
+
+  private async getCenter(centerId?: number): Promise<Center | null> {
+    if (!centerId) return null;
+
+    const center = await this.centersRepository.findOne({
+      where: { id: centerId },
+    });
+
+    if (!center)
+      throw new NotFoundException('No se ha encontrado el centro');
+
+    return center;
   }
 
   // Activa un servicio por su ID (lo marca como activo)

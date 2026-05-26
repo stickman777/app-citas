@@ -2,9 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ServiceEntity } from '../services/service.entity';
 
 @Entity()
 export class Center {
@@ -22,4 +24,7 @@ export class Center {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => ServiceEntity, (service) => service.center)
+  services?: ServiceEntity[];
 }

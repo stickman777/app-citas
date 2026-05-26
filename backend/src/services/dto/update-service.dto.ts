@@ -1,9 +1,4 @@
-import {
-  IsNumber,
-  IsOptional,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class UpdateServiceDto {
   @IsOptional()
@@ -23,4 +18,9 @@ export class UpdateServiceDto {
   @IsNumber()
   @Min(0)
   price?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  centerId?: number;
 }

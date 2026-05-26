@@ -2,9 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Center } from '../centers/center.entity';
 
 @Entity()
 export class ServiceEntity {
@@ -25,6 +27,13 @@ export class ServiceEntity {
 
   @Column({ default: true })
   active: boolean;
+
+  @ManyToOne(() => Center, (center) => center.services, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  center?: Center | null;
 
   @CreateDateColumn()
   createdAt: Date;
