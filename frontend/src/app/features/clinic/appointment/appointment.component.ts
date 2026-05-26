@@ -11,6 +11,8 @@ import {
   AppointmentStatus,
   AppointmentsService,
 } from '../../../core/appointments/appointments.service';
+import { I18nService } from '../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface AppointmentForm {
   startDateTime: string;
@@ -28,7 +30,7 @@ const STATUS_BADGE_CLASSES: Record<AppointmentStatus, string> = {
   selector: 'app-appointment',
   templateUrl: './appointment.component.html',
   styleUrls: ['./appointment.component.scss'],
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
 })
 export class AppointmentComponent {
   public appointments: Appointment[] = [];
@@ -47,7 +49,10 @@ export class AppointmentComponent {
   public appointmentToDelete: Appointment | null = null;
   public form: AppointmentForm = this.getEmptyForm();
 
-  constructor(private readonly appointmentsService: AppointmentsService) {}
+  constructor(
+    private readonly appointmentsService: AppointmentsService,
+    private readonly i18nService: I18nService
+  ) {}
 
   ngOnInit(): void {
     this.loadReferenceData();
@@ -68,7 +73,7 @@ export class AppointmentComponent {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'No se han podido cargar las citas.';
+        this.errorMessage = this.translate('appointments.errors.load');
         this.isLoading = false;
       },
     });
@@ -100,7 +105,7 @@ export class AppointmentComponent {
 
   public saveAppointment(): void {
     if (!this.isFormComplete()) {
-      this.errorMessage = 'Completa todos los campos obligatorios.';
+      this.errorMessage = this.translate('appointments.errors.form');
       return;
     }
 
@@ -120,13 +125,13 @@ export class AppointmentComponent {
       .subscribe({
         next: () => {
           this.successMessage = this.editingAppointment
-            ? 'Cita actualizada correctamente.'
-            : 'Cita creada correctamente.';
+            ? this.translate('appointments.success.updated')
+            : this.translate('appointments.success.created');
           this.isFormModalOpen = false;
           this.loadAppointments(false);
         },
         error: () => {
-          this.errorMessage = 'No se ha podido guardar la cita.';
+          this.errorMessage = this.translate('appointments.errors.save');
         },
       });
   }
@@ -154,13 +159,13 @@ export class AppointmentComponent {
       .pipe(finalize(() => (this.isDeleting = false)))
       .subscribe({
         next: () => {
-          this.successMessage = 'Cita eliminada correctamente.';
+          this.successMessage = this.translate('appointments.success.deleted');
           this.isDeleteModalOpen = false;
           this.appointmentToDelete = null;
           this.loadAppointments(false);
         },
         error: () => {
-          this.errorMessage = 'No se ha podido eliminar la cita.';
+          this.errorMessage = this.translate('appointments.errors.delete');
         },
       });
   }
@@ -192,13 +197,23 @@ export class AppointmentComponent {
   }
 
   public clientOptionLabel(client: AppointmentClient): string {
-    return `${client.name} - ${client.phone}${client.active ? '' : ' (inactivo)'}`;
+    const status = client.active
+      ? ''
+      : ` (${this.translate('common.inactive').toLowerCase()})`;
+
+    return `${client.name} - ${client.phone}${status}`;
   }
 
   public serviceOptionLabel(service: AppointmentServiceOption): string {
-    const status = service.active ? '' : ' (inactivo)';
+    const status = service.active
+      ? ''
+      : ` (${this.translate('common.inactive').toLowerCase()})`;
 
     return `${service.name} (${service.durationMinutes} min)${status}`;
+  }
+
+  public statusLabel(status: AppointmentStatus): string {
+    return this.translate(`appointments.status.${status.toLowerCase()}`);
   }
 
   private loadReferenceData(): void {
@@ -211,7 +226,7 @@ export class AppointmentComponent {
         this.services = services;
       },
       error: () => {
-        this.errorMessage = 'No se han podido cargar clientes o servicios.';
+        this.errorMessage = this.translate('appointments.errors.references');
       },
     });
   }
@@ -238,7 +253,7 @@ export class AppointmentComponent {
       appointment.client.name,
       appointment.client.phone,
       appointment.service.name,
-      appointment.status,
+      this.statusLabel(appointment.status),
       appointment.startDateTime,
     ]
       .join(' ')
@@ -282,5 +297,9 @@ export class AppointmentComponent {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private translate(key: string): string {
+    return this.i18nService.translate(key);
   }
 }
