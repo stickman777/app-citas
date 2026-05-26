@@ -1,8 +1,11 @@
 import {
   IsEmail,
   IsEnum,
+  IsArray,
+  IsInt,
   IsOptional,
   IsString,
+  Min,
   MinLength,
 } from 'class-validator';
 import { UserRole } from '../user.entity';
@@ -20,4 +23,10 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  centerIds?: number[];
 }
