@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { Center } from '../centers/centers.service';
 
 export interface Service {
   id: number;
@@ -11,6 +12,7 @@ export interface Service {
   durationMinutes: number;
   price?: number | string | null;
   active: boolean;
+  center?: Center | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +22,7 @@ export interface ServicePayload {
   description?: string | null;
   durationMinutes: number;
   price?: number | null;
+  centerId?: number | null;
 }
 
 @Injectable({
