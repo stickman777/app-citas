@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -14,13 +14,15 @@ export class CentersController {
   constructor(private readonly centersService: CentersService) {}
 
   @Get()
-  findAll() {
-    return this.centersService.findAll();
+  findAll(@Req() request: { user: { id: number; role: UserRole } }) {
+    return this.centersService.findAll(request.user);
   }
 
   @Get('all')
-  findAllIncludingInactive() {
-    return this.centersService.findAllIncludingInactive();
+  findAllIncludingInactive(
+    @Req() request: { user: { id: number; role: UserRole } },
+  ) {
+    return this.centersService.findAllIncludingInactive(request.user);
   }
 
   @Get(':id')

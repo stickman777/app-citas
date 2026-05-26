@@ -1,22 +1,34 @@
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { User, UserRole } from '../users/user.entity';
 import { Center } from './center.entity';
 import { CreateCenterDto } from './dto/create-center.dto';
 import { UpdateCenterDto } from './dto/update-center.dto';
+
+interface AuthUser {
+  id: number;
+  role: UserRole;
+}
 
 @Injectable()
 export class CentersService implements OnModuleInit {
   constructor(
     @InjectRepository(Center)
     private centersRepository: Repository<Center>,
+
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
   ) {}
 
   async onModuleInit() {
     await this.ensureDefaultCenter();
   }
 
-  findAll() {
+  async findAll(authUser?: AuthUser) {
+    if (authUser?.role === UserRole.GESTOR)
+      return this.findManagedCenters(authUser, true);
+
     return this.centersRepository.find({
       where: {
         active: true,
@@ -27,7 +39,10 @@ export class CentersService implements OnModuleInit {
     });
   }
 
-  findAllIncludingInactive() {
+  async findAllIncludingInactive(authUser?: AuthUser) {
+    if (authUser?.role === UserRole.GESTOR)
+      return this.findManagedCenters(authUser, false);
+
     return this.centersRepository.find({
       order: {
         name: 'ASC',
@@ -90,5 +105,21 @@ export class CentersService implements OnModuleInit {
     });
 
     await this.centersRepository.save(center);
+  }
+
+  private async findManagedCenters(authUser: AuthUser, activeOnly: boolean) {
+    const user = await this.usersRepository.findOne({
+      relations: {
+        centers: true,
+      },
+      where: { id: authUser.id },
+    });
+
+    const centers = user?.centers ?? [];
+    const filteredCenters = activeOnly
+      ? centers.filter((center) => center.active)
+      : centers;
+
+    return filteredCenters.sort((a, b) => a.name.localeCompare(b.name));
   }
 }
