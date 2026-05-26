@@ -27,9 +27,17 @@ export class Appointment {
   status: AppointmentStatus;
 
   // Me traigo la relación con cliente y servicio
-  @ManyToOne(() => Client, { eager: true })
+  @ManyToOne(() => Client, {
+    eager: true,
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
   client: Client;
 
-  @ManyToOne(() => ServiceEntity, { eager: true })
+  @ManyToOne(() => ServiceEntity, {
+    eager: true,
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
   service: ServiceEntity;
 }

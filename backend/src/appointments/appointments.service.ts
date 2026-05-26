@@ -136,13 +136,15 @@ export class AppointmentsService {
       'Solo se pueden actualizar citas programadas',
     );
 
-    const client = appointmentData.clientId
-      ? await this.getActiveClient(appointmentData.clientId)
-      : appointment.client;
+    const client = await this.resolveClientForUpdate(
+      appointment,
+      appointmentData.clientId,
+    );
 
-    const service = appointmentData.serviceId
-      ? await this.getActiveService(appointmentData.serviceId)
-      : appointment.service;
+    const service = await this.resolveServiceForUpdate(
+      appointment,
+      appointmentData.serviceId,
+    );
 
     const startDate = appointmentData.startDateTime
       ? new Date(appointmentData.startDateTime)
@@ -201,6 +203,26 @@ export class AppointmentsService {
       );
 
     return service;
+  }
+
+  private async resolveClientForUpdate(
+    appointment: Appointment,
+    clientId?: number,
+  ): Promise<Client> {
+    if (!clientId || clientId === appointment.client.id)
+      return appointment.client;
+
+    return this.getActiveClient(clientId);
+  }
+
+  private async resolveServiceForUpdate(
+    appointment: Appointment,
+    serviceId?: number,
+  ): Promise<ServiceEntity> {
+    if (!serviceId || serviceId === appointment.service.id)
+      return appointment.service;
+
+    return this.getActiveService(serviceId);
   }
 
   private async findAppointment(id: number): Promise<Appointment> {
