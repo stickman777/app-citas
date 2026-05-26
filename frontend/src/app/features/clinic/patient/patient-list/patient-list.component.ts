@@ -7,6 +7,8 @@ import {
   ClientPayload,
   ClientsService,
 } from '../../../../core/clients/clients.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 interface ClientForm {
   name: string;
@@ -20,7 +22,7 @@ interface ClientForm {
   selector: 'app-patient-list',
   templateUrl: './patient-list.component.html',
   styleUrls: ['./patient-list.component.scss'],
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
 })
 export class PatientListComponent {
   public clients: Client[] = [];
@@ -38,7 +40,10 @@ export class PatientListComponent {
   public selectedStatus = true;
   public form: ClientForm = this.getEmptyForm();
 
-  constructor(private readonly clientsService: ClientsService) {}
+  constructor(
+    private readonly clientsService: ClientsService,
+    private readonly i18nService: I18nService
+  ) {}
 
   ngOnInit(): void {
     this.loadClients();
@@ -58,7 +63,7 @@ export class PatientListComponent {
         this.isLoading = false;
       },
       error: () => {
-        this.errorMessage = 'No se han podido cargar los clientes.';
+        this.errorMessage = this.translate('clients.errors.load');
         this.isLoading = false;
       },
     });
@@ -102,14 +107,14 @@ export class PatientListComponent {
     request.subscribe({
       next: () => {
         this.successMessage = this.editingClient
-          ? 'Cliente actualizado correctamente.'
-          : 'Cliente creado correctamente.';
+          ? this.translate('clients.success.updated')
+          : this.translate('clients.success.created');
         this.isSaving = false;
         this.isFormModalOpen = false;
         this.loadClients(false);
       },
       error: () => {
-        this.errorMessage = 'No se ha podido guardar el cliente.';
+        this.errorMessage = this.translate('clients.errors.save');
         this.isSaving = false;
       },
     });
@@ -149,15 +154,15 @@ export class PatientListComponent {
     request.subscribe({
       next: () => {
         this.successMessage = this.selectedStatus
-          ? 'Cliente activado correctamente.'
-          : 'Cliente desactivado correctamente.';
+          ? this.translate('clients.success.activated')
+          : this.translate('clients.success.deactivated');
         this.isChangingStatus = false;
         this.isStatusModalOpen = false;
         this.clientToChangeStatus = null;
         this.loadClients(false);
       },
       error: () => {
-        this.errorMessage = 'No se ha podido cambiar el estado del cliente.';
+        this.errorMessage = this.translate('clients.errors.status');
         this.isChangingStatus = false;
       },
     });
@@ -211,5 +216,9 @@ export class PatientListComponent {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private translate(key: string): string {
+    return this.i18nService.translate(key);
   }
 }
