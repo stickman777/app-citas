@@ -25,6 +25,11 @@ export class ServicesController {
     return this.servicesService.findAllIncludingInactive();
   }
 
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.servicesService.findOne(id);
+  }
+
   // Endpoint para crear un nuevo servicio
   @Post()
   create(@Body() serviceData: CreateServiceDto) {

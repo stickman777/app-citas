@@ -90,12 +90,12 @@ export class AppointmentsService {
       // Se generan los horarios disponibles en intervalos de 15 minutos
       while (currentSlot < availabilityEnd) {
         const slotEnd = new Date(currentSlot);
-        slotEnd.setMinutes(slotEnd.getMinutes() + service.duration);
+        slotEnd.setMinutes(slotEnd.getMinutes() + service.durationMinutes);
 
         if (slotEnd <= availabilityEnd) {
           const hasOverlap = await this.hasOverlappingAppointment(
             currentSlot,
-            service.duration,
+            service.durationMinutes,
           );
 
           if (!hasOverlap) slots.push(currentSlot.toTimeString().slice(0, 5));
@@ -116,12 +116,12 @@ export class AppointmentsService {
     const service = await this.getActiveService(appointmentData.serviceId);
     const startDate = new Date(appointmentData.startDateTime);
 
-    await this.validateAppointmentSlot(startDate, service.duration);
+    await this.validateAppointmentSlot(startDate, service.durationMinutes);
 
     // Si todo es correcto, se crea la cita
     const appointment = this.appointmentsRepository.create({
       startDateTime: startDate,
-      duration: service.duration,
+      duration: service.durationMinutes,
       client,
       service,
     });
@@ -150,12 +150,12 @@ export class AppointmentsService {
 
     await this.validateAppointmentSlot(
       startDate,
-      service.duration,
+      service.durationMinutes,
       appointment.id,
     );
 
     appointment.startDateTime = startDate;
-    appointment.duration = service.duration;
+    appointment.duration = service.durationMinutes;
     appointment.client = client;
     appointment.service = service;
 

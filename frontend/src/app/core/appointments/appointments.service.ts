@@ -17,8 +17,8 @@ export interface AppointmentClient {
 export interface AppointmentServiceOption {
   id: number;
   name: string;
-  duration: number;
-  price: number;
+  durationMinutes: number;
+  price?: number | string | null;
   active: boolean;
 }
 

@@ -11,12 +11,16 @@ export class UpdateServiceDto {
   name?: string;
 
   @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
   @IsNumber()
   @Min(1)
-  duration?: number;
+  durationMinutes?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  price?: number;
+  price?: number | null;
 }

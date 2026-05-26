@@ -26,6 +26,17 @@ export class ServicesService {
     return this.servicesRepository.find();
   }
 
+  async findOne(id: number) {
+    const service = await this.servicesRepository.findOne({
+      where: { id },
+    });
+
+    if (!service)
+      throw new NotFoundException('No se ha encontrado el servicio');
+
+    return service;
+  }
+
   // Crea un nuevo servicio
   create(serviceData: CreateServiceDto) {
     const service = this.servicesRepository.create(serviceData);
@@ -35,12 +46,7 @@ export class ServicesService {
 
   // Actualiza un servicio existente por su ID
   async update(id: number, serviceData: UpdateServiceDto) {
-    const service = await this.servicesRepository.findOne({
-      where: { id },
-    });
-
-    if (!service)
-      throw new NotFoundException('No se ha encontrado el servicio');
+    const service = await this.findOne(id);
 
     Object.assign(service, serviceData);
 
@@ -49,12 +55,7 @@ export class ServicesService {
 
   // Activa un servicio por su ID (lo marca como activo)
   async activate(id: number) {
-    const service = await this.servicesRepository.findOne({
-      where: { id },
-    });
-
-    if (!service)
-      throw new NotFoundException('No se ha encontrado el servicio');
+    const service = await this.findOne(id);
 
     service.active = true;
 
@@ -63,12 +64,7 @@ export class ServicesService {
 
   // Desactiva un servicio por su ID (lo marca como inactivo)
   async deactivate(id: number) {
-    const service = await this.servicesRepository.findOne({
-      where: { id },
-    });
-
-    if (!service)
-      throw new NotFoundException('No se ha encontrado el servicio');
+    const service = await this.findOne(id);
 
     service.active = false;
 

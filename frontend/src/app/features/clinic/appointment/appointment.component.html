@@ -142,7 +142,7 @@
             <select name="serviceId" [(ngModel)]="form.serviceId" class="form-select" required>
               <option [ngValue]="null">Seleccionar servicio</option>
               @for(service of services; track service.id){
-              <option [ngValue]="service.id">{{ service.name }} ({{ service.duration }} min)</option>
+              <option [ngValue]="service.id">{{ service.name }} ({{ service.durationMinutes }} min)</option>
               }
             </select>
           </div>
