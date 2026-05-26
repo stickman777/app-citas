@@ -16,6 +16,12 @@ export class Center {
   @Column()
   name: string;
 
+  @Column({ nullable: true })
+  city?: string;
+
+  @Column({ nullable: true })
+  logoUrl?: string;
+
   @Column({ default: true })
   active: boolean;
 
