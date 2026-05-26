@@ -60,13 +60,14 @@
           <th>ID</th>
           <th>{{ 'common.email' | translate }}</th>
           <th>{{ 'common.role' | translate }}</th>
+          <th>{{ 'common.center' | translate }}</th>
           <th class="text-end">{{ 'common.actions' | translate }}</th>
         </tr>
       </thead>
       <tbody>
         @if(isLoading){
         <tr>
-          <td colspan="4" class="text-center text-dark py-4">{{ 'users.loading' | translate }}</td>
+          <td colspan="5" class="text-center text-dark py-4">{{ 'users.loading' | translate }}</td>
         </tr>
         } @else {
           @for(user of filteredUsers; track trackByUserId($index, user)){
@@ -85,6 +86,7 @@
                 {{ user.role }}
               </span>
             </td>
+            <td>{{ centerNames(user) }}</td>
             <td>
               <div class="d-flex align-items-center justify-content-end gap-1">
                 <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white" (click)="openEditModal(user)" [attr.aria-label]="'users.actions.edit' | translate">
@@ -98,7 +100,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="4" class="text-center text-dark py-4">{{ 'users.empty' | translate }}</td>
+            <td colspan="5" class="text-center text-dark py-4">{{ 'users.empty' | translate }}</td>
           </tr>
           }
         }
@@ -154,6 +156,24 @@
               <option [ngValue]="role">{{ role }}</option>
               }
             </select>
+          </div>
+          <div class="mb-0 mt-3">
+            <label class="form-label">{{ 'users.fields.centers' | translate }}</label>
+            <div class="border rounded p-2">
+              @for(center of centers; track trackByCenterId($index, center)){
+              <label class="form-check d-flex align-items-center mb-2">
+                <input
+                  type="checkbox"
+                  class="form-check-input me-2"
+                  [checked]="isCenterSelected(center.id)"
+                  (change)="toggleCenter(center.id, $any($event.target).checked)"
+                >
+                <span class="form-check-label">{{ center.name }}</span>
+              </label>
+              } @empty {
+              <span class="text-body fs-13">{{ 'centers.none' | translate }}</span>
+              }
+            </div>
           </div>
         </div>
         <div class="modal-footer d-flex align-items-center gap-1">

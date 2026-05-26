@@ -9,6 +9,7 @@ import {
   UserRole,
   UsersService,
 } from '../../../core/users/users.service';
+import { Center, CentersService } from '../../../core/centers/centers.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -16,6 +17,7 @@ interface UserForm {
   email: string;
   password: string;
   role: UserRole;
+  centerIds: number[];
 }
 
 @Component({
@@ -28,6 +30,7 @@ export class UsersComponent {
   public readonly roleOptions: UserRole[] = ['ADMIN', 'GESTOR', 'CLIENT'];
   public users: User[] = [];
   public filteredUsers: User[] = [];
+  public centers: Center[] = [];
   public searchTerm = '';
   public errorMessage = '';
   public successMessage = '';
@@ -42,10 +45,12 @@ export class UsersComponent {
 
   constructor(
     private readonly usersService: UsersService,
+    private readonly centersService: CentersService,
     private readonly i18nService: I18nService
   ) {}
 
   ngOnInit(): void {
+    this.loadCenters();
     this.loadUsers();
   }
 
@@ -83,6 +88,7 @@ export class UsersComponent {
       email: user.email,
       password: '',
       role: user.role,
+      centerIds: user.centers?.map(center => center.id) ?? [],
     };
     this.isFormModalOpen = true;
   }
@@ -161,7 +167,9 @@ export class UsersComponent {
 
     this.filteredUsers = search
       ? this.users.filter(user =>
-          `${user.id} ${user.email} ${user.role}`.toLowerCase().includes(search)
+          `${user.id} ${user.email} ${user.role} ${this.centerNames(user)}`
+            .toLowerCase()
+            .includes(search)
         )
       : [...this.users];
   }
@@ -180,11 +188,43 @@ export class UsersComponent {
     return user.id;
   }
 
+  public trackByCenterId(_: number, center: Center): number {
+    return center.id;
+  }
+
+  public centerNames(user: User): string {
+    return user.centers?.length
+      ? user.centers.map(center => center.name).join(', ')
+      : this.translate('centers.none');
+  }
+
+  public toggleCenter(centerId: number, checked: boolean): void {
+    this.form.centerIds = checked
+      ? [...this.form.centerIds, centerId]
+      : this.form.centerIds.filter(id => id !== centerId);
+  }
+
+  public isCenterSelected(centerId: number): boolean {
+    return this.form.centerIds.includes(centerId);
+  }
+
+  private loadCenters(): void {
+    this.centersService.getCenters().subscribe({
+      next: centers => {
+        this.centers = centers;
+      },
+      error: () => {
+        this.errorMessage = this.translate('centers.errors.load');
+      },
+    });
+  }
+
   private getCreatePayload(): CreateUserPayload {
     return {
       email: this.form.email.trim(),
       password: this.form.password,
       role: this.form.role,
+      centerIds: this.form.centerIds,
     };
   }
 
@@ -192,6 +232,7 @@ export class UsersComponent {
     const payload: UpdateUserPayload = {
       email: this.form.email.trim(),
       role: this.form.role,
+      centerIds: this.form.centerIds,
     };
 
     if (this.form.password.trim()) {
@@ -206,6 +247,7 @@ export class UsersComponent {
       email: '',
       password: '',
       role: 'CLIENT',
+      centerIds: [],
     };
   }
 

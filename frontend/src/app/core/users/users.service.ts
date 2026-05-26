@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { Center } from '../centers/centers.service';
 
 export type UserRole = 'ADMIN' | 'GESTOR' | 'CLIENT';
 
@@ -10,12 +11,14 @@ export interface User {
   id: number;
   email: string;
   role: UserRole;
+  centers?: Center[];
 }
 
 export interface CreateUserPayload {
   email: string;
   password: string;
   role: UserRole;
+  centerIds?: number[];
 }
 
 export type UpdateUserPayload = Partial<CreateUserPayload>;
