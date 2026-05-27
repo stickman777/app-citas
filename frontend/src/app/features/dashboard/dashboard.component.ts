@@ -21,6 +21,9 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { RouterLink } from '@angular/router';
 import { DatePickerModule } from 'primeng/datepicker';
 import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { ActiveCenterService } from '../../core/centers/active-center.service';
+import { Center } from '../../core/centers/centers.service';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries | any;
@@ -49,6 +52,7 @@ export type ChartOptions = {
 })
 export class DashboardComponent {
 routes=routes
+  public activeCenter$: Observable<Center | null>;
   date: Date[] | undefined;
 @ViewChild('chart') chart!: ChartComponent;
 public barChart: Partial<ChartOptions>;
@@ -57,7 +61,8 @@ public lineChart: Partial<ChartOptions>;
 public lineChart2: Partial<ChartOptions>;
 public appointmentChart: Partial<ChartOptions>;
 public circleChart: Partial<ChartOptions>;
-constructor(){
+constructor(private readonly activeCenterService: ActiveCenterService){
+    this.activeCenter$ = this.activeCenterService.activeCenter$;
     this.barChart= {
         chart:{
         width: 80,
@@ -368,4 +373,3 @@ constructor(){
     }
 }
 }
-

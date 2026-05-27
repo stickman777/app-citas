@@ -7,6 +7,8 @@ import { environment } from '../../../environments/environment';
 export interface Center {
   id: number;
   name: string;
+  address?: string | null;
+  phone?: string | null;
   city?: string | null;
   logoUrl?: string | null;
   active: boolean;
