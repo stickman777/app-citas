@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/user.entity';
@@ -50,40 +56,47 @@ export class CentersService implements OnModuleInit {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, authUser?: AuthUser) {
     const center = await this.centersRepository.findOne({
       where: { id },
     });
 
     if (!center) throw new NotFoundException('No se ha encontrado el centro');
 
+    await this.validateCenterAccess(id, authUser);
+
     return center;
   }
 
-  create(centerData: CreateCenterDto) {
+  async create(centerData: CreateCenterDto, authUser?: AuthUser) {
     const center = this.centersRepository.create(centerData);
 
-    return this.centersRepository.save(center);
+    const savedCenter = await this.centersRepository.save(center);
+
+    if (authUser?.role === UserRole.GESTOR)
+      await this.assignCenterToManager(savedCenter, authUser);
+
+    return savedCenter;
   }
 
-  async update(id: number, centerData: UpdateCenterDto) {
-    const center = await this.findOne(id);
+  async update(id: number, centerData: UpdateCenterDto, authUser?: AuthUser) {
+    const center = await this.findOne(id, authUser);
 
     Object.assign(center, centerData);
 
     return this.centersRepository.save(center);
   }
 
-  async activate(id: number) {
-    const center = await this.findOne(id);
+  async activate(id: number, authUser?: AuthUser) {
+    const center = await this.findOne(id, authUser);
 
     center.active = true;
 
     return this.centersRepository.save(center);
   }
 
-  async deactivate(id: number) {
-    const center = await this.findOne(id);
+  async deactivate(id: number, authUser?: AuthUser) {
+    const center = await this.findOne(id, authUser);
 
     center.active = false;
 
@@ -105,6 +118,42 @@ export class CentersService implements OnModuleInit {
     });
 
     await this.centersRepository.save(center);
+  }
+
+  private async assignCenterToManager(center: Center, authUser: AuthUser) {
+    const user = await this.usersRepository.findOne({
+      relations: {
+        centers: true,
+      },
+      where: { id: authUser.id },
+    });
+
+    if (!user)
+      throw new BadRequestException('No se ha encontrado el usuario autenticado');
+
+    user.centers = [...(user.centers ?? []), center];
+
+    await this.usersRepository.save(user);
+  }
+
+  private async validateCenterAccess(id: number, authUser?: AuthUser) {
+    if (authUser?.role !== UserRole.GESTOR) return;
+
+    const centerIds = await this.getManagedCenterIds(authUser);
+
+    if (!centerIds.includes(id))
+      throw new ForbiddenException('No puedes gestionar este centro');
+  }
+
+  private async getManagedCenterIds(authUser: AuthUser) {
+    const user = await this.usersRepository.findOne({
+      relations: {
+        centers: true,
+      },
+      where: { id: authUser.id },
+    });
+
+    return user?.centers?.map((center) => center.id) ?? [];
   }
 
   private async findManagedCenters(authUser: AuthUser, activeOnly: boolean) {

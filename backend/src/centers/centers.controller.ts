@@ -26,30 +26,43 @@ export class CentersController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.centersService.findOne(id);
+  findOne(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.centersService.findOne(id, request.user);
   }
 
   @Post()
-  create(@Body() centerData: CreateCenterDto) {
-    return this.centersService.create(centerData);
+  create(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Body() centerData: CreateCenterDto,
+  ) {
+    return this.centersService.create(centerData, request.user);
   }
 
   @Patch(':id')
   update(
+    @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe) id: number,
     @Body() centerData: UpdateCenterDto,
   ) {
-    return this.centersService.update(id, centerData);
+    return this.centersService.update(id, centerData, request.user);
   }
 
   @Patch(':id/activate')
-  activate(@Param('id', ParseIntPipe) id: number) {
-    return this.centersService.activate(id);
+  activate(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.centersService.activate(id, request.user);
   }
 
   @Patch(':id/deactivate')
-  deactivate(@Param('id', ParseIntPipe) id: number) {
-    return this.centersService.deactivate(id);
+  deactivate(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.centersService.deactivate(id, request.user);
   }
 }
