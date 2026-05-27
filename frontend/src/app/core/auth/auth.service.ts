@@ -5,14 +5,22 @@ import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { routes } from '../../shared/routes/routes';
+import { Center } from '../centers/centers.service';
 
-interface LoginCredentials {
+export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-interface LoginResponse {
+export interface LoginResponse {
   access_token: string;
+}
+
+export interface CurrentUser {
+  id: number;
+  email: string;
+  role: 'ADMIN' | 'GESTOR' | 'CLIENT';
+  centers?: Center[];
 }
 
 @Injectable({
@@ -30,6 +38,10 @@ export class AuthService {
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, credentials)
       .pipe(tap(response => localStorage.setItem(this.tokenKey, response.access_token)));
+  }
+
+  getCurrentUser(): Observable<CurrentUser> {
+    return this.http.get<CurrentUser>(`${environment.apiUrl}/auth/me`);
   }
 
   logout(): void {

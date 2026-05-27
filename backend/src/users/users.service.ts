@@ -62,6 +62,19 @@ export class UsersService {
     });
   }
 
+  async findProfile(id: number) {
+    const user = await this.usersRepository.findOne({
+      relations: {
+        centers: true,
+      },
+      where: { id },
+    });
+
+    if (!user) throw new NotFoundException('No se ha encontrado el usuario');
+
+    return this.removePassword(user);
+  }
+
   async create(userData: CreateUserDto, authUser?: AuthUser) {
     this.validateRoleChange(authUser, userData.role);
 

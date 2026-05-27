@@ -32,4 +32,8 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
+
+  getCurrentUser(id: number) {
+    return this.usersService.findProfile(id);
+  }
 }

@@ -244,8 +244,8 @@
                             <div class="d-flex align-items-center bg-light rounded-3 p-2 mb-2">
                                 <img src="assets/img/users/user-01.jpg" class="rounded-circle" width="42" height="42" alt="">
                                 <div class="ms-2">
-                                    <p class="fw-medium text-dark mb-0">Jimmy Anderson</p>
-                                    <span class="d-block fs-13">Administrator</span>
+                                    <p class="fw-medium text-dark mb-0">{{ currentUser?.email || 'Usuario' }}</p>
+                                    <span class="d-block fs-13">{{ currentUser?.role || '-' }}</span>
                                 </div>
                             </div>
 

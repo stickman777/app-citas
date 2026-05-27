@@ -7,7 +7,7 @@ import { SettingsService } from '../../shared/settings/settings.service';
 import { SideBarService } from '../../shared/sidebar/sidebar.service';
 import { NgScrollbarModule } from 'ngx-scrollbar';
 import { CommonService } from '../../shared/common/common.service';
-import { AuthService } from '../../core/auth/auth.service';
+import { AuthService, CurrentUser } from '../../core/auth/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { Language, SUPPORTED_LANGUAGES } from '../../core/i18n/translations';
@@ -21,6 +21,7 @@ import { Language, SUPPORTED_LANGUAGES } from '../../core/i18n/translations';
 export class HeaderComponent {
   public readonly languageOptions = SUPPORTED_LANGUAGES;
   public routes = routes;
+  public currentUser: CurrentUser | null = null;
   public openBox = false;
   public miniSidebar  = false;
   public addClass = false;
@@ -95,6 +96,7 @@ export class HeaderComponent {
     const savedTheme = localStorage.getItem('themeColor') as 'light' | 'dark' | null;
     this.themeColor = savedTheme || 'light';
     this.sideBar.changeThemeColor(this.themeColor);
+    this.loadCurrentUser();
   }
 
   toggleTheme(): void {
@@ -114,6 +116,14 @@ export class HeaderComponent {
   public logout(): void {
     this.toastr.error('Sesión cerrada.');
     this.authService.logout();
+  }
+
+  private loadCurrentUser(): void {
+    this.authService.getCurrentUser().subscribe({
+      next: user => {
+        this.currentUser = user;
+      },
+    });
   }
 
   }
