@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
@@ -27,6 +27,9 @@ export interface CenterPayload {
 })
 export class CentersService {
   private readonly apiUrl = `${environment.apiUrl}/centers`;
+  private readonly centersChangedSubject = new Subject<void>();
+
+  public readonly centersChanged$ = this.centersChangedSubject.asObservable();
 
   constructor(private readonly http: HttpClient) {}
 
@@ -39,18 +42,26 @@ export class CentersService {
   }
 
   createCenter(payload: CenterPayload): Observable<Center> {
-    return this.http.post<Center>(this.apiUrl, payload);
+    return this.http
+      .post<Center>(this.apiUrl, payload)
+      .pipe(tap(() => this.centersChangedSubject.next()));
   }
 
   updateCenter(id: number, payload: CenterPayload): Observable<Center> {
-    return this.http.patch<Center>(`${this.apiUrl}/${id}`, payload);
+    return this.http
+      .patch<Center>(`${this.apiUrl}/${id}`, payload)
+      .pipe(tap(() => this.centersChangedSubject.next()));
   }
 
   activateCenter(id: number): Observable<Center> {
-    return this.http.patch<Center>(`${this.apiUrl}/${id}/activate`, {});
+    return this.http
+      .patch<Center>(`${this.apiUrl}/${id}/activate`, {})
+      .pipe(tap(() => this.centersChangedSubject.next()));
   }
 
   deactivateCenter(id: number): Observable<Center> {
-    return this.http.patch<Center>(`${this.apiUrl}/${id}/deactivate`, {});
+    return this.http
+      .patch<Center>(`${this.apiUrl}/${id}/deactivate`, {})
+      .pipe(tap(() => this.centersChangedSubject.next()));
   }
 }

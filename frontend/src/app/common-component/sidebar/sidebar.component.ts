@@ -61,6 +61,7 @@ export class SidebarComponent {
     this.activeCenterService.activeCenter$.subscribe(center => {
       this.activeCenter = center;
     });
+    this.centersService.centersChanged$.subscribe(() => this.loadCenters());
     this.getRoutes(this.router);
   }
 public toggleSidebar(): void {
