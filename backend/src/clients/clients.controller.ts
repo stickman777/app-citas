@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -26,49 +27,65 @@ export class ClientsController {
 
   // Endpoint para obtener todos los clientes activos
   @Get()
-  findAll(@Query('centerId') centerId?: string) {
-    return this.clientsService.findAll(this.parseCenterId(centerId));
+  findAll(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Query('centerId') centerId?: string,
+  ) {
+    return this.clientsService.findAll(
+      request.user,
+      this.parseCenterId(centerId),
+    );
   }
 
   // Endpoint para obtener todos los clientes, incluyendo los inactivos
   @Get('all')
-  findAllIncludingInactive(@Query('centerId') centerId?: string) {
+  findAllIncludingInactive(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Query('centerId') centerId?: string,
+  ) {
     return this.clientsService.findAllIncludingInactive(
+      request.user,
       this.parseCenterId(centerId),
     );
   }
 
   // Endpoint para crear un nuevo cliente
   @Post()
-  create(@Body() clientData: CreateClientDto) {
-    return this.clientsService.create(clientData);
+  create(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Body() clientData: CreateClientDto,
+  ) {
+    return this.clientsService.create(clientData, request.user);
   }
 
   // Endpoint para actualizar un cliente existente por su ID
   @Patch(':id')
   update(
+    @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe) id: number,
     @Body() clientData: UpdateClientDto,
   ) {
-    return this.clientsService.update(id, clientData);
+    return this.clientsService.update(id, clientData, request.user);
   }
 
   // Endpoint para activar un cliente por su ID
   @Patch(':id/activate')
   activate(
+    @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe)
     id: number,
   ) {
-    return this.clientsService.activate(id);
+    return this.clientsService.activate(id, request.user);
   }
 
   // Endpoint para desactivar un cliente por su ID
   @Patch(':id/deactivate')
   deactivate(
+    @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe)
     id: number,
   ) {
-    return this.clientsService.deactivate(id);
+    return this.clientsService.deactivate(id, request.user);
   }
 
   private parseCenterId(centerId?: string): number | undefined {
