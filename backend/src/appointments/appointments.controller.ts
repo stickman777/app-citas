@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -28,13 +29,18 @@ export class AppointmentsController {
 
   // Endpoint para obtener todas las citas, con opción de filtrar por fecha
   @Get()
-  findAll(@Query('date') date?: string, @Query('centerId') centerId?: string) {
+  findAll(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Query('date') date?: string,
+    @Query('centerId') centerId?: string,
+  ) {
     if (date !== undefined) {
       if (!date) throw new BadRequestException('Debe indicar una fecha');
 
       this.validateDateQuery(date);
     }
     return this.appointmentsService.findAll(
+      request.user,
       date,
       this.parseCenterId(centerId),
     );
@@ -43,6 +49,7 @@ export class AppointmentsController {
   // Endpoint para obtener los horarios disponibles para un servicio en una fecha determinada
   @Get('available-slots')
   findAvailableSlots(
+    @Req() request: { user: { id: number; role: UserRole } },
     @Query('date') date: string,
     @Query('serviceId', ParseIntPipe)
     serviceId: number,
@@ -52,52 +59,72 @@ export class AppointmentsController {
 
     this.validateDateQuery(date);
 
-    return this.appointmentsService.findAvailableSlots(date, serviceId);
+    return this.appointmentsService.findAvailableSlots(
+      date,
+      serviceId,
+      request.user,
+    );
   }
 
   // Endpoint para crear una nueva cita
   @Post()
   create(
+    @Req() request: { user: { id: number; role: UserRole } },
     @Body()
     appointmentData: CreateAppointmentDto,
   ) {
-    return this.appointmentsService.create(appointmentData);
+    return this.appointmentsService.create(appointmentData, request.user);
   }
 
   // Endpoint para actualizar una cita existente por su ID
   @Patch(':id')
   update(
+    @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe) id: number,
     @Body() appointmentData: UpdateAppointmentDto,
   ) {
-    return this.appointmentsService.update(id, appointmentData);
+    return this.appointmentsService.update(id, appointmentData, request.user);
   }
 
   // Endpoint para eliminar una cita existente por su ID
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.appointmentsService.remove(id);
+  remove(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.appointmentsService.remove(id, request.user);
   }
 
   // Endpoint para cancelar una cita existente
   @Patch(':id/cancel')
-  cancel(@Param('id', ParseIntPipe) id: number) {
-    return this.appointmentsService.cancel(id);
+  cancel(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.appointmentsService.cancel(id, request.user);
   }
 
   // Endpoint para marcar una cita como completada
   @Patch(':id/complete')
-  complete(@Param('id', ParseIntPipe) id: number) {
-    return this.appointmentsService.complete(id);
+  complete(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.appointmentsService.complete(id, request.user);
   }
 
   // Endpoint para reprogramar una cita existente
   @Patch(':id/reschedule')
   reschedule(
+    @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe) id: number,
     @Body() appointmentData: RescheduleAppointmentDto,
   ) {
-    return this.appointmentsService.reschedule(id, appointmentData);
+    return this.appointmentsService.reschedule(
+      id,
+      appointmentData,
+      request.user,
+    );
   }
 
   // Validación del formato de fecha

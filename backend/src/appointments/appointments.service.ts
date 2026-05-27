@@ -1,6 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, FindOptionsWhere, Repository } from 'typeorm';
+import { Between, FindOptionsWhere, In, Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { Client } from '../clients/client.entity';
@@ -9,6 +14,12 @@ import { AppointmentStatus } from './appointment.entity';
 import { Availability } from '../availability/availability.entity';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { User, UserRole } from '../users/user.entity';
+
+interface AuthUser {
+  id: number;
+  role: UserRole;
+}
 
 @Injectable()
 export class AppointmentsService {
@@ -25,14 +36,21 @@ export class AppointmentsService {
 
     @InjectRepository(Availability)
     private availabilityRepository: Repository<Availability>,
+
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
   ) {}
 
   private readonly SLOT_STEP_MINUTES = 15;
 
   // Obtiene todas las citas, con opción de filtrar por fecha
-  async findAll(date?: string, centerId?: number) {
+  async findAll(authUser?: AuthUser, date?: string, centerId?: number) {
+    const centerIds = await this.getAllowedCenterIds(authUser, centerId);
+
+    if (centerIds?.length === 0) return [];
+
     return this.appointmentsRepository.find({
-      where: this.getFindAllWhere(date, centerId),
+      where: this.getFindAllWhere(date, centerIds),
       order: {
         startDateTime: 'ASC',
       },
@@ -40,8 +58,15 @@ export class AppointmentsService {
   }
 
   // Obtiene los horarios disponibles para un servicio en una fecha determinada
-  async findAvailableSlots(date: string, serviceId: number) {
+  async findAvailableSlots(
+    date: string,
+    serviceId: number,
+    authUser?: AuthUser,
+  ) {
     const service = await this.getActiveService(serviceId);
+    const centerId = this.getServiceCenterId(service);
+
+    await this.validateCenterAccess(centerId, authUser);
 
     const targetDate = this.buildDateFromDateQuery(date);
     const dayOfWeek = targetDate.getDay();
@@ -80,6 +105,7 @@ export class AppointmentsService {
           const hasOverlap = await this.hasOverlappingAppointment(
             currentSlot,
             service.durationMinutes,
+            centerId,
           );
 
           if (!hasOverlap) slots.push(currentSlot.toTimeString().slice(0, 5));
@@ -95,13 +121,18 @@ export class AppointmentsService {
   }
 
   // Crea una nueva cita
-  async create(appointmentData: CreateAppointmentDto) {
+  async create(appointmentData: CreateAppointmentDto, authUser?: AuthUser) {
     const client = await this.getActiveClient(appointmentData.clientId);
     const service = await this.getActiveService(appointmentData.serviceId);
     const startDate = new Date(appointmentData.startDateTime);
+    const centerId = this.validateAppointmentCenter(client, service);
 
-    this.validateAppointmentCenter(client, service);
-    await this.validateAppointmentSlot(startDate, service.durationMinutes);
+    await this.validateCenterAccess(centerId, authUser);
+    await this.validateAppointmentSlot(
+      startDate,
+      service.durationMinutes,
+      centerId,
+    );
 
     // Si todo es correcto, se crea la cita
     const appointment = this.appointmentsRepository.create({
@@ -115,10 +146,15 @@ export class AppointmentsService {
   }
 
   // Actualiza una cita existente
-  async update(id: number, appointmentData: UpdateAppointmentDto) {
+  async update(
+    id: number,
+    appointmentData: UpdateAppointmentDto,
+    authUser?: AuthUser,
+  ) {
     const appointment = await this.findScheduledAppointment(
       id,
       'Solo se pueden actualizar citas programadas',
+      authUser,
     );
 
     const client = await this.resolveClientForUpdate(
@@ -134,11 +170,13 @@ export class AppointmentsService {
     const startDate = appointmentData.startDateTime
       ? new Date(appointmentData.startDateTime)
       : new Date(appointment.startDateTime);
+    const centerId = this.validateAppointmentCenter(client, service);
 
-    this.validateAppointmentCenter(client, service);
+    await this.validateCenterAccess(centerId, authUser);
     await this.validateAppointmentSlot(
       startDate,
       service.durationMinutes,
+      centerId,
       appointment.id,
     );
 
@@ -151,8 +189,8 @@ export class AppointmentsService {
   }
 
   // Elimina una cita existente
-  async remove(id: number) {
-    const appointment = await this.findAppointment(id);
+  async remove(id: number, authUser?: AuthUser) {
+    const appointment = await this.findAppointment(id, authUser);
     const appointmentToReturn = { ...appointment };
 
     await this.appointmentsRepository.remove(appointment);
@@ -214,7 +252,7 @@ export class AppointmentsService {
   private validateAppointmentCenter(
     client: Client,
     service: ServiceEntity,
-  ): void {
+  ): number {
     if (!client.center?.id || !service.center?.id)
       throw new BadRequestException(
         'El cliente y el servicio deben tener un centro asignado',
@@ -224,9 +262,14 @@ export class AppointmentsService {
       throw new BadRequestException(
         'El cliente y el servicio deben pertenecer al mismo centro',
       );
+
+    return service.center.id;
   }
 
-  private async findAppointment(id: number): Promise<Appointment> {
+  private async findAppointment(
+    id: number,
+    authUser?: AuthUser,
+  ): Promise<Appointment> {
     const appointment = await this.appointmentsRepository.findOne({
       where: { id },
     });
@@ -234,14 +277,20 @@ export class AppointmentsService {
     if (!appointment)
       throw new NotFoundException('No se ha encontrado la cita');
 
+    await this.validateCenterAccess(
+      this.getServiceCenterId(appointment.service),
+      authUser,
+    );
+
     return appointment;
   }
 
   private async findScheduledAppointment(
     id: number,
     invalidStatusMessage: string,
+    authUser?: AuthUser,
   ): Promise<Appointment> {
-    const appointment = await this.findAppointment(id);
+    const appointment = await this.findAppointment(id, authUser);
 
     if (appointment.status !== AppointmentStatus.SCHEDULED)
       throw new BadRequestException(invalidStatusMessage);
@@ -252,6 +301,7 @@ export class AppointmentsService {
   private async validateAppointmentSlot(
     startDate: Date,
     duration: number,
+    centerId: number,
     appointmentIdToExclude?: number,
   ): Promise<void> {
     const isAvailable = await this.isInsideAvailability(startDate, duration);
@@ -264,6 +314,7 @@ export class AppointmentsService {
     const hasOverlap = await this.hasOverlappingAppointment(
       startDate,
       duration,
+      centerId,
       appointmentIdToExclude,
     );
 
@@ -277,6 +328,7 @@ export class AppointmentsService {
   private async hasOverlappingAppointment(
     startDate: Date,
     duration: number,
+    centerId: number,
     appointmentIdToExclude?: number,
   ): Promise<boolean> {
     const endDate = new Date(startDate);
@@ -292,6 +344,11 @@ export class AppointmentsService {
       where: {
         startDateTime: Between(dayStart, dayEnd),
         status: AppointmentStatus.SCHEDULED,
+        service: {
+          center: {
+            id: centerId,
+          },
+        },
       },
     });
 
@@ -351,7 +408,7 @@ export class AppointmentsService {
 
   private getFindAllWhere(
     date?: string,
-    centerId?: number,
+    centerIds?: number[],
   ): FindOptionsWhere<Appointment> {
     const where: FindOptionsWhere<Appointment> = {};
 
@@ -365,10 +422,10 @@ export class AppointmentsService {
       where.startDateTime = Between(startOfDay, endOfDay);
     }
 
-    if (centerId) {
+    if (centerIds?.length) {
       where.service = {
         center: {
-          id: centerId,
+          id: In(centerIds),
         },
       };
     }
@@ -376,11 +433,69 @@ export class AppointmentsService {
     return where;
   }
 
+  private async getAllowedCenterIds(
+    authUser?: AuthUser,
+    centerId?: number,
+  ): Promise<number[] | undefined> {
+    if (authUser?.role !== UserRole.GESTOR) {
+      if (centerId) return [centerId];
+
+      return undefined;
+    }
+
+    const managedCenterIds = await this.getManagedCenterIds(authUser);
+
+    if (centerId) {
+      if (!managedCenterIds.includes(centerId))
+        throw new ForbiddenException('No puedes gestionar este centro');
+
+      return [centerId];
+    }
+
+    return managedCenterIds;
+  }
+
+  private async validateCenterAccess(
+    centerId: number,
+    authUser?: AuthUser,
+  ): Promise<void> {
+    if (authUser?.role !== UserRole.GESTOR) return;
+
+    const managedCenterIds = await this.getManagedCenterIds(authUser);
+
+    if (!managedCenterIds.includes(centerId))
+      throw new ForbiddenException('No puedes gestionar este centro');
+  }
+
+  private async getManagedCenterIds(authUser?: AuthUser): Promise<number[]> {
+    if (!authUser) return [];
+
+    const user = await this.usersRepository.findOne({
+      relations: {
+        centers: true,
+      },
+      where: { id: authUser.id },
+    });
+
+    if (!user)
+      throw new BadRequestException('No se ha encontrado el usuario autenticado');
+
+    return user.centers?.map((center) => center.id) ?? [];
+  }
+
+  private getServiceCenterId(service: ServiceEntity): number {
+    if (!service.center?.id)
+      throw new BadRequestException('El servicio debe tener un centro asignado');
+
+    return service.center.id;
+  }
+
   // Cancela una cita existente
-  async cancel(id: number) {
+  async cancel(id: number, authUser?: AuthUser) {
     const appointment = await this.findScheduledAppointment(
       id,
       'Solo se pueden cancelar citas programadas',
+      authUser,
     );
 
     appointment.status = AppointmentStatus.CANCELLED;
@@ -389,10 +504,11 @@ export class AppointmentsService {
   }
 
   // Marca una cita como completada
-  async complete(id: number) {
+  async complete(id: number, authUser?: AuthUser) {
     const appointment = await this.findScheduledAppointment(
       id,
       'Solo se pueden completar citas programadas',
+      authUser,
     );
 
     appointment.status = AppointmentStatus.COMPLETED;
@@ -401,10 +517,15 @@ export class AppointmentsService {
   }
 
   // Reprograma una cita existente
-  async reschedule(id: number, appointmentData: RescheduleAppointmentDto) {
+  async reschedule(
+    id: number,
+    appointmentData: RescheduleAppointmentDto,
+    authUser?: AuthUser,
+  ) {
     const appointment = await this.findScheduledAppointment(
       id,
       'Solo se pueden reprogramar citas programadas',
+      authUser,
     );
 
     if (!appointment.service.active)
@@ -417,6 +538,7 @@ export class AppointmentsService {
     await this.validateAppointmentSlot(
       startDate,
       appointment.duration,
+      this.getServiceCenterId(appointment.service),
       appointment.id,
     );
 
