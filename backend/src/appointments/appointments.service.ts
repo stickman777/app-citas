@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,12 +13,10 @@ import { AppointmentStatus } from './appointment.entity';
 import { Availability } from '../availability/availability.entity';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
-import { User, UserRole } from '../users/user.entity';
-
-interface AuthUser {
-  id: number;
-  role: UserRole;
-}
+import {
+  AuthUser,
+  CenterAccessService,
+} from '../centers/center-access.service';
 
 @Injectable()
 export class AppointmentsService {
@@ -37,8 +34,7 @@ export class AppointmentsService {
     @InjectRepository(Availability)
     private availabilityRepository: Repository<Availability>,
 
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private readonly centerAccessService: CenterAccessService,
   ) {}
 
   private readonly SLOT_STEP_MINUTES = 15;
@@ -66,7 +62,7 @@ export class AppointmentsService {
     const service = await this.getActiveService(serviceId);
     const centerId = this.getServiceCenterId(service);
 
-    await this.validateCenterAccess(centerId, authUser);
+    await this.centerAccessService.validateCenterAccess(centerId, authUser);
 
     const targetDate = this.buildDateFromDateQuery(date);
     const dayOfWeek = targetDate.getDay();
@@ -127,7 +123,7 @@ export class AppointmentsService {
     const startDate = new Date(appointmentData.startDateTime);
     const centerId = this.validateAppointmentCenter(client, service);
 
-    await this.validateCenterAccess(centerId, authUser);
+    await this.centerAccessService.validateCenterAccess(centerId, authUser);
     await this.validateAppointmentSlot(
       startDate,
       service.durationMinutes,
@@ -172,7 +168,7 @@ export class AppointmentsService {
       : new Date(appointment.startDateTime);
     const centerId = this.validateAppointmentCenter(client, service);
 
-    await this.validateCenterAccess(centerId, authUser);
+    await this.centerAccessService.validateCenterAccess(centerId, authUser);
     await this.validateAppointmentSlot(
       startDate,
       service.durationMinutes,
@@ -277,7 +273,7 @@ export class AppointmentsService {
     if (!appointment)
       throw new NotFoundException('No se ha encontrado la cita');
 
-    await this.validateCenterAccess(
+    await this.centerAccessService.validateCenterAccess(
       this.getServiceCenterId(appointment.service),
       authUser,
     );
@@ -437,55 +433,14 @@ export class AppointmentsService {
     authUser?: AuthUser,
     centerId?: number,
   ): Promise<number[] | undefined> {
-    if (authUser?.role !== UserRole.GESTOR) {
-      if (centerId) return [centerId];
-
-      return undefined;
-    }
-
-    const managedCenterIds = await this.getManagedCenterIds(authUser);
-
-    if (centerId) {
-      if (!managedCenterIds.includes(centerId))
-        throw new ForbiddenException('No puedes gestionar este centro');
-
-      return [centerId];
-    }
-
-    return managedCenterIds;
-  }
-
-  private async validateCenterAccess(
-    centerId: number,
-    authUser?: AuthUser,
-  ): Promise<void> {
-    if (authUser?.role !== UserRole.GESTOR) return;
-
-    const managedCenterIds = await this.getManagedCenterIds(authUser);
-
-    if (!managedCenterIds.includes(centerId))
-      throw new ForbiddenException('No puedes gestionar este centro');
-  }
-
-  private async getManagedCenterIds(authUser?: AuthUser): Promise<number[]> {
-    if (!authUser) return [];
-
-    const user = await this.usersRepository.findOne({
-      relations: {
-        centers: true,
-      },
-      where: { id: authUser.id },
-    });
-
-    if (!user)
-      throw new BadRequestException('No se ha encontrado el usuario autenticado');
-
-    return user.centers?.map((center) => center.id) ?? [];
+    return this.centerAccessService.getAllowedCenterIds(authUser, centerId);
   }
 
   private getServiceCenterId(service: ServiceEntity): number {
     if (!service.center?.id)
-      throw new BadRequestException('El servicio debe tener un centro asignado');
+      throw new BadRequestException(
+        'El servicio debe tener un centro asignado',
+      );
 
     return service.center.id;
   }

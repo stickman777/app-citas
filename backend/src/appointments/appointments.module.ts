@@ -6,7 +6,7 @@ import { AppointmentsController } from './appointments.controller';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
 import { Availability } from '../availability/availability.entity';
-import { User } from '../users/user.entity';
+import { CentersModule } from '../centers/centers.module';
 
 @Module({
   imports: [
@@ -16,8 +16,8 @@ import { User } from '../users/user.entity';
       Client,
       ServiceEntity,
       Availability,
-      User,
     ]),
+    CentersModule,
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
