@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, FindOptionsWhere, Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { Client } from '../clients/client.entity';
@@ -30,25 +30,9 @@ export class AppointmentsService {
   private readonly SLOT_STEP_MINUTES = 15;
 
   // Obtiene todas las citas, con opción de filtrar por fecha
-  async findAll(date?: string) {
-    if (!date) {
-      return this.appointmentsRepository.find({
-        order: {
-          startDateTime: 'ASC',
-        },
-      });
-    }
-
-    const startOfDay = this.buildDateFromDateQuery(date);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = this.buildDateFromDateQuery(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
+  async findAll(date?: string, centerId?: number) {
     return this.appointmentsRepository.find({
-      where: {
-        startDateTime: Between(startOfDay, endOfDay),
-      },
+      where: this.getFindAllWhere(date, centerId),
       order: {
         startDateTime: 'ASC',
       },
@@ -363,6 +347,33 @@ export class AppointmentsService {
     const [year, month, day] = date.split('-').map(Number);
 
     return new Date(year, month - 1, day);
+  }
+
+  private getFindAllWhere(
+    date?: string,
+    centerId?: number,
+  ): FindOptionsWhere<Appointment> {
+    const where: FindOptionsWhere<Appointment> = {};
+
+    if (date) {
+      const startOfDay = this.buildDateFromDateQuery(date);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = this.buildDateFromDateQuery(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      where.startDateTime = Between(startOfDay, endOfDay);
+    }
+
+    if (centerId) {
+      where.service = {
+        center: {
+          id: centerId,
+        },
+      };
+    }
+
+    return where;
   }
 
   // Cancela una cita existente

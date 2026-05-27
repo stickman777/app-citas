@@ -53,7 +53,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public appointmentToDelete: Appointment | null = null;
   public form: AppointmentForm = this.getEmptyForm();
   private activeCenterSubscription?: Subscription;
-  private loadedCenterId?: number | null;
+  private loadedCenterId: number | null = null;
 
   constructor(
     private readonly appointmentsService: AppointmentsService,
@@ -64,7 +64,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadCenters();
-    this.loadAppointments();
     this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
       center => {
         const centerId = center?.id ?? null;
@@ -74,6 +73,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
         this.activeCenter = center;
         this.loadedCenterId = centerId;
         this.loadReferenceData();
+        this.loadAppointments();
       }
     );
   }
@@ -89,7 +89,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       this.clearMessages();
     }
 
-    this.appointmentsService.getAppointments().subscribe({
+    this.appointmentsService.getAppointments(this.activeCenter?.id).subscribe({
       next: appointments => {
         this.appointments = appointments;
         this.applySearch();

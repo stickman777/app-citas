@@ -50,8 +50,10 @@ export class AppointmentsService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getAppointments(): Observable<Appointment[]> {
-    return this.http.get<Appointment[]>(this.appointmentsUrl);
+  getAppointments(centerId?: number | null): Observable<Appointment[]> {
+    return this.http.get<Appointment[]>(this.appointmentsUrl, {
+      params: this.getCenterParams(centerId),
+    });
   }
 
   createAppointment(payload: AppointmentPayload): Observable<Appointment> {

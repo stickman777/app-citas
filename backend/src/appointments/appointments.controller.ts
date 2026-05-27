@@ -28,13 +28,16 @@ export class AppointmentsController {
 
   // Endpoint para obtener todas las citas, con opción de filtrar por fecha
   @Get()
-  findAll(@Query('date') date?: string) {
+  findAll(@Query('date') date?: string, @Query('centerId') centerId?: string) {
     if (date !== undefined) {
       if (!date) throw new BadRequestException('Debe indicar una fecha');
 
       this.validateDateQuery(date);
     }
-    return this.appointmentsService.findAll(date);
+    return this.appointmentsService.findAll(
+      date,
+      this.parseCenterId(centerId),
+    );
   }
 
   // Endpoint para obtener los horarios disponibles para un servicio en una fecha determinada
@@ -111,5 +114,16 @@ export class AppointmentsController {
       parsedDate.getDate() !== day
     )
       throw new BadRequestException('Fecha no válida');
+  }
+
+  private parseCenterId(centerId?: string): number | undefined {
+    if (centerId === undefined) return undefined;
+
+    const parsedCenterId = Number(centerId);
+
+    if (!Number.isInteger(parsedCenterId) || parsedCenterId < 1)
+      throw new BadRequestException('El centro no es valido');
+
+    return parsedCenterId;
   }
 }
