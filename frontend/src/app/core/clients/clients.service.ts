@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { Center } from '../centers/centers.service';
 
 export interface LinkedClientUser {
   id: number;
@@ -18,6 +19,7 @@ export interface Client {
   notes?: string | null;
   priority: number;
   user?: LinkedClientUser | null;
+  center?: Center | null;
 }
 
 export interface ClientPayload {
@@ -26,6 +28,7 @@ export interface ClientPayload {
   email?: string | null;
   notes?: string | null;
   priority?: number;
+  centerId?: number | null;
 }
 
 @Injectable({

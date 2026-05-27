@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Center } from '../centers/center.entity';
 import { Client } from './client.entity';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -11,6 +12,9 @@ export class ClientsService {
     // Repositorio necesario para manejar los clientes
     @InjectRepository(Client)
     private clientsRepository: Repository<Client>,
+
+    @InjectRepository(Center)
+    private centersRepository: Repository<Center>,
   ) {}
 
   // Obtiene todos los clientes, incluyendo los inactivos
@@ -28,8 +32,14 @@ export class ClientsService {
   }
 
   // Crea un nuevo cliente
-  create(clientData: CreateClientDto) {
-    const client = this.clientsRepository.create(clientData);
+  async create(clientData: CreateClientDto) {
+    const { centerId, ...clientPayload } = clientData;
+    const center = await this.getCenter(centerId);
+    const client = this.clientsRepository.create({
+      ...clientPayload,
+      center,
+    });
+
     return this.clientsRepository.save(client);
   }
 
@@ -41,9 +51,28 @@ export class ClientsService {
 
     if (!client) throw new NotFoundException('No se ha encontrado el cliente');
 
-    Object.assign(client, clientData);
+    const { centerId, ...clientPayload } = clientData;
+    const center = await this.getCenter(centerId);
+
+    Object.assign(client, clientPayload);
+
+    if (centerId !== undefined) {
+      client.center = center;
+    }
 
     return this.clientsRepository.save(client);
+  }
+
+  private async getCenter(centerId?: number): Promise<Center | null> {
+    if (!centerId) return null;
+
+    const center = await this.centersRepository.findOne({
+      where: { id: centerId },
+    });
+
+    if (!center) throw new NotFoundException('No se ha encontrado el centro');
+
+    return center;
   }
 
   // Activa un cliente por su ID (lo marca como activo)

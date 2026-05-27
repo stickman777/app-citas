@@ -21,4 +21,9 @@ export class UpdateClientDto {
   @IsInt()
   @Min(0)
   priority?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  centerId?: number;
 }
