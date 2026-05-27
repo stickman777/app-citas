@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -15,14 +26,16 @@ export class ClientsController {
 
   // Endpoint para obtener todos los clientes activos
   @Get()
-  findAll() {
-    return this.clientsService.findAll();
+  findAll(@Query('centerId') centerId?: string) {
+    return this.clientsService.findAll(this.parseCenterId(centerId));
   }
 
   // Endpoint para obtener todos los clientes, incluyendo los inactivos
   @Get('all')
-  findAllIncludingInactive() {
-    return this.clientsService.findAllIncludingInactive();
+  findAllIncludingInactive(@Query('centerId') centerId?: string) {
+    return this.clientsService.findAllIncludingInactive(
+      this.parseCenterId(centerId),
+    );
   }
 
   // Endpoint para crear un nuevo cliente
@@ -56,5 +69,16 @@ export class ClientsController {
     id: number,
   ) {
     return this.clientsService.deactivate(id);
+  }
+
+  private parseCenterId(centerId?: string): number | undefined {
+    if (centerId === undefined) return undefined;
+
+    const parsedCenterId = Number(centerId);
+
+    if (!Number.isInteger(parsedCenterId) || parsedCenterId < 1)
+      throw new BadRequestException('El centro no es valido');
+
+    return parsedCenterId;
   }
 }

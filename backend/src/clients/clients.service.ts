@@ -18,15 +18,18 @@ export class ClientsService {
   ) {}
 
   // Obtiene todos los clientes, incluyendo los inactivos
-  findAllIncludingInactive() {
-    return this.clientsRepository.find();
+  findAllIncludingInactive(centerId?: number) {
+    return this.clientsRepository.find({
+      where: this.getCenterWhere(centerId),
+    });
   }
 
   // Obtiene todos los clientes activos
-  findAll() {
+  findAll(centerId?: number) {
     return this.clientsRepository.find({
       where: {
         active: true,
+        ...this.getCenterWhere(centerId),
       },
     });
   }
@@ -73,6 +76,16 @@ export class ClientsService {
     if (!center) throw new NotFoundException('No se ha encontrado el centro');
 
     return center;
+  }
+
+  private getCenterWhere(centerId?: number) {
+    return centerId
+      ? {
+          center: {
+            id: centerId,
+          },
+        }
+      : {};
   }
 
   // Activa un cliente por su ID (lo marca como activo)

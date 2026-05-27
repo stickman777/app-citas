@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -39,8 +39,10 @@ export class ClientsService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getClients(): Observable<Client[]> {
-    return this.http.get<Client[]>(`${this.apiUrl}/all`);
+  getClients(centerId?: number | null): Observable<Client[]> {
+    return this.http.get<Client[]>(`${this.apiUrl}/all`, {
+      params: this.getCenterParams(centerId),
+    });
   }
 
   createClient(payload: ClientPayload): Observable<Client> {
@@ -57,5 +59,9 @@ export class ClientsService {
 
   deactivateClient(id: number): Observable<Client> {
     return this.http.patch<Client>(`${this.apiUrl}/${id}/deactivate`, {});
+  }
+
+  private getCenterParams(centerId?: number | null): HttpParams {
+    return centerId ? new HttpParams().set('centerId', centerId) : new HttpParams();
   }
 }

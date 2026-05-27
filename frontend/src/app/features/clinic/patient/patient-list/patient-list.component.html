@@ -61,6 +61,7 @@
           <th>{{ 'clients.client' | translate }}</th>
           <th>{{ 'clients.fields.phone' | translate }}</th>
           <th>{{ 'common.email' | translate }}</th>
+          <th>{{ 'common.center' | translate }}</th>
           <th>{{ 'clients.fields.priority' | translate }}</th>
           <th>{{ 'clients.fields.mobileAccount' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
@@ -70,7 +71,7 @@
       <tbody>
         @if(isLoading){
         <tr>
-          <td colspan="8" class="text-center text-dark py-4">{{ 'clients.loading' | translate }}</td>
+          <td colspan="9" class="text-center text-dark py-4">{{ 'clients.loading' | translate }}</td>
         </tr>
         } @else {
           @for(client of filteredClients; track trackByClientId($index, client)){
@@ -91,6 +92,7 @@
             </td>
             <td>{{ client.phone }}</td>
             <td>{{ client.email || '-' }}</td>
+            <td>{{ centerName(client) }}</td>
             <td>{{ client.priority }}</td>
             <td>
               <span class="badge badge-soft-warning border border-warning text-warning fs-13 fw-medium">
@@ -126,7 +128,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="8" class="text-center text-dark py-4">{{ 'clients.empty' | translate }}</td>
+            <td colspan="9" class="text-center text-dark py-4">{{ 'clients.empty' | translate }}</td>
           </tr>
           }
         }
@@ -162,6 +164,15 @@
           <div class="mb-3">
             <label class="form-label">{{ 'clients.fields.priority' | translate }}</label>
             <input type="number" name="priority" [(ngModel)]="form.priority" class="form-control" min="0">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ 'common.center' | translate }}</label>
+            <select name="centerId" [(ngModel)]="form.centerId" class="form-select">
+              <option [ngValue]="null">{{ 'centers.none' | translate }}</option>
+              @for(center of centerOptions; track trackByCenterId($index, center)){
+              <option [ngValue]="center.id">{{ center.name }}</option>
+              }
+            </select>
           </div>
           <div class="mb-0">
             <label class="form-label">{{ 'clients.fields.notes' | translate }}</label>

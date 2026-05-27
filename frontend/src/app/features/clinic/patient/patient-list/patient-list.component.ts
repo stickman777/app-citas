@@ -1,7 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
+import { ActiveCenterService } from '../../../../core/centers/active-center.service';
+import { Center, CentersService } from '../../../../core/centers/centers.service';
 import {
   Client,
   ClientPayload,
@@ -16,6 +19,7 @@ interface ClientForm {
   email: string;
   notes: string;
   priority: number;
+  centerId: number | null;
 }
 
 @Component({
@@ -24,9 +28,11 @@ interface ClientForm {
   styleUrls: ['./patient-list.component.scss'],
   imports: [CommonModule, FormsModule, TranslatePipe],
 })
-export class PatientListComponent {
+export class PatientListComponent implements OnInit, OnDestroy {
   public clients: Client[] = [];
   public filteredClients: Client[] = [];
+  public centers: Center[] = [];
+  public activeCenter: Center | null = null;
   public searchTerm = '';
   public errorMessage = '';
   public successMessage = '';
@@ -39,14 +45,33 @@ export class PatientListComponent {
   public clientToChangeStatus: Client | null = null;
   public selectedStatus = true;
   public form: ClientForm = this.getEmptyForm();
+  private activeCenterSubscription?: Subscription;
+  private loadedCenterId?: number | null;
 
   constructor(
     private readonly clientsService: ClientsService,
+    private readonly centersService: CentersService,
+    private readonly activeCenterService: ActiveCenterService,
     private readonly i18nService: I18nService
   ) {}
 
   ngOnInit(): void {
-    this.loadClients();
+    this.loadCenters();
+    this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
+      center => {
+        const centerId = center?.id ?? null;
+
+        if (centerId === this.loadedCenterId) return;
+
+        this.activeCenter = center;
+        this.loadedCenterId = centerId;
+        this.loadClients();
+      }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.activeCenterSubscription?.unsubscribe();
   }
 
   public loadClients(clearMessages = true): void {
@@ -56,7 +81,7 @@ export class PatientListComponent {
       this.clearMessages();
     }
 
-    this.clientsService.getClients().subscribe({
+    this.clientsService.getClients(this.activeCenter?.id).subscribe({
       next: clients => {
         this.clients = clients;
         this.applySearch();
@@ -85,6 +110,7 @@ export class PatientListComponent {
       email: client.email ?? '',
       notes: client.notes ?? '',
       priority: client.priority,
+      centerId: client.center?.id ?? this.activeCenter?.id ?? null,
     };
     this.isFormModalOpen = true;
   }
@@ -179,7 +205,7 @@ export class PatientListComponent {
 
     this.filteredClients = search
       ? this.clients.filter(client =>
-          `${client.id} ${client.name} ${client.phone} ${client.email ?? ''} ${client.notes ?? ''}`
+          `${client.id} ${client.name} ${client.phone} ${client.email ?? ''} ${client.notes ?? ''} ${client.center?.name ?? ''}`
             .toLowerCase()
             .includes(search)
         )
@@ -196,6 +222,18 @@ export class PatientListComponent {
     return client.id;
   }
 
+  public get centerOptions(): Center[] {
+    return this.withCurrentOption(this.centers, this.editingClient?.center);
+  }
+
+  public trackByCenterId(_: number, center: Center): number {
+    return center.id;
+  }
+
+  public centerName(client: Client): string {
+    return client.center?.name ?? this.translate('centers.none');
+  }
+
   private getPayload(): ClientPayload {
     const email = this.form.email.trim();
     const notes = this.form.notes.trim();
@@ -206,6 +244,7 @@ export class PatientListComponent {
       priority: Number(this.form.priority) || 0,
       email: email || null,
       notes: notes || null,
+      centerId: this.form.centerId ?? undefined,
     };
   }
 
@@ -216,7 +255,31 @@ export class PatientListComponent {
       email: '',
       notes: '',
       priority: 0,
+      centerId: this.activeCenter?.id ?? null,
     };
+  }
+
+  private loadCenters(): void {
+    this.centersService.getCenters().subscribe({
+      next: centers => {
+        this.centers = centers;
+        this.activeCenterService.setAvailableCenters(centers);
+      },
+      error: () => {
+        this.errorMessage = this.translate('centers.errors.load');
+      },
+    });
+  }
+
+  private withCurrentOption<T extends { id: number }>(
+    options: T[],
+    current?: T | null,
+  ): T[] {
+    if (!current || options.some(option => option.id === current.id)) {
+      return options;
+    }
+
+    return [current, ...options];
   }
 
   private clearMessages(): void {
