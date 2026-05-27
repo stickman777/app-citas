@@ -2,45 +2,9 @@
 <div class="sidebar" id="sidebar" (mouseover)="miniSideBarMouseHover('over')" (mouseout)="miniSideBarMouseHover('out')"
     (focus)="miniSideBarMouseHover('over')" (blur)="miniSideBarMouseHover('out')" tabindex="0">
 
-    <!-- Start Logo -->
-    <div class="sidebar-logo">
-        <div>
-            <!-- Logo Normal -->
-            <a [routerLink]="routes.index" class="logo logo-normal">
-                <img src="assets/img/logo.svg" alt="Logo">
-            </a>
-
-            <!-- Logo Small -->
-            <a [routerLink]="routes.index" class="logo-small">
-                <img src="assets/img/logo-small.svg" alt="Logo">
-            </a>
-
-            <!-- Logo Dark -->
-            <a [routerLink]="routes.index" class="dark-logo">
-                <img src="assets/img/logo-white.svg" alt="Logo">
-            </a>
-        </div>
-
-        <button *ngIf="base==='layout-hidden'  || dataLayoutHidden" class="sidenav-toggle-btn btn border-0 p-0 active"
-            id="toggle_btn" (click)="settings.togglehidden()">
-            <i class="ti ti-arrow-right"></i>
-        </button>
-
-        <!-- Show this when layout is not hidden -->
-        <button *ngIf="!(base === 'layout-hidden' || dataLayoutHidden)"
-            class="sidenav-toggle-btn btn border-0 p-0 active" id="toggle_btn" (click)="toggleSidebarmini()">
-            <i class="ti ti-arrow-left"></i>
-        </button>
-
-
-
-
-        <!-- Sidebar Menu Close -->
-        <a href="javascript:void(0);" class="sidebar-close" (click)="toggleSidebar()">
-            <i class="ti ti-x align-middle"></i>
-        </a>
-    </div>
-    <!-- End Logo -->
+    <a href="javascript:void(0);" class="sidebar-close" (click)="toggleSidebar()">
+        <i class="ti ti-x align-middle"></i>
+    </a>
     <div class="dropdown-menu dropdown-menu-lg" [ngClass]="{'show':sidebartop}">
         <div class="p-2">
             @for(center of centers; track center.id){

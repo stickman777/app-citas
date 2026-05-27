@@ -3,7 +3,6 @@ import { NavigationEnd, Router , RouterLink } from '@angular/router';
 import { DataService } from '../../shared/data/data.service';
 import { MenuItem, SideBarData } from '../../shared/models/models';
 import { routes } from '../../shared/routes/routes';
-import { SettingsService } from '../../shared/settings/settings.service';
 import { SideBarService } from '../../shared/sidebar/sidebar.service';
 import { MatSelectModule } from '@angular/material/select';
 import { CommonModule } from '@angular/common';
@@ -32,10 +31,6 @@ export class SidebarComponent {
   togglesidebartop():void{
     this.sidebartop=!this.sidebartop
   }
-  public toggleSidebarmini(): void {
-    this.sideBar.switchSideMenuPosition();
-
-  }
     footerClose(){
     this.sidebarfooter=true;
   }
@@ -49,7 +44,6 @@ export class SidebarComponent {
     private data: DataService,
     private router: Router,
     public sideBar: SideBarService,
-    public settings:SettingsService,
     public common:CommonService,
     private centersService: CentersService,
     private activeCenterService: ActiveCenterService
@@ -185,13 +179,7 @@ if(this.base=='layout-default' || this.base=='layout-mini'|| this.base=='layout-
     this.multiLevel3 = !this.multiLevel3;
     this.multiLevel2=true;
   }
-dataLayoutHidden = false;
-
 ngOnInit(): void {
-  const html = document.documentElement;
-  const dataLayout = html.getAttribute('data-layout');
-  this.dataLayoutHidden = dataLayout === 'hidden';
-
   this.expandSubMenusActive();
   this.loadCenters();
 

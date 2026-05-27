@@ -3,3 +3,15 @@
   height: 32px;
   object-fit: contain;
 }
+
+.sidebar {
+  [data-simplebar] {
+    top: 0;
+    height: 100%;
+  }
+
+  .sidebar-menu {
+    margin-top: 0;
+    padding-top: 16px;
+  }
+}
