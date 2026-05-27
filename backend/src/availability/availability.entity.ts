@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Center } from '../centers/center.entity';
 
 @Entity()
 export class Availability {
@@ -13,4 +14,11 @@ export class Availability {
 
   @Column()
   endTime: string; // "14:00"
+
+  @ManyToOne(() => Center, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  center?: Center | null;
 }

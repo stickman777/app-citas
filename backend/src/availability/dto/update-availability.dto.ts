@@ -1,8 +1,20 @@
-import { IsInt, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  Min,
+} from 'class-validator';
 
 const TIME_FORMAT_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export class UpdateAvailabilityDto {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  centerId?: number;
+
   @IsOptional()
   @IsInt()
   @Min(0)

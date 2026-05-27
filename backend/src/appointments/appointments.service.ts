@@ -68,7 +68,12 @@ export class AppointmentsService {
     const dayOfWeek = targetDate.getDay();
 
     const availabilities = await this.availabilityRepository.find({
-      where: { dayOfWeek },
+      where: {
+        dayOfWeek,
+        center: {
+          id: centerId,
+        },
+      },
       order: {
         startTime: 'ASC',
       },
@@ -300,7 +305,11 @@ export class AppointmentsService {
     centerId: number,
     appointmentIdToExclude?: number,
   ): Promise<void> {
-    const isAvailable = await this.isInsideAvailability(startDate, duration);
+    const isAvailable = await this.isInsideAvailability(
+      startDate,
+      duration,
+      centerId,
+    );
 
     if (!isAvailable)
       throw new BadRequestException(
@@ -365,6 +374,7 @@ export class AppointmentsService {
   private async isInsideAvailability(
     startDate: Date,
     duration: number,
+    centerId: number,
   ): Promise<boolean> {
     const endDate = new Date(startDate);
     endDate.setMinutes(endDate.getMinutes() + duration);
@@ -372,7 +382,12 @@ export class AppointmentsService {
     const dayOfWeek = startDate.getDay();
 
     const availabilities = await this.availabilityRepository.find({
-      where: { dayOfWeek },
+      where: {
+        dayOfWeek,
+        center: {
+          id: centerId,
+        },
+      },
     });
 
     const startTime = startDate.toTimeString().slice(0, 5);

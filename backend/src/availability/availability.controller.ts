@@ -1,4 +1,17 @@
-import { BadRequestException, Body, Controller, Get, Post, UseGuards, Param, ParseIntPipe, Delete, Patch, } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -13,48 +26,68 @@ import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 export class AvailabilityController {
   constructor(private readonly availabilityService: AvailabilityService) {}
 
-  // Endpoint obtener todas las franjas de disponibilidad
   @Get()
-  findAll() {
-    return this.availabilityService.findAll();
+  findAll(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Query('centerId') centerId?: string,
+  ) {
+    return this.availabilityService.findAll(
+      request.user,
+      this.parseCenterId(centerId),
+    );
   }
 
-  // Endpoint para obtener franjas de disponibilidad de un día
   @Get('day/:dayOfWeek')
   findByDay(
-    @Param('dayOfWeek', ParseIntPipe)
-    dayOfWeek: number,
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('dayOfWeek', ParseIntPipe) dayOfWeek: number,
+    @Query('centerId') centerId?: string,
   ) {
     if (dayOfWeek < 0 || dayOfWeek > 6)
-      throw new BadRequestException('El día de la semana debe estar entre el Lunes y el Domingo (0-6)');
+      throw new BadRequestException(
+        'El dia de la semana debe estar entre el Lunes y el Domingo (0-6)',
+      );
 
-    return this.availabilityService.findByDay(dayOfWeek);
+    return this.availabilityService.findByDay(
+      dayOfWeek,
+      request.user,
+      this.parseCenterId(centerId),
+    );
   }
 
-  // Endpoint crear nueva disponibilidad
   @Post()
   create(
-    @Body()
-    availabilityData: CreateAvailabilityDto,
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Body() availabilityData: CreateAvailabilityDto,
   ) {
-    return this.availabilityService.create(availabilityData);
+    return this.availabilityService.create(availabilityData, request.user);
   }
 
-  // Endpoint eliminar una franja de disponibilidad por su ID
   @Delete(':id')
   remove(
-    @Param('id', ParseIntPipe)
-    id: number,
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
   ) {
-    return this.availabilityService.remove(id);
+    return this.availabilityService.remove(id, request.user);
   }
 
-  // Endpoint actualizar una franja de disponibilidad por su ID
   @Patch(':id')
   update(
+    @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe) id: number,
     @Body() availabilityData: UpdateAvailabilityDto,
   ) {
-    return this.availabilityService.update(id, availabilityData);
+    return this.availabilityService.update(id, availabilityData, request.user);
+  }
+
+  private parseCenterId(centerId?: string): number | undefined {
+    if (centerId === undefined) return undefined;
+
+    const parsedCenterId = Number(centerId);
+
+    if (!Number.isInteger(parsedCenterId) || parsedCenterId < 1)
+      throw new BadRequestException('El centro no es valido');
+
+    return parsedCenterId;
   }
 }

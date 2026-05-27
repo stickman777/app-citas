@@ -4,6 +4,10 @@ const TIME_FORMAT_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export class CreateAvailabilityDto {
   @IsInt()
+  @Min(1)
+  centerId: number;
+
+  @IsInt()
   @Min(0)
   @Max(6)
   dayOfWeek: number;
