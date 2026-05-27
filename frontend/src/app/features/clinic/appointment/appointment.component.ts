@@ -1,8 +1,10 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, Subscription } from 'rxjs';
 
+import { ActiveCenterService } from '../../../core/centers/active-center.service';
+import { Center, CentersService } from '../../../core/centers/centers.service';
 import {
   Appointment,
   AppointmentClient,
@@ -32,11 +34,13 @@ const STATUS_BADGE_CLASSES: Record<AppointmentStatus, string> = {
   styleUrls: ['./appointment.component.scss'],
   imports: [CommonModule, FormsModule, TranslatePipe],
 })
-export class AppointmentComponent {
+export class AppointmentComponent implements OnInit, OnDestroy {
   public appointments: Appointment[] = [];
   public filteredAppointments: Appointment[] = [];
   public clients: AppointmentClient[] = [];
   public services: AppointmentServiceOption[] = [];
+  public centers: Center[] = [];
+  public activeCenter: Center | null = null;
   public searchTerm = '';
   public errorMessage = '';
   public successMessage = '';
@@ -48,15 +52,34 @@ export class AppointmentComponent {
   public editingAppointment: Appointment | null = null;
   public appointmentToDelete: Appointment | null = null;
   public form: AppointmentForm = this.getEmptyForm();
+  private activeCenterSubscription?: Subscription;
+  private loadedCenterId?: number | null;
 
   constructor(
     private readonly appointmentsService: AppointmentsService,
+    private readonly centersService: CentersService,
+    private readonly activeCenterService: ActiveCenterService,
     private readonly i18nService: I18nService
   ) {}
 
   ngOnInit(): void {
-    this.loadReferenceData();
+    this.loadCenters();
     this.loadAppointments();
+    this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
+      center => {
+        const centerId = center?.id ?? null;
+
+        if (centerId === this.loadedCenterId) return;
+
+        this.activeCenter = center;
+        this.loadedCenterId = centerId;
+        this.loadReferenceData();
+      }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.activeCenterSubscription?.unsubscribe();
   }
 
   public loadAppointments(clearMessages = true): void {
@@ -224,8 +247,8 @@ export class AppointmentComponent {
 
   private loadReferenceData(): void {
     forkJoin({
-      clients: this.appointmentsService.getClients(),
-      services: this.appointmentsService.getServices(),
+      clients: this.appointmentsService.getClients(this.activeCenter?.id),
+      services: this.appointmentsService.getServices(this.activeCenter?.id),
     }).subscribe({
       next: ({ clients, services }) => {
         this.clients = clients;
@@ -233,6 +256,18 @@ export class AppointmentComponent {
       },
       error: () => {
         this.errorMessage = this.translate('appointments.errors.references');
+      },
+    });
+  }
+
+  private loadCenters(): void {
+    this.centersService.getCenters().subscribe({
+      next: centers => {
+        this.centers = centers;
+        this.activeCenterService.setAvailableCenters(centers);
+      },
+      error: () => {
+        this.errorMessage = this.translate('centers.errors.load');
       },
     });
   }

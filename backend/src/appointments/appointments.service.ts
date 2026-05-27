@@ -116,6 +116,7 @@ export class AppointmentsService {
     const service = await this.getActiveService(appointmentData.serviceId);
     const startDate = new Date(appointmentData.startDateTime);
 
+    this.validateAppointmentCenter(client, service);
     await this.validateAppointmentSlot(startDate, service.durationMinutes);
 
     // Si todo es correcto, se crea la cita
@@ -150,6 +151,7 @@ export class AppointmentsService {
       ? new Date(appointmentData.startDateTime)
       : new Date(appointment.startDateTime);
 
+    this.validateAppointmentCenter(client, service);
     await this.validateAppointmentSlot(
       startDate,
       service.durationMinutes,
@@ -223,6 +225,21 @@ export class AppointmentsService {
       return appointment.service;
 
     return this.getActiveService(serviceId);
+  }
+
+  private validateAppointmentCenter(
+    client: Client,
+    service: ServiceEntity,
+  ): void {
+    if (!client.center?.id || !service.center?.id)
+      throw new BadRequestException(
+        'El cliente y el servicio deben tener un centro asignado',
+      );
+
+    if (client.center.id !== service.center.id)
+      throw new BadRequestException(
+        'El cliente y el servicio deben pertenecer al mismo centro',
+      );
   }
 
   private async findAppointment(id: number): Promise<Appointment> {

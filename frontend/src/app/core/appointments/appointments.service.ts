@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { Center } from '../centers/centers.service';
 
 export type AppointmentStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
 
@@ -12,6 +13,7 @@ export interface AppointmentClient {
   phone: string;
   email?: string;
   active: boolean;
+  center?: Center | null;
 }
 
 export interface AppointmentServiceOption {
@@ -20,6 +22,7 @@ export interface AppointmentServiceOption {
   durationMinutes: number;
   price?: number | string | null;
   active: boolean;
+  center?: Center | null;
 }
 
 export interface Appointment {
@@ -66,11 +69,19 @@ export class AppointmentsService {
     return this.http.delete<Appointment>(`${this.appointmentsUrl}/${id}`);
   }
 
-  getClients(): Observable<AppointmentClient[]> {
-    return this.http.get<AppointmentClient[]>(this.clientsUrl);
+  getClients(centerId?: number | null): Observable<AppointmentClient[]> {
+    return this.http.get<AppointmentClient[]>(this.clientsUrl, {
+      params: this.getCenterParams(centerId),
+    });
   }
 
-  getServices(): Observable<AppointmentServiceOption[]> {
-    return this.http.get<AppointmentServiceOption[]>(this.servicesUrl);
+  getServices(centerId?: number | null): Observable<AppointmentServiceOption[]> {
+    return this.http.get<AppointmentServiceOption[]>(this.servicesUrl, {
+      params: this.getCenterParams(centerId),
+    });
+  }
+
+  private getCenterParams(centerId?: number | null): HttpParams {
+    return centerId ? new HttpParams().set('centerId', centerId) : new HttpParams();
   }
 }
