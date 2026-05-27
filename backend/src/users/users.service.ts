@@ -72,7 +72,12 @@ export class UsersService {
 
     if (!user) throw new NotFoundException('No se ha encontrado el usuario');
 
-    return this.removePassword(user);
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      centerIds: user.centers?.map((center) => center.id) ?? [],
+    };
   }
 
   async create(userData: CreateUserDto, authUser?: AuthUser) {

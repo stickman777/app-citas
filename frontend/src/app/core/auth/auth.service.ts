@@ -5,7 +5,6 @@ import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { routes } from '../../shared/routes/routes';
-import { Center } from '../centers/centers.service';
 
 export interface LoginCredentials {
   email: string;
@@ -20,7 +19,7 @@ export interface CurrentUser {
   id: number;
   email: string;
   role: 'ADMIN' | 'GESTOR' | 'CLIENT';
-  centers?: Center[];
+  centerIds: number[];
 }
 
 @Injectable({
