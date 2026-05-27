@@ -1,21 +1,16 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User, UserRole } from '../users/user.entity';
+import { AuthUser, CenterAccessService } from './center-access.service';
 import { Center } from './center.entity';
 import { CreateCenterDto } from './dto/create-center.dto';
 import { UpdateCenterDto } from './dto/update-center.dto';
-
-interface AuthUser {
-  id: number;
-  role: UserRole;
-}
 
 @Injectable()
 export class CentersService implements OnModuleInit {
@@ -25,6 +20,8 @@ export class CentersService implements OnModuleInit {
 
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+
+    private readonly centerAccessService: CenterAccessService,
   ) {}
 
   async onModuleInit() {
@@ -63,7 +60,7 @@ export class CentersService implements OnModuleInit {
 
     if (!center) throw new NotFoundException('No se ha encontrado el centro');
 
-    await this.validateCenterAccess(id, authUser);
+    await this.centerAccessService.validateCenterAccess(id, authUser);
 
     return center;
   }
@@ -129,46 +126,31 @@ export class CentersService implements OnModuleInit {
     });
 
     if (!user)
-      throw new BadRequestException('No se ha encontrado el usuario autenticado');
+      throw new BadRequestException(
+        'No se ha encontrado el usuario autenticado',
+      );
 
     user.centers = [...(user.centers ?? []), center];
 
     await this.usersRepository.save(user);
   }
 
-  private async validateCenterAccess(id: number, authUser?: AuthUser) {
-    if (authUser?.role !== UserRole.GESTOR) return;
-
-    const centerIds = await this.getManagedCenterIds(authUser);
-
-    if (!centerIds.includes(id))
-      throw new ForbiddenException('No puedes gestionar este centro');
-  }
-
-  private async getManagedCenterIds(authUser: AuthUser) {
-    const user = await this.usersRepository.findOne({
-      relations: {
-        centers: true,
-      },
-      where: { id: authUser.id },
-    });
-
-    return user?.centers?.map((center) => center.id) ?? [];
-  }
-
   private async findManagedCenters(authUser: AuthUser, activeOnly: boolean) {
-    const user = await this.usersRepository.findOne({
-      relations: {
-        centers: true,
+    const centerIds =
+      await this.centerAccessService.getManagedCenterIds(authUser);
+
+    if (centerIds.length === 0) return [];
+
+    const centers = await this.centersRepository.find({
+      where: {
+        id: In(centerIds),
+        ...(activeOnly ? { active: true } : {}),
       },
-      where: { id: authUser.id },
+      order: {
+        name: 'ASC',
+      },
     });
 
-    const centers = user?.centers ?? [];
-    const filteredCenters = activeOnly
-      ? centers.filter((center) => center.active)
-      : centers;
-
-    return filteredCenters.sort((a, b) => a.name.localeCompare(b.name));
+    return centers;
   }
 }

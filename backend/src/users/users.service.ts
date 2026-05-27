@@ -7,15 +7,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { Center } from '../centers/center.entity';
+import {
+  AuthUser,
+  CenterAccessService,
+} from '../centers/center-access.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserRole } from './user.entity';
-
-interface AuthUser {
-  id: number;
-  role: UserRole;
-}
 
 @Injectable()
 export class UsersService {
@@ -23,8 +21,7 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
 
-    @InjectRepository(Center)
-    private centersRepository: Repository<Center>,
+    private readonly centerAccessService: CenterAccessService,
   ) {}
 
   async findAll(authUser?: AuthUser) {
@@ -38,7 +35,8 @@ export class UsersService {
       return users.map((user) => this.removePassword(user));
     }
 
-    const centerIds = await this.getManagedCenterIds(authUser);
+    const centerIds =
+      await this.centerAccessService.getManagedCenterIds(authUser);
 
     if (centerIds.length === 0) return [];
 
@@ -83,8 +81,7 @@ export class UsersService {
   async create(userData: CreateUserDto, authUser?: AuthUser) {
     this.validateRoleChange(authUser, userData.role);
 
-    if (!userData.password)
-      throw new BadRequestException('Password requerido');
+    if (!userData.password) throw new BadRequestException('Password requerido');
 
     const existingUser = await this.usersRepository.findOne({
       where: {
@@ -179,7 +176,8 @@ export class UsersService {
 
     if (!user || !authUser || authUser.role === UserRole.ADMIN) return user;
 
-    const centerIds = await this.getManagedCenterIds(authUser);
+    const centerIds =
+      await this.centerAccessService.getManagedCenterIds(authUser);
     const sharesCenter = user.centers?.some((center) =>
       centerIds.includes(center.id),
     );
@@ -195,7 +193,7 @@ export class UsersService {
   private async resolveCentersForUser(
     authUser: AuthUser | undefined,
     centerIds?: number[],
-  ): Promise<Center[]> {
+  ) {
     if (centerIds === undefined) return [];
 
     const uniqueCenterIds = [...new Set(centerIds)];
@@ -203,7 +201,8 @@ export class UsersService {
     if (uniqueCenterIds.length === 0) return [];
 
     if (authUser?.role !== UserRole.ADMIN) {
-      const managedCenterIds = await this.getManagedCenterIds(authUser);
+      const managedCenterIds =
+        await this.centerAccessService.getManagedCenterIds(authUser);
       const hasInvalidCenter = uniqueCenterIds.some(
         (centerId) => !managedCenterIds.includes(centerId),
       );
@@ -214,29 +213,7 @@ export class UsersService {
         );
     }
 
-    const centers = await this.centersRepository.find({
-      where: {
-        id: In(uniqueCenterIds),
-      },
-    });
-
-    if (centers.length !== uniqueCenterIds.length)
-      throw new BadRequestException('Alguno de los centros no existe');
-
-    return centers;
-  }
-
-  private async getManagedCenterIds(authUser?: AuthUser): Promise<number[]> {
-    if (!authUser) return [];
-
-    const user = await this.usersRepository.findOne({
-      relations: {
-        centers: true,
-      },
-      where: { id: authUser.id },
-    });
-
-    return user?.centers?.map((center) => center.id) ?? [];
+    return this.centerAccessService.findCentersByIds(uniqueCenterIds);
   }
 
   private validateRoleChange(authUser: AuthUser | undefined, role?: UserRole) {
