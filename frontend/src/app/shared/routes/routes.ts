@@ -198,6 +198,7 @@ export const routes = {
   editDoctor: '/doctor/edit-doctor',
   patient: '/patient',
   clients: '/clients',
+  centers: '/centers',
   patientGrid: '/patient/patient-grid',
   patientList: '/patient/patient-list',
   patientDetails: '/patient/patient-details',
