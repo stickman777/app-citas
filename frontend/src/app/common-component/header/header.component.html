@@ -76,7 +76,7 @@
 								<div class="p-2 border-bottom">
 									<div class="row align-items-center">
 										<div class="col">
-											<h6 class="m-0 fs-16 fw-semibold"> Notifications</h6>
+											<h6 class="m-0 fs-16 fw-semibold">{{ 'notifications.title' | translate }}</h6>
 										</div>
 									</div>
 								</div>
@@ -93,12 +93,12 @@
 											<div class="flex-grow-1">
 												<p class="mb-0 fw-medium text-dark">Dr. Smith</p>
 												<p class="mb-1 text-wrap">
-													updated the <span class="fw-medium text-dark">surgery</span> schedule. 
+													{{ 'notifications.item.schedule' | translate }}
 												</p>
 												<div class="d-flex justify-content-between align-items-center">
-													<span class="fs-12"><i class="ti ti-clock me-1"></i>4 min ago</span>
+													<span class="fs-12"><i class="ti ti-clock me-1"></i>{{ 'notifications.ago.4min' | translate }}</span>
 													<div class="notification-action d-flex align-items-center float-end gap-2">
-														<a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
+														<a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" [attr.data-bs-original-title]="'notifications.markAsRead' | translate" [attr.aria-label]="'notifications.markAsRead' | translate"></a>
 														<button class="btn rounded-circle p-0" data-dismissible="#notification-1">
 															<i class="ti ti-x"></i>
 														</button>
@@ -117,12 +117,12 @@
 											<div class="flex-grow-1">
 												<p class="mb-0 fw-medium text-dark">Dr. Patel</p>
 												<p class="mb-1 text-wrap">
-                                                    completed a <span class="fw-medium text-dark">follow-up</span> report for patient <span class="fw-medium text-dark">Emily</span>.
+                                                    {{ 'notifications.item.report' | translate }}
 												</p>
 												<div class="d-flex justify-content-between align-items-center">
-													<span class="fs-12"><i class="ti ti-clock me-1"></i>8 min ago</span>
+													<span class="fs-12"><i class="ti ti-clock me-1"></i>{{ 'notifications.ago.8min' | translate }}</span>
 													<div class="notification-action d-flex align-items-center float-end gap-2">
-														<a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
+														<a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" [attr.data-bs-original-title]="'notifications.markAsRead' | translate" [attr.aria-label]="'notifications.markAsRead' | translate"></a>
 														<button class="btn rounded-circle p-0" data-dismissible="#notification-2">
 															<i class="ti ti-x"></i>
 														</button>
@@ -141,12 +141,12 @@
 											<div class="flex-grow-1">
 												<p class="mb-0 fw-medium text-dark">Emily</p>
 												<p class="mb-1 text-wrap">
-                                                    booked an appointment with <span class="fw-medium text-dark">Dr. Patel</span> for <span class="fw-medium text-dark">April 15</span>
+                                                    {{ 'notifications.item.appointment' | translate }}
 												</p>
 												<div class="d-flex justify-content-between align-items-center">
-													<span class="fs-12"><i class="ti ti-clock me-1"></i>15 min ago</span>
+													<span class="fs-12"><i class="ti ti-clock me-1"></i>{{ 'notifications.ago.15min' | translate }}</span>
 													<div class="notification-action d-flex align-items-center float-end gap-2">
-														<a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
+														<a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" [attr.data-bs-original-title]="'notifications.markAsRead' | translate" [attr.aria-label]="'notifications.markAsRead' | translate"></a>
 														<button class="btn rounded-circle p-0" data-dismissible="#notification-3">
 															<i class="ti ti-x"></i>
 														</button>
@@ -165,12 +165,12 @@
 											<div class="flex-grow-1">
 												<p class="mb-0 fw-medium text-dark">Amelia</p>
 												<p class="mb-1 text-wrap">
-                                                    completed the <span class="fw-medium text-dark">pre-visit</span> health questionnaire.
+                                                    {{ 'notifications.item.questionnaire' | translate }}
 												</p>
 												<div class="d-flex justify-content-between align-items-center">
-													<span class="fs-12"><i class="ti ti-clock me-1"></i>20 min ago</span>
+													<span class="fs-12"><i class="ti ti-clock me-1"></i>{{ 'notifications.ago.20min' | translate }}</span>
 													<div class="notification-action d-flex align-items-center float-end gap-2">
-														<a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
+														<a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" [attr.data-bs-original-title]="'notifications.markAsRead' | translate" [attr.aria-label]="'notifications.markAsRead' | translate"></a>
 														<button class="btn rounded-circle p-0" data-dismissible="#notification-4">
 															<i class="ti ti-x"></i>
 														</button>
@@ -185,7 +185,7 @@
 								<!-- View All-->
 								<div class="p-2 rounded-bottom border-top text-center">
 									<a [routerLink]="routes.notifications" class="text-center text-decoration-underline fs-14 mb-0">
-										View All Notifications
+										{{ 'notifications.viewAll' | translate }}
 									</a>
 								</div>
 								
@@ -212,13 +212,13 @@
                             <!-- Item-->
                             <a [routerLink]="routes.centers" class="dropdown-item">
                                 <i class="ti ti-building-hospital me-1 align-middle"></i>
-                                <span class="align-middle">Centres</span>
+                                <span class="align-middle">{{ 'account.centers' | translate }}</span>
                             </a>
 
                             <!-- Item-->
                             <a [routerLink]="routes.profileSettings" class="dropdown-item">
                                 <i class="ti ti-settings me-1 align-middle"></i>
-                                <span class="align-middle">Account Settings</span>
+                                <span class="align-middle">{{ 'account.settings' | translate }}</span>
                             </a>
 
                                         
@@ -227,7 +227,7 @@
                             <div class="pt-2 mt-2 border-top">
                                 <a href="javascript:void(0);" (click)="logout()" class="dropdown-item text-danger">
                                     <i class="ti ti-logout me-1 fs-17 align-middle"></i>
-                                    <span class="align-middle">Log Out</span>
+                                    <span class="align-middle">{{ 'account.logout' | translate }}</span>
                                 </a>
                             </div>
                         </div>

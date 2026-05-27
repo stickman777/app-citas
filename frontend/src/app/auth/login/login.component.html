@@ -16,21 +16,21 @@
 							<div class="card border-1 p-lg-3 shadow-md rounded-3 mb-4">
 								<div class="card-body">
 									<div class="text-center mb-3">
-										<h5 class="mb-1 fs-20 fw-bold">Sign In</h5>
-										<p class="mb-0">Please enter below details to access the dashboard</p>
+										<h5 class="mb-1 fs-20 fw-bold">{{ 'auth.signIn' | translate }}</h5>
+										<p class="mb-0">{{ 'auth.subtitle' | translate }}</p>
 									</div>
 									<div class="mb-3">
-										<label class="form-label">Email Address</label>
+										<label class="form-label">{{ 'auth.email' | translate }}</label>
 										<div class="input-group">
 											<span class="input-group-text border-end-0 bg-white">
 												<i class="ti ti-mail fs-14 text-dark"></i>
 											</span>
 											<input type="email" name="email" [(ngModel)]="email" class="form-control border-start-0 ps-0"
-												placeholder="Enter Email Address" autocomplete="email" required>
+												[placeholder]="'auth.emailPlaceholder' | translate" autocomplete="email" required>
 										</div>
 									</div>
 									<div class="mb-3">
-										<label class="form-label">Password</label>
+										<label class="form-label">{{ 'auth.password' | translate }}</label>
 										<div class="position-relative">
 											<div class="pass-group input-group position-relative border rounded">
 												<span class="input-group-text bg-white border-0">
@@ -52,7 +52,7 @@
 											<div class="form-check form-check-md mb-0">
 												<input class="form-check-input" id="remember_me" type="checkbox">
 												<label for="remember_me"
-													class="form-check-label mt-0 text-dark">Remember Me</label>
+													class="form-check-label mt-0 text-dark">{{ 'auth.rememberMe' | translate }}</label>
 											</div>
 										</div>
 									</div>
@@ -63,14 +63,13 @@
 									}
 									<div class="mb-2">
 										<button type="submit" class="btn bg-primary text-white w-100" [disabled]="isLoading">
-											{{ isLoading ? 'Logging in...' : 'Login' }}
+											{{ (isLoading ? 'auth.loggingIn' : 'auth.login') | translate }}
 										</button>
 									</div>
 								</div><!-- end card body -->
 							</div><!-- end card -->
 						</div>
 					</form>
-					<p class="text-dark text-center"> Copyright &copy; 2026 - Preclinic </p>
 				</div><!-- end col -->
 			</div>
 			<!-- end row -->

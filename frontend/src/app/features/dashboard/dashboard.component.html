@@ -4,26 +4,26 @@
     <div class="col-xl-4 col-lg-6 d-flex">
       <div class="card shadow-sm flex-fill w-100">
         <div class="card-header d-flex align-items-center justify-content-between">
-          <h5 class="fw-bold mb-0">Doctors Schedule</h5>
-          <a [routerLink]="routes.doctorSchedule" class="btn fw-normal btn-outline-white">View All</a>
+          <h5 class="fw-bold mb-0">{{ 'dashboard.doctorsSchedule' | translate }}</h5>
+          <a [routerLink]="routes.doctorSchedule" class="btn fw-normal btn-outline-white">{{ 'common.viewAll' | translate }}</a>
         </div>
         <div class="card-body">
           <div class="row g-2 mb-4">
             <div class="col d-flex border-end">
               <div class="text-center flex-fill">
-                <p class="mb-1">Available</p>
+                <p class="mb-1">{{ 'dashboard.available' | translate }}</p>
                 <h3 class="fw-bold mb-0">48</h3>
               </div>
             </div>
             <div class="col d-flex border-end">
               <div class="text-center flex-fill">
-                <p class="mb-1">Unavailable</p>
+                <p class="mb-1">{{ 'dashboard.unavailable' | translate }}</p>
                 <h3 class="fw-bold mb-0">28</h3>
               </div>
             </div>
             <div class="col d-flex">
               <div class="text-center flex-fill">
-                <p class="mb-1">Leave</p>
+                <p class="mb-1">{{ 'dashboard.leave' | translate }}</p>
                 <h3 class="fw-bold mb-0">12</h3>
               </div>
             </div>
@@ -38,11 +38,11 @@
                   <h6 class="fw-semibold fs-14 text-truncate mb-1">
                     <a [routerLink]="routes.doctorDetails">Dr. Sarah Johnson</a>
                   </h6>
-                  <p class="fs-13">Orthopedic Surgeon</p>
+                  <p class="fs-13">{{ 'dashboard.orthopedicSurgeon' | translate }}</p>
                 </div>
               </div>
               <div class="flex-shrink-0 ms-2">
-                <a href="javascript:void(0);" class="btn btn-primary btn-sm py-1 flex-shrink-0">Book Now</a>
+                <a href="javascript:void(0);" class="btn btn-primary btn-sm py-1 flex-shrink-0">{{ 'dashboard.bookNow' | translate }}</a>
               </div>
             </div>
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -54,11 +54,11 @@
                   <h6 class="fw-semibold fs-14 text-truncate mb-1">
                     <a [routerLink]="routes.doctorDetails">Dr. Emily Carter</a>
                   </h6>
-                  <p class="fs-13">Pediatrician</p>
+                  <p class="fs-13">{{ 'dashboard.pediatrician' | translate }}</p>
                 </div>
               </div>
               <div class="flex-shrink-0 ms-2">
-                <a href="javascript:void(0);" class="btn btn-primary btn-sm py-1">Book Now</a>
+                <a href="javascript:void(0);" class="btn btn-primary btn-sm py-1">{{ 'dashboard.bookNow' | translate }}</a>
               </div>
             </div>
             <div class="d-flex justify-content-between align-items-center mb-0">
@@ -70,11 +70,11 @@
                   <h6 class="fw-semibold fs-14 text-truncate mb-1">
                     <a [routerLink]="routes.doctorDetails">Dr. David Lee</a>
                   </h6>
-                  <p class="fs-13">Gynecologist</p>
+                  <p class="fs-13">{{ 'dashboard.gynecologist' | translate }}</p>
                 </div>
               </div>
               <div class="flex-shrink-0 ms-2">
-                <a href="javascript:void(0);" class="btn btn-primary btn-sm py-1">Book Now</a>
+                <a href="javascript:void(0);" class="btn btn-primary btn-sm py-1">{{ 'dashboard.bookNow' | translate }}</a>
               </div>
             </div>
           </div>
@@ -85,15 +85,15 @@
     <div class="col-xl-4 col-lg-6 d-flex">
       <div class="card shadow-sm flex-fill w-100">
         <div class="card-header d-flex align-items-center justify-content-between">
-          <h5 class="fw-bold mb-0">Leave Requests</h5>
+          <h5 class="fw-bold mb-0">{{ 'dashboard.leaveRequests' | translate }}</h5>
           <div class="dropdown">
             <a href="javascript:void(0);" class="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-              Today <i class="ti ti-chevron-down ms-1"></i>
+              {{ 'dashboard.period.today' | translate }} <i class="ti ti-chevron-down ms-1"></i>
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="javascript:void(0);">Today</a></li>
-              <li><a class="dropdown-item" href="javascript:void(0);">This Week</a></li>
-              <li><a class="dropdown-item" href="javascript:void(0);">This Month</a></li>
+              <li><a class="dropdown-item" href="javascript:void(0);">{{ 'dashboard.period.today' | translate }}</a></li>
+              <li><a class="dropdown-item" href="javascript:void(0);">{{ 'dashboard.period.thisWeek' | translate }}</a></li>
+              <li><a class="dropdown-item" href="javascript:void(0);">{{ 'dashboard.period.thisMonth' | translate }}</a></li>
             </ul>
           </div>
         </div>
@@ -107,7 +107,7 @@
                 <h6 class="fw-semibold text-truncate mb-1 fs-14">
                   <a [routerLink]="routes.doctorDetails">James Allaire</a>
                 </h6>
-                <p class="fs-13 mb-0 text-truncate">4 Days - Personal Reason</p>
+                <p class="fs-13 mb-0 text-truncate">{{ 'dashboard.reason.personal' | translate }}</p>
               </div>
             </div>
             <div class="d-flex align-items-center">
@@ -128,7 +128,7 @@
                 <h6 class="fw-semibold text-truncate mb-1 fs-14">
                   <a [routerLink]="routes.doctorDetails">Esther Schmidt</a>
                 </h6>
-                <p class="fs-13 mb-0 text-truncate">2 Days - Going to Hospital</p>
+                <p class="fs-13 mb-0 text-truncate">{{ 'dashboard.reason.hospital' | translate }}</p>
               </div>
             </div>
             <div class="d-flex align-items-center">
@@ -149,7 +149,7 @@
                 <h6 class="fw-semibold text-truncate mb-1 fs-14">
                   <a [routerLink]="routes.doctorDetails">Valerie Padgett</a>
                 </h6>
-                <p class="fs-13 mb-0 text-truncate">1 Day - Changing Account</p>
+                <p class="fs-13 mb-0 text-truncate">{{ 'dashboard.reason.accountChange' | translate }}</p>
               </div>
             </div>
             <div class="d-flex align-items-center">
@@ -168,14 +168,14 @@
     <div class="col-xl-4 col-lg-12 d-flex">
       <div class="card shadow-sm flex-fill w-100">
         <div class="card-header d-flex align-items-center justify-content-between">
-          <h5 class="fw-bold mb-0 text-truncate">Appointments</h5>
+          <h5 class="fw-bold mb-0 text-truncate">{{ 'dashboard.appointments' | translate }}</h5>
           <div class="dropdown">
             <a href="javascript:void(0);" class="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-              All Type <i class="ti ti-chevron-down ms-1"></i>
+              {{ 'common.status' | translate }} <i class="ti ti-chevron-down ms-1"></i>
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="javascript:void(0);">In Person</a></li>
-              <li><a class="dropdown-item" href="javascript:void(0);">Online</a></li>
+              <li><a class="dropdown-item" href="javascript:void(0);">{{ 'dashboard.inPerson' | translate }}</a></li>
+              <li><a class="dropdown-item" href="javascript:void(0);">{{ 'dashboard.online' | translate }}</a></li>
             </ul>
           </div>
         </div>
@@ -190,7 +190,7 @@
           </div>
           <div class="mb-3 bg-light p-3 rounded-2 d-flex align-items-center justify-content-between">
             <div>
-              <h6 class="fs-14 fw-semibold mb-1">General Visit</h6>
+              <h6 class="fs-14 fw-semibold mb-1">{{ 'dashboard.generalVisit' | translate }}</h6>
               <p class="mb-0 text-truncate">
                 <i class="ti ti-calendar-time me-1 text-dark"></i> Wed, 05 Apr 2025, 06:30 PM
               </p>
@@ -206,7 +206,7 @@
           </div>
           <div class="mb-3 bg-soft-danger p-3 rounded-2 d-flex align-items-center justify-content-between">
             <div>
-              <h6 class="fs-14 fw-semibold mb-1">General Visit</h6>
+              <h6 class="fs-14 fw-semibold mb-1">{{ 'dashboard.generalVisit' | translate }}</h6>
               <p class="mb-0 text-truncate">
                 <i class="ti ti-calendar-time me-1 text-dark"></i> Wed, 05 Apr 2025, 04:10 PM
               </p>
@@ -222,7 +222,7 @@
           </div>
           <div class="mb-3 bg-soft-info p-3 rounded-2 d-flex align-items-center justify-content-between">
             <div>
-              <h6 class="fs-14 fw-semibold mb-1">General Visit</h6>
+              <h6 class="fs-14 fw-semibold mb-1">{{ 'dashboard.generalVisit' | translate }}</h6>
               <p class="mb-0 text-truncate">
                 <i class="ti ti-calendar-time me-1 text-dark"></i> Wed, 05 Apr 2025, 10:00 AM
               </p>
@@ -236,7 +236,7 @@
               </span>
             </div>
           </div>
-          <a [routerLink]="routes.appointmentList" class="btn btn-light w-100">View All Appointments</a>
+          <a [routerLink]="routes.appointmentList" class="btn btn-light w-100">{{ 'common.viewAllAppointments' | translate }}</a>
         </div>
       </div>
     </div>

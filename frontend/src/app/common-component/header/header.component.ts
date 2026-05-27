@@ -11,12 +11,13 @@ import { AuthService, CurrentUser } from '../../core/auth/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { Language, SUPPORTED_LANGUAGES } from '../../core/i18n/translations';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
     selector: 'app-header',
     templateUrl: './header.component.html',
     styleUrls: ['./header.component.scss'],
-    imports: [CommonModule,RouterLink,MatSelectModule,NgScrollbarModule]
+    imports: [CommonModule,RouterLink,MatSelectModule,NgScrollbarModule,TranslatePipe]
 })
 export class HeaderComponent {
   public readonly languageOptions = SUPPORTED_LANGUAGES;
@@ -114,7 +115,7 @@ export class HeaderComponent {
   }
 
   public logout(): void {
-    this.toastr.error('Sesión cerrada.');
+    this.toastr.error(this.i18nService.translate('auth.success.logout'));
     this.authService.logout();
   }
 
