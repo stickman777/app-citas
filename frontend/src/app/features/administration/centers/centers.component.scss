@@ -3,3 +3,11 @@
   max-width: 22px;
   object-fit: contain;
 }
+
+.center-modal {
+  background: rgba(0, 0, 0, 0.05);
+
+  .modal-content {
+    background-color: var(--white);
+  }
+}
