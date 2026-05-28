@@ -49,6 +49,10 @@ export class CentersService {
     return this.http.get<Center[]>(`${this.apiUrl}/all`);
   }
 
+  getCenter(id: number): Observable<Center> {
+    return this.http.get<Center>(`${this.apiUrl}/${id}`);
+  }
+
   createCenter(payload: CenterPayload): Observable<Center> {
     return this.http
       .post<Center>(this.apiUrl, payload)

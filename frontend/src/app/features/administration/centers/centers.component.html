@@ -90,19 +90,17 @@
             <td>{{ center.city || '-' }}</td>
             <td>{{ center.logoUrl || '-' }}</td>
             <td>
-              <button
-                type="button"
-                class="badge rounded border fs-13 fw-medium bg-transparent"
-                [ngClass]="statusBadgeClass(center)"
-                (click)="openStatusModal(center)"
-              >
+              <span class="badge rounded border fs-13 fw-medium" [ngClass]="statusBadgeClass(center)">
                 {{ (center.active ? 'common.active' : 'common.inactive') | translate }}
-              </button>
+              </span>
             </td>
             <td>
               <div class="d-flex align-items-center justify-content-end gap-1">
-                <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white" (click)="openEditModal(center)" [attr.aria-label]="'centers.actions.edit' | translate">
+                <a class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white" [routerLink]="['/centers', center.id, 'edit']" [attr.aria-label]="'centers.actions.edit' | translate">
                   <i class="ti ti-edit"></i>
+                </a>
+                <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white" (click)="openStatusModal(center)" [attr.aria-label]="'centers.status.edit' | translate">
+                  <i class="ti" [ngClass]="center.active ? 'ti-toggle-right text-success' : 'ti-toggle-left text-danger'"></i>
                 </button>
               </div>
             </td>
@@ -123,7 +121,7 @@
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="text-dark modal-title fw-bold">{{ (editingCenter ? 'centers.actions.edit' : 'centers.new') | translate }}</h4>
+        <h4 class="text-dark modal-title fw-bold">{{ 'centers.new' | translate }}</h4>
         <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.cancel' | translate" (click)="closeFormModal()">
           <i class="ti ti-x"></i>
         </button>

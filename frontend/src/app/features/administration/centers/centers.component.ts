@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import {
@@ -23,7 +24,7 @@ interface CenterForm {
   selector: 'app-centers',
   templateUrl: './centers.component.html',
   styleUrls: ['./centers.component.scss'],
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
 })
 export class CentersComponent {
   public readonly dayOptions = [1, 2, 3, 4, 5, 6, 0];
@@ -38,7 +39,6 @@ export class CentersComponent {
   public showAll = false;
   public isFormModalOpen = false;
   public isStatusModalOpen = false;
-  public editingCenter: Center | null = null;
   public centerToChangeStatus: Center | null = null;
   public selectedStatus = true;
   public form: CenterForm = this.getEmptyForm();
@@ -81,22 +81,7 @@ export class CentersComponent {
 
   public openCreateModal(): void {
     this.clearMessages();
-    this.editingCenter = null;
     this.form = this.getEmptyForm();
-    this.isFormModalOpen = true;
-  }
-
-  public openEditModal(center: Center): void {
-    this.clearMessages();
-    this.editingCenter = center;
-    this.form = {
-      name: center.name,
-      city: center.city ?? '',
-      logoUrl: center.logoUrl ?? '',
-      schedule: this.cloneSchedule(
-        center.schedule?.length ? center.schedule : this.getDefaultSchedule()
-      ),
-    };
     this.isFormModalOpen = true;
   }
 
@@ -115,15 +100,11 @@ export class CentersComponent {
     this.isSaving = true;
     this.clearMessages();
 
-    const request = this.editingCenter
-      ? this.centersService.updateCenter(this.editingCenter.id, this.getPayload())
-      : this.centersService.createCenter(this.getPayload());
+    const request = this.centersService.createCenter(this.getPayload());
 
     request.pipe(finalize(() => (this.isSaving = false))).subscribe({
       next: () => {
-        this.successMessage = this.editingCenter
-          ? this.translate('centers.success.updated')
-          : this.translate('centers.success.created');
+        this.successMessage = this.translate('centers.success.created');
         this.isFormModalOpen = false;
         this.loadCenters(false);
       },
