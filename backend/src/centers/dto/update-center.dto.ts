@@ -1,4 +1,5 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
+import { CenterScheduleSlotDto } from './center-schedule-slot.dto';
 
 export class UpdateCenterDto {
   @IsOptional()
@@ -12,4 +13,8 @@ export class UpdateCenterDto {
   @IsOptional()
   @IsString()
   logoUrl?: string;
+
+  @IsOptional()
+  @IsArray()
+  schedule?: CenterScheduleSlotDto[];
 }
