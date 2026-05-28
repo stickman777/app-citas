@@ -47,12 +47,112 @@
     </div>
 
     <div class="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap row-gap-3">
+      <div class="btn-group me-2" role="group" [attr.aria-label]="'appointments.view.toggle' | translate">
+        <button
+          type="button"
+          class="btn btn-md d-inline-flex align-items-center fw-normal rounded-start border px-2 py-1 fs-14"
+          [ngClass]="viewMode === 'calendar' ? 'btn-primary' : 'bg-white text-dark'"
+          (click)="setViewMode('calendar')"
+        >
+          <i class="ti ti-calendar me-1"></i>{{ 'appointments.view.calendar' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-md d-inline-flex align-items-center fw-normal rounded-end border px-2 py-1 fs-14"
+          [ngClass]="viewMode === 'list' ? 'btn-primary' : 'bg-white text-dark'"
+          (click)="setViewMode('list')"
+        >
+          <i class="ti ti-list me-1"></i>{{ 'appointments.view.list' | translate }}
+        </button>
+      </div>
       <button type="button" class="btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" (click)="loadAppointments()">
         <i class="ti ti-refresh me-1"></i>{{ 'common.refresh' | translate }}
       </button>
     </div>
   </div>
 
+  @if(viewMode === 'calendar'){
+  <div class="appointment-calendar">
+    <div class="appointment-calendar-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <div class="d-flex align-items-center gap-1">
+        <button type="button" class="btn btn-white border btn-sm" (click)="goToToday()">
+          {{ 'appointments.calendar.today' | translate }}
+        </button>
+        <button type="button" class="btn btn-white border btn-sm icon-btn" (click)="goToPreviousPeriod()" [attr.aria-label]="'appointments.calendar.previous' | translate">
+          <i class="ti ti-chevron-left"></i>
+        </button>
+        <button type="button" class="btn btn-white border btn-sm icon-btn" (click)="goToNextPeriod()" [attr.aria-label]="'appointments.calendar.next' | translate">
+          <i class="ti ti-chevron-right"></i>
+        </button>
+      </div>
+      <h5 class="mb-0 text-dark fw-semibold appointment-calendar-title">{{ calendarTitle() }}</h5>
+      <div class="btn-group" role="group" [attr.aria-label]="'appointments.calendar.view' | translate">
+        <button
+          type="button"
+          class="btn btn-sm border"
+          [ngClass]="calendarView === CalendarView.Day ? 'btn-primary' : 'btn-white'"
+          (click)="setCalendarView(CalendarView.Day)"
+        >
+          {{ 'appointments.calendar.day' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm border"
+          [ngClass]="calendarView === CalendarView.Week ? 'btn-primary' : 'btn-white'"
+          (click)="setCalendarView(CalendarView.Week)"
+        >
+          {{ 'appointments.calendar.week' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm border"
+          [ngClass]="calendarView === CalendarView.Month ? 'btn-primary' : 'btn-white'"
+          (click)="setCalendarView(CalendarView.Month)"
+        >
+          {{ 'appointments.calendar.month' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="appointment-calendar-legend d-flex align-items-center flex-wrap gap-3 mb-3">
+      <span><i class="appointment-legend appointment-legend-available"></i>{{ 'appointments.calendar.available' | translate }}</span>
+      <span><i class="appointment-legend appointment-legend-appointment"></i>{{ 'appointments.title' | translate }}</span>
+      <span><i class="appointment-legend appointment-legend-blocked"></i>{{ 'appointments.calendar.blocked' | translate }}</span>
+      <span><i class="appointment-legend appointment-legend-extra"></i>{{ 'appointments.calendar.extraAvailable' | translate }}</span>
+      <span><i class="appointment-legend appointment-legend-outside"></i>{{ 'appointments.outsideAvailability.badge' | translate }}</span>
+    </div>
+
+    <mwl-calendar-month-view
+      [hidden]="calendarView !== CalendarView.Month"
+      [viewDate]="calendarViewDate"
+      [events]="calendarEvents"
+      [weekStartsOn]="1"
+      (eventClicked)="handleCalendarEvent($event.event)"
+    >
+    </mwl-calendar-month-view>
+
+    <mwl-calendar-week-view
+      *ngIf="calendarView === CalendarView.Week"
+      [viewDate]="calendarViewDate"
+      [events]="calendarEvents"
+      [weekStartsOn]="1"
+      [dayStartHour]="6"
+      [dayEndHour]="22"
+      (eventClicked)="handleCalendarEvent($event.event)"
+    >
+    </mwl-calendar-week-view>
+
+    <mwl-calendar-day-view
+      *ngIf="calendarView === CalendarView.Day"
+      [viewDate]="calendarViewDate"
+      [events]="calendarEvents"
+      [dayStartHour]="6"
+      [dayEndHour]="22"
+      (eventClicked)="handleCalendarEvent($event.event)"
+    >
+    </mwl-calendar-day-view>
+  </div>
+  } @else {
   <div class="table-responsive">
     <table class="table table-nowrap dataTable datatable">
       <thead class="thead-light">
@@ -129,6 +229,7 @@
       </tbody>
     </table>
   </div>
+  }
 </div>
 
 @if(isFormModalOpen){

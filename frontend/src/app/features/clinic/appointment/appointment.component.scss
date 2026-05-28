@@ -5,3 +5,142 @@
     background-color: var(--white);
   }
 }
+
+.appointment-calendar {
+  border: 1px solid var(--border-color, #e7e8eb);
+  border-radius: 6px;
+  padding: 16px;
+  background: var(--white);
+}
+
+.appointment-calendar-title {
+  text-transform: capitalize;
+}
+
+.appointment-calendar-toolbar .icon-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.appointment-calendar-legend {
+  color: var(--body-color);
+  font-size: 13px;
+}
+
+.appointment-legend {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.appointment-legend-available {
+  background: #10b981;
+}
+
+.appointment-legend-appointment {
+  background: #2e37a4;
+}
+
+.appointment-legend-blocked {
+  background: #dc2626;
+}
+
+.appointment-legend-extra {
+  background: #0f766e;
+}
+
+.appointment-legend-outside {
+  background: #f59e0b;
+}
+
+:host ::ng-deep {
+  .cal-month-view,
+  .cal-week-view,
+  .cal-day-view {
+    background: var(--white);
+    color: var(--body-color);
+    border: 1px solid var(--border-color, #e7e8eb);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .cal-month-view .cal-cell-row,
+  .cal-month-view .cal-days,
+  .cal-week-view .cal-day-headers,
+  .cal-week-view .cal-hour-segment,
+  .cal-day-view .cal-hour-segment {
+    border-color: var(--border-color, #e7e8eb);
+  }
+
+  .cal-month-view .cal-cell,
+  .cal-week-view .cal-day-headers .cal-header,
+  .cal-week-view .cal-hour-odd,
+  .cal-day-view .cal-hour-odd {
+    background: var(--white);
+  }
+
+  .cal-month-view .cal-day-cell.cal-today,
+  .cal-week-view .cal-header.cal-today,
+  .cal-day-view .cal-header.cal-today {
+    background: rgba(46, 55, 164, 0.08);
+  }
+
+  .cal-event {
+    border-radius: 4px;
+    box-shadow: none;
+  }
+}
+
+:host-context([data-bs-theme='dark']) .appointment-calendar {
+  background: #0d0d0d;
+  border-color: #202a36;
+}
+
+:host-context([data-bs-theme='dark']) ::ng-deep {
+  .cal-month-view,
+  .cal-week-view,
+  .cal-day-view,
+  .cal-month-view .cal-cell,
+  .cal-week-view .cal-day-headers .cal-header,
+  .cal-week-view .cal-hour-odd,
+  .cal-day-view .cal-hour-odd {
+    background: #0d0d0d;
+    color: #d9dcff;
+    border-color: #202a36;
+  }
+
+  .cal-month-view .cal-cell-row:hover,
+  .cal-month-view .cal-cell:hover,
+  .cal-week-view .cal-hour-segment:hover,
+  .cal-day-view .cal-hour-segment:hover {
+    background: #111827;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .appointment-calendar {
+    padding: 12px;
+    overflow-x: auto;
+  }
+
+  .appointment-calendar-title {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
+
+  :host ::ng-deep {
+    mwl-calendar-month-view,
+    mwl-calendar-week-view,
+    mwl-calendar-day-view {
+      min-width: 720px;
+      display: block;
+    }
+  }
+}

@@ -2,6 +2,19 @@ import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize, forkJoin, Subscription } from 'rxjs';
+import { CalendarEvent, CalendarView } from 'angular-calendar';
+import {
+  addDays,
+  addMonths,
+  addWeeks,
+  endOfMonth,
+  endOfWeek,
+  startOfMonth,
+  startOfWeek,
+  subMonths,
+  subWeeks,
+  subDays,
+} from 'date-fns';
 
 import { ActiveCenterService } from '../../../core/centers/active-center.service';
 import {
@@ -17,8 +30,13 @@ import {
   AppointmentStatus,
   AppointmentsService,
 } from '../../../core/appointments/appointments.service';
+import {
+  AvailabilityException,
+  AvailabilityService,
+} from '../../../core/availability/availability.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { CalendarWrapperModule } from '../../../shared/calendar/calendar-wrapper.module';
 
 interface AppointmentForm {
   startDateTime: string;
@@ -33,19 +51,32 @@ const STATUS_BADGE_CLASSES: Record<AppointmentStatus, string> = {
   CANCELLED: 'badge-soft-danger border-danger text-danger',
 };
 
+type AppointmentViewMode = 'calendar' | 'list';
+
+type AppointmentCalendarEventMeta =
+  | { type: 'appointment'; appointment: Appointment }
+  | { type: 'availability' }
+  | { type: 'exception'; exception: AvailabilityException };
+
 @Component({
   selector: 'app-appointment',
   templateUrl: './appointment.component.html',
   styleUrls: ['./appointment.component.scss'],
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, CalendarWrapperModule],
 })
 export class AppointmentComponent implements OnInit, OnDestroy {
+  public readonly CalendarView = CalendarView;
   public appointments: Appointment[] = [];
   public filteredAppointments: Appointment[] = [];
+  public calendarEvents: CalendarEvent<AppointmentCalendarEventMeta>[] = [];
+  public availabilityExceptions: AvailabilityException[] = [];
   public clients: AppointmentClient[] = [];
   public services: AppointmentServiceOption[] = [];
   public centers: Center[] = [];
   public activeCenter: Center | null = null;
+  public viewMode: AppointmentViewMode = 'calendar';
+  public calendarView: CalendarView = CalendarView.Week;
+  public calendarViewDate = new Date();
   public searchTerm = '';
   public errorMessage = '';
   public successMessage = '';
@@ -62,6 +93,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly appointmentsService: AppointmentsService,
+    private readonly availabilityService: AvailabilityService,
     private readonly centersService: CentersService,
     private readonly activeCenterService: ActiveCenterService,
     private readonly i18nService: I18nService
@@ -79,6 +111,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
         this.loadedCenterId = centerId;
         this.loadReferenceData();
         this.loadAppointments();
+        this.loadAvailabilityExceptions();
       }
     );
   }
@@ -98,6 +131,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       next: appointments => {
         this.appointments = appointments;
         this.applySearch();
+        this.updateCalendarEvents();
         this.isLoading = false;
       },
       error: () => {
@@ -228,6 +262,52 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return appointment.id;
   }
 
+  public setViewMode(viewMode: AppointmentViewMode): void {
+    this.viewMode = viewMode;
+
+    if (viewMode === 'calendar') {
+      this.loadAvailabilityExceptions(false);
+    }
+  }
+
+  public setCalendarView(view: CalendarView): void {
+    this.calendarView = view;
+    this.loadAvailabilityExceptions(false);
+  }
+
+  public goToToday(): void {
+    this.calendarViewDate = new Date();
+    this.loadAvailabilityExceptions(false);
+  }
+
+  public goToPreviousPeriod(): void {
+    this.calendarViewDate = this.changeCalendarDate(-1);
+    this.loadAvailabilityExceptions(false);
+  }
+
+  public goToNextPeriod(): void {
+    this.calendarViewDate = this.changeCalendarDate(1);
+    this.loadAvailabilityExceptions(false);
+  }
+
+  public handleCalendarEvent(event: CalendarEvent<AppointmentCalendarEventMeta>): void {
+    if (event.meta?.type === 'appointment') {
+      this.openEditModal(event.meta.appointment);
+    }
+  }
+
+  public calendarTitle(): string {
+    const formatOptions: Intl.DateTimeFormatOptions =
+      this.calendarView === CalendarView.Month
+        ? { month: 'long', year: 'numeric' }
+        : this.calendarView === CalendarView.Week
+          ? { day: '2-digit', month: 'short', year: 'numeric' }
+          : { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+
+    return new Intl.DateTimeFormat(this.i18nService.currentLanguage, formatOptions)
+      .format(this.calendarViewDate);
+  }
+
   public get clientOptions(): AppointmentClient[] {
     return this.withCurrentOption(this.clients, this.editingAppointment?.client);
   }
@@ -309,6 +389,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       next: centers => {
         this.centers = centers;
         this.activeCenterService.setAvailableCenters(centers);
+        this.updateCalendarEvents();
       },
       error: () => {
         this.errorMessage = this.translate('centers.errors.load');
@@ -362,6 +443,202 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   private normalizeDateTime(value: string): string {
     return value.length === 16 ? `${value}:00` : value;
+  }
+
+  private loadAvailabilityExceptions(clearMessages = true): void {
+    if (!this.activeCenter) {
+      this.availabilityExceptions = [];
+      this.updateCalendarEvents();
+      return;
+    }
+
+    if (clearMessages) {
+      this.clearMessages();
+    }
+
+    const range = this.getCalendarDateRange();
+
+    this.availabilityService
+      .getAvailabilityExceptions(
+        this.activeCenter.id,
+        this.toDateQuery(range.start),
+        this.toDateQuery(range.end)
+      )
+      .subscribe({
+        next: exceptions => {
+          this.availabilityExceptions = exceptions;
+          this.updateCalendarEvents();
+        },
+        error: () => {
+          this.errorMessage = this.translate('availability.errors.load');
+        },
+      });
+  }
+
+  private updateCalendarEvents(): void {
+    this.calendarEvents = [
+      ...this.buildAvailabilityEvents(),
+      ...this.buildExceptionEvents(),
+      ...this.buildAppointmentEvents(),
+    ].sort((a, b) => a.start.getTime() - b.start.getTime());
+  }
+
+  private buildAppointmentEvents(): CalendarEvent<AppointmentCalendarEventMeta>[] {
+    return this.appointments.map(appointment => {
+      const start = new Date(appointment.startDateTime);
+      const end = new Date(start);
+      end.setMinutes(end.getMinutes() + appointment.duration);
+
+      return {
+        start,
+        end,
+        title: `${appointment.client.name} - ${appointment.service.name}`,
+        color: appointment.outsideAvailability
+          ? { primary: '#f59e0b', secondary: '#fef3c7' }
+          : { primary: '#2e37a4', secondary: '#e6e8ff' },
+        cssClass: appointment.outsideAvailability
+          ? 'appointment-event appointment-event-outside'
+          : 'appointment-event',
+        meta: {
+          type: 'appointment',
+          appointment,
+        },
+      };
+    });
+  }
+
+  private buildAvailabilityEvents(): CalendarEvent<AppointmentCalendarEventMeta>[] {
+    if (!this.activeCenter?.schedule?.length) return [];
+
+    const range = this.getCalendarDateRange();
+    const events: CalendarEvent<AppointmentCalendarEventMeta>[] = [];
+
+    for (const date of this.eachDate(range.start, range.end)) {
+      const daySchedule = this.activeCenter.schedule.filter(
+        slot => slot.dayOfWeek === date.getDay()
+      );
+
+      for (const slot of daySchedule) {
+        events.push({
+          start: this.buildDateTime(date, slot.startTime),
+          end: this.buildDateTime(date, slot.endTime),
+          title: this.translate('appointments.calendar.available'),
+          color: { primary: '#10b981', secondary: '#d1fae5' },
+          cssClass: 'appointment-event appointment-event-availability',
+          meta: {
+            type: 'availability',
+          },
+        });
+      }
+    }
+
+    return events;
+  }
+
+  private buildExceptionEvents(): CalendarEvent<AppointmentCalendarEventMeta>[] {
+    return this.availabilityExceptions.map(exception => {
+      const isBlocked = exception.type === 'BLOCKED';
+      const date = this.fromDateQuery(exception.date);
+
+      return {
+        start: this.buildDateTime(date, exception.startTime),
+        end: this.buildDateTime(date, exception.endTime),
+        title:
+          exception.label ||
+          this.translate(
+            isBlocked
+              ? 'appointments.calendar.blocked'
+              : 'appointments.calendar.extraAvailable'
+          ),
+        color: isBlocked
+          ? { primary: '#dc2626', secondary: '#fee2e2' }
+          : { primary: '#0f766e', secondary: '#ccfbf1' },
+        cssClass: isBlocked
+          ? 'appointment-event appointment-event-blocked'
+          : 'appointment-event appointment-event-extra',
+        meta: {
+          type: 'exception',
+          exception,
+        },
+      };
+    });
+  }
+
+  private getCalendarDateRange(): { start: Date; end: Date } {
+    if (this.calendarView === CalendarView.Day) {
+      return {
+        start: new Date(this.calendarViewDate),
+        end: new Date(this.calendarViewDate),
+      };
+    }
+
+    if (this.calendarView === CalendarView.Week) {
+      return {
+        start: startOfWeek(this.calendarViewDate, { weekStartsOn: 1 }),
+        end: endOfWeek(this.calendarViewDate, { weekStartsOn: 1 }),
+      };
+    }
+
+    return {
+      start: startOfMonth(this.calendarViewDate),
+      end: endOfMonth(this.calendarViewDate),
+    };
+  }
+
+  private changeCalendarDate(step: number): Date {
+    if (this.calendarView === CalendarView.Day) {
+      return step > 0
+        ? addDays(this.calendarViewDate, 1)
+        : subDays(this.calendarViewDate, 1);
+    }
+
+    if (this.calendarView === CalendarView.Week) {
+      return step > 0
+        ? addWeeks(this.calendarViewDate, 1)
+        : subWeeks(this.calendarViewDate, 1);
+    }
+
+    return step > 0
+      ? addMonths(this.calendarViewDate, 1)
+      : subMonths(this.calendarViewDate, 1);
+  }
+
+  private eachDate(start: Date, end: Date): Date[] {
+    const dates: Date[] = [];
+    const current = new Date(start);
+    current.setHours(0, 0, 0, 0);
+
+    const lastDate = new Date(end);
+    lastDate.setHours(0, 0, 0, 0);
+
+    while (current <= lastDate) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+
+    return dates;
+  }
+
+  private buildDateTime(date: Date, time: string): Date {
+    const [hours, minutes] = time.split(':').map(Number);
+    const result = new Date(date);
+    result.setHours(hours, minutes, 0, 0);
+
+    return result;
+  }
+
+  private fromDateQuery(value: string): Date {
+    const [year, month, day] = value.split('-').map(Number);
+
+    return new Date(year, month - 1, day);
+  }
+
+  private toDateQuery(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 
   private resolveSchedule(service: AppointmentServiceOption): CenterScheduleSlot[] {
