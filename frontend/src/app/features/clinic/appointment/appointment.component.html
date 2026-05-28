@@ -72,8 +72,8 @@
   </div>
 
   @if(viewMode === 'calendar'){
-  <div class="appointment-calendar">
-    <div class="appointment-calendar-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+  <div class="appointments-calendar">
+    <div class="appointments-calendar-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
       <div class="d-flex align-items-center gap-1">
         <button type="button" class="btn btn-white border btn-sm" (click)="goToToday()">
           {{ 'appointments.calendar.today' | translate }}
@@ -88,7 +88,7 @@
           <i class="ti ti-calendar-plus me-1"></i>{{ 'availability.exceptions.extraButton' | translate }}
         </button>
       </div>
-      <h5 class="mb-0 text-dark fw-semibold appointment-calendar-title">{{ calendarTitle() }}</h5>
+      <h5 class="mb-0 text-dark fw-semibold appointments-calendar-title">{{ calendarTitle() }}</h5>
       <div class="btn-group" role="group" [attr.aria-label]="'appointments.calendar.view' | translate">
         <button
           type="button"
@@ -117,7 +117,7 @@
       </div>
     </div>
 
-    <div class="appointment-calendar-legend d-flex align-items-center flex-wrap gap-3 mb-3">
+    <div class="appointments-calendar-legend d-flex align-items-center flex-wrap gap-3 mb-3">
       <span><i class="appointment-legend appointment-legend-available"></i>{{ 'appointments.calendar.available' | translate }}</span>
       <span><i class="appointment-legend appointment-legend-appointment"></i>{{ 'appointments.title' | translate }}</span>
       <span><i class="appointment-legend appointment-legend-blocked"></i>{{ 'appointments.calendar.blocked' | translate }}</span>

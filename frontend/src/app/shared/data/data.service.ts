@@ -687,11 +687,6 @@ export class DataService {
               route: routes.newAppointment,
               base: 'new-appointment',
             },
-            {
-              menuValue: 'Calendar',
-              route: routes.appointmentCalendar,
-              base: 'appointment-calendar',
-            },
           ],
         },
         {

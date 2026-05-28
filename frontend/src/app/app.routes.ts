@@ -40,22 +40,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/clinic/services/services.component').then(m => m.ServicesComponent),
       },
       {
-        path: 'availability',
-        redirectTo: 'appointment',
-        pathMatch: 'full',
-      },
-      {
         path: 'appointment/appointment-list',
         redirectTo: 'appointment',
         pathMatch: 'full',
       },
       {
         path: 'appointment/new-appointment',
-        redirectTo: 'appointment',
-        pathMatch: 'full',
-      },
-      {
-        path: 'appointment/appointment-calendar',
         redirectTo: 'appointment',
         pathMatch: 'full',
       },

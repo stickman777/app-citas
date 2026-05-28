@@ -6,18 +6,18 @@
   }
 }
 
-.appointment-calendar {
+.appointments-calendar {
   border: 1px solid var(--border-color, #e7e8eb);
   border-radius: 6px;
   padding: 16px;
   background: var(--white);
 }
 
-.appointment-calendar-title {
+.appointments-calendar-title {
   text-transform: capitalize;
 }
 
-.appointment-calendar-toolbar .icon-btn {
+.appointments-calendar-toolbar .icon-btn {
   width: 32px;
   height: 32px;
   display: inline-flex;
@@ -26,7 +26,7 @@
   padding: 0;
 }
 
-.appointment-calendar-legend {
+.appointments-calendar-legend {
   color: var(--body-color);
   font-size: 13px;
 }
@@ -97,7 +97,7 @@
   }
 }
 
-:host-context([data-bs-theme='dark']) .appointment-calendar {
+:host-context([data-bs-theme='dark']) .appointments-calendar {
   background: #0d0d0d;
   border-color: #202a36;
 }
@@ -124,12 +124,12 @@
 }
 
 @media (max-width: 767.98px) {
-  .appointment-calendar {
+  .appointments-calendar {
     padding: 12px;
     overflow-x: auto;
   }
 
-  .appointment-calendar-title {
+  .appointments-calendar-title {
     width: 100%;
     text-align: center;
     order: -1;
