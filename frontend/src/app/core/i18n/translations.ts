@@ -56,6 +56,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.empty': 'No hay citas para mostrar',
     'appointments.errors.form': 'Completa todos los campos obligatorios.',
     'appointments.errors.load': 'No se han podido cargar las citas.',
+    'appointments.errors.outsideAvailability':
+      'Confirma el aviso para agendar una cita fuera del horario del centro.',
     'appointments.errors.references':
       'No se han podido cargar clientes o servicios.',
     'appointments.errors.save': 'No se ha podido guardar la cita.',
@@ -65,6 +67,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.loading': 'Cargando citas...',
     'appointments.createButton': 'Cita',
     'appointments.new': 'Nueva cita',
+    'appointments.outsideAvailability.badge': 'Fuera de horario',
+    'appointments.outsideAvailability.confirm':
+      'Agendar igualmente fuera del horario del centro.',
+    'appointments.outsideAvailability.warning':
+      'La cita no entra por completo dentro del horario fijo del centro.',
     'appointments.search': 'Buscar cita',
     'appointments.status.cancelled': 'Cancelada',
     'appointments.status.completed': 'Completada',
@@ -281,6 +288,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.empty': 'No appointments to show',
     'appointments.errors.form': 'Complete all required fields.',
     'appointments.errors.load': 'Appointments could not be loaded.',
+    'appointments.errors.outsideAvailability':
+      'Confirm the warning to schedule an appointment outside the center schedule.',
     'appointments.errors.references':
       'Clients or services could not be loaded.',
     'appointments.errors.save': 'The appointment could not be saved.',
@@ -290,6 +299,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.loading': 'Loading appointments...',
     'appointments.createButton': 'Appointment',
     'appointments.new': 'New appointment',
+    'appointments.outsideAvailability.badge': 'Outside hours',
+    'appointments.outsideAvailability.confirm':
+      'Schedule it outside the center schedule anyway.',
+    'appointments.outsideAvailability.warning':
+      'The appointment does not fit completely inside the fixed center schedule.',
     'appointments.search': 'Search appointment',
     'appointments.status.cancelled': 'Cancelled',
     'appointments.status.completed': 'Completed',

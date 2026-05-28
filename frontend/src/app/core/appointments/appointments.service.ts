@@ -29,6 +29,7 @@ export interface Appointment {
   id: number;
   startDateTime: string;
   duration: number;
+  outsideAvailability: boolean;
   status: AppointmentStatus;
   client: AppointmentClient;
   service: AppointmentServiceOption;
@@ -38,6 +39,7 @@ export interface AppointmentPayload {
   startDateTime: string;
   clientId: number;
   serviceId: number;
+  allowOutsideAvailability?: boolean;
 }
 
 @Injectable({

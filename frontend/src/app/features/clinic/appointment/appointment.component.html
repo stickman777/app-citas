@@ -103,6 +103,11 @@
               <span class="badge border px-2 py-1 fs-13 fw-medium" [ngClass]="statusBadgeClass(appointment.status)">
                 {{ statusLabel(appointment.status) }}
               </span>
+              @if(appointment.outsideAvailability){
+              <span class="badge badge-soft-warning border border-warning text-warning ms-1">
+                {{ 'appointments.outsideAvailability.badge' | translate }}
+              </span>
+              }
             </td>
             <td>
               <div class="d-flex align-items-center justify-content-end gap-1">
@@ -166,10 +171,29 @@
               required
             >
           </div>
+          @if(isOutsideFixedSchedule()){
+          <div class="alert alert-warning mt-3 mb-0 py-2">
+            <div class="d-flex align-items-start gap-2">
+              <i class="ti ti-alert-triangle mt-1"></i>
+              <div>
+                <p class="mb-2">{{ 'appointments.outsideAvailability.warning' | translate }}</p>
+                <label class="form-check mb-0">
+                  <input
+                    type="checkbox"
+                    name="allowOutsideAvailability"
+                    [(ngModel)]="form.allowOutsideAvailability"
+                    class="form-check-input me-2"
+                  >
+                  <span class="form-check-label">{{ 'appointments.outsideAvailability.confirm' | translate }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          }
         </div>
         <div class="modal-footer d-flex align-items-center gap-1">
           <button type="button" class="btn btn-white border" (click)="closeFormModal()">{{ 'common.cancel' | translate }}</button>
-          <button type="submit" class="btn btn-primary" [disabled]="appointmentForm.invalid || isSaving">
+          <button type="submit" class="btn btn-primary" [disabled]="appointmentForm.invalid || (isOutsideFixedSchedule() && !form.allowOutsideAvailability) || isSaving">
             {{ (isSaving ? 'common.saving' : 'common.save') | translate }}
           </button>
         </div>

@@ -4,7 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { finalize, forkJoin, Subscription } from 'rxjs';
 
 import { ActiveCenterService } from '../../../core/centers/active-center.service';
-import { Center, CentersService } from '../../../core/centers/centers.service';
+import {
+  Center,
+  CenterScheduleSlot,
+  CentersService,
+} from '../../../core/centers/centers.service';
 import {
   Appointment,
   AppointmentClient,
@@ -20,6 +24,7 @@ interface AppointmentForm {
   startDateTime: string;
   clientId: number | null;
   serviceId: number | null;
+  allowOutsideAvailability: boolean;
 }
 
 const STATUS_BADGE_CLASSES: Record<AppointmentStatus, string> = {
@@ -116,6 +121,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       startDateTime: this.toDateTimeInputValue(appointment.startDateTime),
       clientId: appointment.client.id,
       serviceId: appointment.service.id,
+      allowOutsideAvailability: appointment.outsideAvailability,
     };
     this.isFormModalOpen = true;
   }
@@ -129,6 +135,11 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public saveAppointment(): void {
     if (!this.isFormComplete()) {
       this.errorMessage = this.translate('appointments.errors.form');
+      return;
+    }
+
+    if (this.isOutsideFixedSchedule() && !this.form.allowOutsideAvailability) {
+      this.errorMessage = this.translate('appointments.errors.outsideAvailability');
       return;
     }
 
@@ -245,6 +256,39 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return this.translate(`appointments.status.${status.toLowerCase()}`);
   }
 
+  public isOutsideFixedSchedule(): boolean {
+    if (!this.form.startDateTime || !this.form.serviceId) return false;
+
+    const service = this.serviceOptions.find(
+      option => option.id === Number(this.form.serviceId)
+    );
+
+    if (!service) return false;
+
+    const schedule = this.resolveSchedule(service);
+
+    if (schedule.length === 0) return true;
+
+    const startDate = new Date(this.form.startDateTime);
+
+    if (Number.isNaN(startDate.getTime())) return false;
+
+    const endDate = new Date(startDate);
+    endDate.setMinutes(endDate.getMinutes() + service.durationMinutes);
+
+    const dayOfWeek = startDate.getDay();
+    const startTime = this.toTimeValue(startDate);
+    const endTime = this.toTimeValue(endDate);
+
+    return !schedule.some(slot => {
+      return (
+        slot.dayOfWeek === dayOfWeek &&
+        startTime >= slot.startTime &&
+        endTime <= slot.endTime
+      );
+    });
+  }
+
   private loadReferenceData(): void {
     forkJoin({
       clients: this.appointmentsService.getClients(this.activeCenter?.id),
@@ -277,6 +321,9 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       startDateTime: this.normalizeDateTime(this.form.startDateTime),
       clientId: Number(this.form.clientId),
       serviceId: Number(this.form.serviceId),
+      allowOutsideAvailability: this.isOutsideFixedSchedule()
+        ? this.form.allowOutsideAvailability
+        : false,
     };
   }
 
@@ -295,6 +342,9 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       appointment.client.phone,
       appointment.service.name,
       this.statusLabel(appointment.status),
+      appointment.outsideAvailability
+        ? this.translate('appointments.outsideAvailability.badge')
+        : '',
       appointment.startDateTime,
     ]
       .join(' ')
@@ -306,11 +356,28 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       startDateTime: '',
       clientId: null,
       serviceId: null,
+      allowOutsideAvailability: false,
     };
   }
 
   private normalizeDateTime(value: string): string {
     return value.length === 16 ? `${value}:00` : value;
+  }
+
+  private resolveSchedule(service: AppointmentServiceOption): CenterScheduleSlot[] {
+    return (
+      service.center?.schedule ??
+      this.activeCenter?.schedule ??
+      this.centers.find(center => center.id === service.center?.id)?.schedule ??
+      []
+    );
+  }
+
+  private toTimeValue(date: Date): string {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${hours}:${minutes}`;
   }
 
   private toDateTimeInputValue(value: string): string {
