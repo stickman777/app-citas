@@ -32,6 +32,15 @@ export interface AvailabilityException {
   center: Center;
 }
 
+export interface AvailabilityExceptionPayload {
+  centerId: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  type: AvailabilityExceptionType;
+  label?: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -75,6 +84,31 @@ export class AvailabilityService {
     return this.http.get<AvailabilityException[]>(`${this.apiUrl}/exceptions`, {
       params,
     });
+  }
+
+  createAvailabilityException(
+    payload: AvailabilityExceptionPayload,
+  ): Observable<AvailabilityException> {
+    return this.http.post<AvailabilityException>(
+      `${this.apiUrl}/exceptions`,
+      payload,
+    );
+  }
+
+  updateAvailabilityException(
+    id: number,
+    payload: AvailabilityExceptionPayload,
+  ): Observable<AvailabilityException> {
+    return this.http.patch<AvailabilityException>(
+      `${this.apiUrl}/exceptions/${id}`,
+      payload,
+    );
+  }
+
+  deleteAvailabilityException(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.apiUrl}/exceptions/${id}`,
+    );
   }
 
   private getCenterParams(centerId?: number | null): HttpParams {
