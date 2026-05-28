@@ -20,6 +20,18 @@ export interface AvailabilityPayload {
   endTime: string;
 }
 
+export type AvailabilityExceptionType = 'BLOCKED' | 'EXTRA_AVAILABLE';
+
+export interface AvailabilityException {
+  id: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  type: AvailabilityExceptionType;
+  label?: string | null;
+  center: Center;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -47,6 +59,22 @@ export class AvailabilityService {
 
   deleteAvailability(id: number): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.apiUrl}/${id}`);
+  }
+
+  getAvailabilityExceptions(
+    centerId?: number | null,
+    from?: string,
+    to?: string,
+  ): Observable<AvailabilityException[]> {
+    let params = this.getCenterParams(centerId);
+
+    if (from && to) {
+      params = params.set('from', from).set('to', to);
+    }
+
+    return this.http.get<AvailabilityException[]>(`${this.apiUrl}/exceptions`, {
+      params,
+    });
   }
 
   private getCenterParams(centerId?: number | null): HttpParams {
