@@ -120,7 +120,7 @@
 
 @if(isFormModalOpen){
 <div class="modal fade show d-block center-modal" tabindex="-1" role="dialog" aria-modal="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="text-dark modal-title fw-bold">{{ (editingCenter ? 'centers.actions.edit' : 'centers.new') | translate }}</h4>
@@ -142,10 +142,50 @@
             <label class="form-label">{{ 'centers.fields.logoUrl' | translate }}</label>
             <input type="text" name="logoUrl" [(ngModel)]="form.logoUrl" class="form-control">
           </div>
+          <div class="mt-4">
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+              <label class="form-label mb-0">{{ 'centers.fields.schedule' | translate }}</label>
+              <button type="button" class="btn btn-white border btn-sm d-inline-flex align-items-center" (click)="addScheduleSlot()">
+                <i class="ti ti-plus me-1"></i>{{ 'centers.schedule.addSlot' | translate }}
+              </button>
+            </div>
+            <div class="center-schedule border rounded">
+              @for(slot of form.schedule; track trackByScheduleIndex($index)){
+              <div class="center-schedule-row">
+                <div>
+                  <label class="form-label fs-13">{{ 'availability.fields.day' | translate }}</label>
+                  <select class="form-select" [name]="'scheduleDay' + $index" [(ngModel)]="slot.dayOfWeek">
+                    @for(day of dayOptions; track day){
+                    <option [ngValue]="day">{{ ('availability.days.' + day) | translate }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label fs-13">{{ 'availability.fields.startTime' | translate }}</label>
+                  <input type="time" class="form-control" [name]="'scheduleStart' + $index" [(ngModel)]="slot.startTime" required>
+                </div>
+                <div>
+                  <label class="form-label fs-13">{{ 'availability.fields.endTime' | translate }}</label>
+                  <input type="time" class="form-control" [name]="'scheduleEnd' + $index" [(ngModel)]="slot.endTime" required>
+                </div>
+                <div class="center-schedule-actions">
+                  <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 bg-white text-danger" (click)="removeScheduleSlot($index)" [attr.aria-label]="'centers.schedule.removeSlot' | translate">
+                    <i class="ti ti-trash"></i>
+                  </button>
+                </div>
+              </div>
+              } @empty {
+              <div class="p-3 text-body fs-13">{{ 'centers.schedule.empty' | translate }}</div>
+              }
+            </div>
+            @if(!isScheduleValid()){
+            <div class="text-danger fs-13 mt-2">{{ 'centers.errors.schedule' | translate }}</div>
+            }
+          </div>
         </div>
         <div class="modal-footer d-flex align-items-center gap-1">
           <button type="button" class="btn btn-white border" (click)="closeFormModal()">{{ 'common.cancel' | translate }}</button>
-          <button type="submit" class="btn btn-primary" [disabled]="centerForm.invalid || isSaving">
+          <button type="submit" class="btn btn-primary" [disabled]="centerForm.invalid || !isScheduleValid() || isSaving">
             {{ (isSaving ? 'common.saving' : 'common.save') | translate }}
           </button>
         </div>

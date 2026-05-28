@@ -11,3 +11,36 @@
     background-color: var(--white);
   }
 }
+
+.center-schedule {
+  overflow: hidden;
+}
+
+.center-schedule-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(120px, 0.8fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.center-schedule-row:last-child {
+  border-bottom: 0;
+}
+
+.center-schedule-actions {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+}
+
+@media (max-width: 767.98px) {
+  .center-schedule-row {
+    grid-template-columns: 1fr;
+  }
+
+  .center-schedule-actions {
+    justify-content: flex-end;
+  }
+}

@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import {
   Center,
   CenterPayload,
+  CenterScheduleSlot,
   CentersService,
 } from '../../../core/centers/centers.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
@@ -15,6 +16,7 @@ interface CenterForm {
   name: string;
   city: string;
   logoUrl: string;
+  schedule: CenterScheduleSlot[];
 }
 
 @Component({
@@ -24,6 +26,7 @@ interface CenterForm {
   imports: [CommonModule, FormsModule, TranslatePipe],
 })
 export class CentersComponent {
+  public readonly dayOptions = [1, 2, 3, 4, 5, 6, 0];
   public centers: Center[] = [];
   public filteredCenters: Center[] = [];
   public searchTerm = '';
@@ -90,6 +93,9 @@ export class CentersComponent {
       name: center.name,
       city: center.city ?? '',
       logoUrl: center.logoUrl ?? '',
+      schedule: this.cloneSchedule(
+        center.schedule?.length ? center.schedule : this.getDefaultSchedule()
+      ),
     };
     this.isFormModalOpen = true;
   }
@@ -101,7 +107,7 @@ export class CentersComponent {
   }
 
   public saveCenter(): void {
-    if (!this.form.name.trim()) {
+    if (!this.form.name.trim() || !this.isScheduleValid()) {
       this.errorMessage = this.translate('centers.errors.form');
       return;
     }
@@ -201,6 +207,40 @@ export class CentersComponent {
     return center.id;
   }
 
+  public trackByScheduleIndex(index: number): number {
+    return index;
+  }
+
+  public addScheduleSlot(): void {
+    this.form.schedule = [
+      ...this.form.schedule,
+      { dayOfWeek: 1, startTime: '08:00', endTime: '14:00' },
+    ];
+  }
+
+  public removeScheduleSlot(index: number): void {
+    this.form.schedule = this.form.schedule.filter(
+      (_, slotIndex) => slotIndex !== index
+    );
+  }
+
+  public isScheduleValid(): boolean {
+    if (this.form.schedule.length === 0) return false;
+
+    return (
+      this.form.schedule.every(slot => {
+        return (
+          Number.isInteger(Number(slot.dayOfWeek)) &&
+          slot.dayOfWeek >= 0 &&
+          slot.dayOfWeek <= 6 &&
+          this.isValidTime(slot.startTime) &&
+          this.isValidTime(slot.endTime) &&
+          slot.startTime < slot.endTime
+        );
+      }) && !this.hasScheduleOverlaps()
+    );
+  }
+
   private getPayload(): CenterPayload {
     const city = this.form.city.trim();
     const logoUrl = this.form.logoUrl.trim();
@@ -209,6 +249,7 @@ export class CentersComponent {
       name: this.form.name.trim(),
       city: city || null,
       logoUrl: logoUrl || null,
+      schedule: this.getSchedulePayload(),
     };
   }
 
@@ -217,6 +258,7 @@ export class CentersComponent {
       name: '',
       city: '',
       logoUrl: '',
+      schedule: this.getDefaultSchedule(),
     };
   }
 
@@ -227,5 +269,56 @@ export class CentersComponent {
 
   private translate(key: string): string {
     return this.i18nService.translate(key);
+  }
+
+  private getDefaultSchedule(): CenterScheduleSlot[] {
+    return [
+      { dayOfWeek: 1, startTime: '08:00', endTime: '14:00' },
+      { dayOfWeek: 1, startTime: '16:00', endTime: '20:00' },
+      { dayOfWeek: 2, startTime: '08:00', endTime: '14:00' },
+      { dayOfWeek: 2, startTime: '16:00', endTime: '20:00' },
+      { dayOfWeek: 3, startTime: '08:00', endTime: '14:00' },
+      { dayOfWeek: 3, startTime: '16:00', endTime: '20:00' },
+      { dayOfWeek: 4, startTime: '08:00', endTime: '14:00' },
+      { dayOfWeek: 4, startTime: '16:00', endTime: '20:00' },
+      { dayOfWeek: 5, startTime: '08:00', endTime: '17:00' },
+    ];
+  }
+
+  private getSchedulePayload(): CenterScheduleSlot[] {
+    return this.cloneSchedule(this.form.schedule).sort(
+      (a, b) =>
+        a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)
+    );
+  }
+
+  private cloneSchedule(schedule: CenterScheduleSlot[]): CenterScheduleSlot[] {
+    return schedule.map(slot => ({
+      dayOfWeek: Number(slot.dayOfWeek),
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+    }));
+  }
+
+  private isValidTime(value: string): boolean {
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+  }
+
+  private hasScheduleOverlaps(): boolean {
+    return this.form.schedule.some((slot, index) =>
+      this.form.schedule.some((otherSlot, otherIndex) => {
+        if (
+          index === otherIndex ||
+          Number(slot.dayOfWeek) !== Number(otherSlot.dayOfWeek)
+        ) {
+          return false;
+        }
+
+        return (
+          slot.startTime < otherSlot.endTime &&
+          slot.endTime > otherSlot.startTime
+        );
+      })
+    );
   }
 }

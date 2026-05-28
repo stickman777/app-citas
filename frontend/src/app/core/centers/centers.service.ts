@@ -14,12 +14,20 @@ export interface Center {
   active: boolean;
   createdAt: string;
   updatedAt: string;
+  schedule?: CenterScheduleSlot[];
+}
+
+export interface CenterScheduleSlot {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
 }
 
 export interface CenterPayload {
   name: string;
   city?: string | null;
   logoUrl?: string | null;
+  schedule?: CenterScheduleSlot[];
 }
 
 @Injectable({
