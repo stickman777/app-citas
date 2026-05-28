@@ -129,16 +129,19 @@ export class AppointmentsService {
     const centerId = this.validateAppointmentCenter(client, service);
 
     await this.centerAccessService.validateCenterAccess(centerId, authUser);
-    await this.validateAppointmentSlot(
+    const outsideAvailability = await this.validateAppointmentSlot(
       startDate,
       service.durationMinutes,
       centerId,
+      undefined,
+      appointmentData.allowOutsideAvailability,
     );
 
     // Si todo es correcto, se crea la cita
     const appointment = this.appointmentsRepository.create({
       startDateTime: startDate,
       duration: service.durationMinutes,
+      outsideAvailability,
       client,
       service,
     });
@@ -174,15 +177,18 @@ export class AppointmentsService {
     const centerId = this.validateAppointmentCenter(client, service);
 
     await this.centerAccessService.validateCenterAccess(centerId, authUser);
-    await this.validateAppointmentSlot(
+    const outsideAvailability = await this.validateAppointmentSlot(
       startDate,
       service.durationMinutes,
       centerId,
       appointment.id,
+      appointmentData.allowOutsideAvailability ??
+        appointment.outsideAvailability,
     );
 
     appointment.startDateTime = startDate;
     appointment.duration = service.durationMinutes;
+    appointment.outsideAvailability = outsideAvailability;
     appointment.client = client;
     appointment.service = service;
 
@@ -304,14 +310,15 @@ export class AppointmentsService {
     duration: number,
     centerId: number,
     appointmentIdToExclude?: number,
-  ): Promise<void> {
+    allowOutsideAvailability = false,
+  ): Promise<boolean> {
     const isAvailable = await this.isInsideAvailability(
       startDate,
       duration,
       centerId,
     );
 
-    if (!isAvailable)
+    if (!isAvailable && !allowOutsideAvailability)
       throw new BadRequestException(
         'La cita está fuera del horario disponible',
       );
@@ -327,6 +334,8 @@ export class AppointmentsService {
       throw new BadRequestException(
         'El horario seleccionado no está disponible',
       );
+
+    return !isAvailable;
   }
 
   // Verifica si hay citas que se solapan en el mismo día
@@ -505,14 +514,17 @@ export class AppointmentsService {
 
     const startDate = new Date(appointmentData.startDateTime);
 
-    await this.validateAppointmentSlot(
+    const outsideAvailability = await this.validateAppointmentSlot(
       startDate,
       appointment.duration,
       this.getServiceCenterId(appointment.service),
       appointment.id,
+      appointmentData.allowOutsideAvailability ??
+        appointment.outsideAvailability,
     );
 
     appointment.startDateTime = startDate;
+    appointment.outsideAvailability = outsideAvailability;
 
     return this.appointmentsRepository.save(appointment);
   }

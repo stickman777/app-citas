@@ -1,4 +1,4 @@
-import { IsString, Matches } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, Matches } from 'class-validator';
 
 // Requiere fecha local sin zona horaria, con formato YYYY-MM-DDTHH:mm:ss
 const LOCAL_DATE_TIME_REGEX =
@@ -10,4 +10,8 @@ export class RescheduleAppointmentDto {
     message: 'La fecha y hora debe tener formato YYYY-MM-DDTHH:mm:ss',
   })
   startDateTime: string;
+
+  @IsOptional()
+  @IsBoolean()
+  allowOutsideAvailability?: boolean;
 }

@@ -19,6 +19,9 @@ export class Appointment {
   @Column()
   duration: number;
 
+  @Column({ default: false })
+  outsideAvailability: boolean;
+
   @Column({
     type: 'enum',
     enum: AppointmentStatus,

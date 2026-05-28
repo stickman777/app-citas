@@ -1,4 +1,11 @@
-import { IsInt, IsString, Matches, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Min,
+} from 'class-validator';
 
 // Requiere fecha local sin zona horaria, con formato YYYY-MM-DDTHH:mm:ss
 const LOCAL_DATE_TIME_REGEX =
@@ -18,4 +25,8 @@ export class CreateAppointmentDto {
   @IsInt()
   @Min(1)
   serviceId: number;
+
+  @IsOptional()
+  @IsBoolean()
+  allowOutsideAvailability?: boolean;
 }
