@@ -10,6 +10,10 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
 import { AppointmentStatus } from './appointment.entity';
+import {
+  AvailabilityException,
+  AvailabilityExceptionType,
+} from '../availability/availability-exception.entity';
 import { Availability } from '../availability/availability.entity';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
@@ -33,6 +37,9 @@ export class AppointmentsService {
 
     @InjectRepository(Availability)
     private availabilityRepository: Repository<Availability>,
+
+    @InjectRepository(AvailabilityException)
+    private availabilityExceptionRepository: Repository<AvailabilityException>,
 
     private readonly centerAccessService: CenterAccessService,
   ) {}
@@ -78,13 +85,24 @@ export class AppointmentsService {
         startTime: 'ASC',
       },
     });
+    const exceptions = await this.findExceptionsForDate(
+      this.toDateQuery(targetDate),
+      centerId,
+    );
+    const availableRanges = [
+      ...availabilities,
+      ...exceptions.filter(
+        (exception) =>
+          exception.type === AvailabilityExceptionType.EXTRA_AVAILABLE,
+      ),
+    ];
 
-    if (availabilities.length === 0) return [];
+    if (availableRanges.length === 0) return [];
 
-    const slots: string[] = [];
+    const slots = new Set<string>();
 
     // Para cada franja de disponibilidad, se generan los posibles horarios de cita
-    for (const availability of availabilities) {
+    for (const availability of availableRanges) {
       const availabilityStart = this.buildDateWithTime(
         targetDate,
         availability.startTime,
@@ -103,13 +121,20 @@ export class AppointmentsService {
         slotEnd.setMinutes(slotEnd.getMinutes() + service.durationMinutes);
 
         if (slotEnd <= availabilityEnd) {
+          const hasBlockedTime = this.hasOverlappingBlockedException(
+            exceptions,
+            currentSlot,
+            service.durationMinutes,
+          );
           const hasOverlap = await this.hasOverlappingAppointment(
             currentSlot,
             service.durationMinutes,
             centerId,
           );
 
-          if (!hasOverlap) slots.push(currentSlot.toTimeString().slice(0, 5));
+          if (!hasBlockedTime && !hasOverlap) {
+            slots.add(currentSlot.toTimeString().slice(0, 5));
+          }
         }
 
         currentSlot.setMinutes(
@@ -118,7 +143,7 @@ export class AppointmentsService {
       }
     }
 
-    return slots;
+    return [...slots].sort();
   }
 
   // Crea una nueva cita
@@ -389,6 +414,10 @@ export class AppointmentsService {
     endDate.setMinutes(endDate.getMinutes() + duration);
 
     const dayOfWeek = startDate.getDay();
+    const exceptions = await this.findExceptionsForDate(
+      this.toDateQuery(startDate),
+      centerId,
+    );
 
     const availabilities = await this.availabilityRepository.find({
       where: {
@@ -398,15 +427,69 @@ export class AppointmentsService {
         },
       },
     });
+    const availableRanges = [
+      ...availabilities,
+      ...exceptions.filter(
+        (exception) =>
+          exception.type === AvailabilityExceptionType.EXTRA_AVAILABLE,
+      ),
+    ];
 
     const startTime = startDate.toTimeString().slice(0, 5);
     const endTime = endDate.toTimeString().slice(0, 5);
+    const hasBlockedTime = this.hasOverlappingBlockedException(
+      exceptions,
+      startDate,
+      duration,
+    );
 
-    return availabilities.some((availability) => {
+    if (hasBlockedTime) return false;
+
+    return availableRanges.some((availability) => {
       return (
         startTime >= availability.startTime && endTime <= availability.endTime
       );
     });
+  }
+
+  private async findExceptionsForDate(date: string, centerId: number) {
+    return this.availabilityExceptionRepository.find({
+      where: {
+        date,
+        center: {
+          id: centerId,
+        },
+      },
+      order: {
+        startTime: 'ASC',
+      },
+    });
+  }
+
+  private hasOverlappingBlockedException(
+    exceptions: AvailabilityException[],
+    startDate: Date,
+    duration: number,
+  ): boolean {
+    const endDate = new Date(startDate);
+    endDate.setMinutes(endDate.getMinutes() + duration);
+
+    const startTime = startDate.toTimeString().slice(0, 5);
+    const endTime = endDate.toTimeString().slice(0, 5);
+
+    return exceptions.some((exception) => {
+      if (exception.type !== AvailabilityExceptionType.BLOCKED) return false;
+
+      return exception.startTime < endTime && exception.endTime > startTime;
+    });
+  }
+
+  private toDateQuery(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 
   // Construye un objeto Date combinando fecha y hora
