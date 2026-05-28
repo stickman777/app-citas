@@ -163,6 +163,9 @@
           <th>ID</th>
           <th>{{ 'common.client' | translate }}</th>
           <th>{{ 'common.service' | translate }}</th>
+          @if(isAdmin){
+          <th>{{ 'common.center' | translate }}</th>
+          }
           <th>{{ 'common.dateTime' | translate }}</th>
           <th>{{ 'common.duration' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
@@ -172,7 +175,7 @@
       <tbody>
         @if(isLoading){
         <tr>
-          <td colspan="7" class="text-center text-dark py-4">{{ 'appointments.loading' | translate }}</td>
+          <td [attr.colspan]="appointmentTableColumnCount" class="text-center text-dark py-4">{{ 'appointments.loading' | translate }}</td>
         </tr>
         } @else {
           @for(appointment of filteredAppointments; track trackByAppointmentId($index, appointment)){
@@ -200,6 +203,9 @@
               <span class="badge badge-soft-danger border border-danger text-danger ms-1">{{ 'common.inactive' | translate }}</span>
               }
             </td>
+            @if(isAdmin){
+            <td>{{ appointmentCenterName(appointment) }}</td>
+            }
             <td>{{ appointment.startDateTime | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>{{ appointment.duration }} min</td>
             <td>
@@ -225,7 +231,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="7" class="text-center text-dark py-4">{{ 'appointments.empty' | translate }}</td>
+            <td [attr.colspan]="appointmentTableColumnCount" class="text-center text-dark py-4">{{ 'appointments.empty' | translate }}</td>
           </tr>
           }
         }

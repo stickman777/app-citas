@@ -51,16 +51,6 @@ export class DataService {
             subMenus: [],
           },
           {
-            menuValue: 'Disponibilidad',
-            labelKey: 'sidebar.availability',
-            hasSubRoute: false,
-            showSubRoute: false,
-            route: routes.availability,
-            base: 'availability',
-            icon: 'calendar-time',
-            subMenus: [],
-          },
-          {
             menuValue: 'Citas',
             labelKey: 'sidebar.appointments',
             hasSubRoute: false,

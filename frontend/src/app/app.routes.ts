@@ -41,7 +41,8 @@ export const routes: Routes = [
       },
       {
         path: 'availability',
-        loadComponent: () => import('./features/clinic/appointment/appointment-calendar/appointment-calendar.component').then(m => m.AppointmentCalendarComponent),
+        redirectTo: 'appointment',
+        pathMatch: 'full',
       },
       {
         path: 'appointment/appointment-list',

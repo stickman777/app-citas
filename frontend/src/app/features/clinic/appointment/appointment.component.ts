@@ -39,6 +39,7 @@ import {
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { CalendarWrapperModule } from '../../../shared/calendar/calendar-wrapper.module';
+import { AuthService, CurrentUser } from '../../../core/auth/auth.service';
 
 interface AppointmentForm {
   startDateTime: string;
@@ -53,6 +54,11 @@ interface AvailabilityExceptionForm {
   endTime: string;
   type: AvailabilityExceptionType;
   label: string;
+}
+
+interface TimeRange {
+  startTime: string;
+  endTime: string;
 }
 
 const STATUS_BADGE_CLASSES: Record<AppointmentStatus, string> = {
@@ -84,6 +90,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public services: AppointmentServiceOption[] = [];
   public centers: Center[] = [];
   public activeCenter: Center | null = null;
+  public currentUser: CurrentUser | null = null;
   public viewMode: AppointmentViewMode = 'calendar';
   public calendarView: CalendarView = CalendarView.Week;
   public calendarViewDate = new Date();
@@ -112,11 +119,13 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     private readonly appointmentsService: AppointmentsService,
     private readonly availabilityService: AvailabilityService,
     private readonly centersService: CentersService,
+    private readonly authService: AuthService,
     private readonly activeCenterService: ActiveCenterService,
     private readonly i18nService: I18nService
   ) {}
 
   ngOnInit(): void {
+    this.loadCurrentUser();
     this.loadCenters();
     this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
       center => {
@@ -306,6 +315,14 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return appointment.id;
   }
 
+  public get isAdmin(): boolean {
+    return this.currentUser?.role === 'ADMIN';
+  }
+
+  public get appointmentTableColumnCount(): number {
+    return this.isAdmin ? 8 : 7;
+  }
+
   public setViewMode(viewMode: AppointmentViewMode): void {
     this.viewMode = viewMode;
 
@@ -399,6 +416,10 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   public statusLabel(status: AppointmentStatus): string {
     return this.translate(`appointments.status.${status.toLowerCase()}`);
+  }
+
+  public appointmentCenterName(appointment: Appointment): string {
+    return appointment.service.center?.name ?? this.translate('centers.none');
   }
 
   public saveAvailabilityException(): void {
@@ -495,10 +516,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
     if (!service) return false;
 
-    const schedule = this.resolveSchedule(service);
-
-    if (schedule.length === 0) return true;
-
     const startDate = new Date(this.form.startDateTime);
 
     if (Number.isNaN(startDate.getTime())) return false;
@@ -509,10 +526,33 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     const dayOfWeek = startDate.getDay();
     const startTime = this.toTimeValue(startDate);
     const endTime = this.toTimeValue(endDate);
+    const date = this.toDateQuery(startDate);
+    const exceptions = this.getExceptionsForDate(date);
+    const isBlocked = this.hasTimeOverlap(
+      { startTime, endTime },
+      exceptions.filter(exception => exception.type === 'BLOCKED')
+    );
 
-    return !schedule.some(slot => {
+    if (isBlocked) return true;
+
+    const scheduleRanges = this.resolveSchedule(service)
+      .filter(slot => slot.dayOfWeek === dayOfWeek)
+      .map(slot => ({
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      }));
+    const extraRanges = exceptions
+      .filter(exception => exception.type === 'EXTRA_AVAILABLE')
+      .map(exception => ({
+        startTime: exception.startTime,
+        endTime: exception.endTime,
+      }));
+    const availableRanges = [...scheduleRanges, ...extraRanges];
+
+    if (availableRanges.length === 0) return true;
+
+    return !availableRanges.some(slot => {
       return (
-        slot.dayOfWeek === dayOfWeek &&
         startTime >= slot.startTime &&
         endTime <= slot.endTime
       );
@@ -530,6 +570,17 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.errorMessage = this.translate('appointments.errors.references');
+      },
+    });
+  }
+
+  private loadCurrentUser(): void {
+    this.authService.getCurrentUser().subscribe({
+      next: user => {
+        this.currentUser = user;
+      },
+      error: () => {
+        this.currentUser = null;
       },
     });
   }
@@ -687,21 +738,29 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     const events: CalendarEvent<AppointmentCalendarEventMeta>[] = [];
 
     for (const date of this.eachDate(range.start, range.end)) {
+      const dateQuery = this.toDateQuery(date);
+      const blockedExceptions = this.getExceptionsForDate(dateQuery).filter(
+        exception => exception.type === 'BLOCKED'
+      );
       const daySchedule = this.activeCenter.schedule.filter(
         slot => slot.dayOfWeek === date.getDay()
       );
 
       for (const slot of daySchedule) {
-        events.push({
-          start: this.buildDateTime(date, slot.startTime),
-          end: this.buildDateTime(date, slot.endTime),
-          title: this.translate('appointments.calendar.available'),
-          color: { primary: '#10b981', secondary: '#d1fae5' },
-          cssClass: 'appointment-event appointment-event-availability',
-          meta: {
-            type: 'availability',
-          },
-        });
+        const availableRanges = this.removeBlockedRanges(slot, blockedExceptions);
+
+        for (const range of availableRanges) {
+          events.push({
+            start: this.buildDateTime(date, range.startTime),
+            end: this.buildDateTime(date, range.endTime),
+            title: this.translate('appointments.calendar.available'),
+            color: { primary: '#10b981', secondary: '#d1fae5' },
+            cssClass: 'appointment-event appointment-event-availability',
+            meta: {
+              type: 'availability',
+            },
+          });
+        }
       }
     }
 
@@ -756,6 +815,60 @@ export class AppointmentComponent implements OnInit, OnDestroy {
         },
       };
     });
+  }
+
+  private getExceptionsForDate(date: string): AvailabilityException[] {
+    return this.availabilityExceptions.filter(
+      exception => exception.date === date
+    );
+  }
+
+  private removeBlockedRanges(
+    slot: TimeRange,
+    blockedExceptions: AvailabilityException[],
+  ): TimeRange[] {
+    return blockedExceptions.reduce<TimeRange[]>((ranges, exception) => {
+      return ranges.flatMap(range => this.splitRange(range, exception));
+    }, [{ startTime: slot.startTime, endTime: slot.endTime }]);
+  }
+
+  private splitRange(
+    range: TimeRange,
+    blockedException: AvailabilityException,
+  ): TimeRange[] {
+    if (
+      blockedException.startTime >= range.endTime ||
+      blockedException.endTime <= range.startTime
+    ) {
+      return [range];
+    }
+
+    const ranges: TimeRange[] = [];
+
+    if (blockedException.startTime > range.startTime) {
+      ranges.push({
+        startTime: range.startTime,
+        endTime: blockedException.startTime,
+      });
+    }
+
+    if (blockedException.endTime < range.endTime) {
+      ranges.push({
+        startTime: blockedException.endTime,
+        endTime: range.endTime,
+      });
+    }
+
+    return ranges;
+  }
+
+  private hasTimeOverlap(
+    range: TimeRange,
+    ranges: TimeRange[],
+  ): boolean {
+    return ranges.some(
+      item => item.startTime < range.endTime && item.endTime > range.startTime
+    );
   }
 
   private getCalendarDateRange(): { start: Date; end: Date } {
