@@ -1,0 +1,119 @@
+.center-edit-logo {
+  max-height: 38px;
+  max-width: 38px;
+  object-fit: contain;
+}
+
+.center-schedule {
+  overflow: hidden;
+}
+
+.center-schedule-day {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.center-schedule-day:last-child {
+  border-bottom: 0;
+}
+
+.center-schedule-day-label {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.center-schedule-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.center-schedule-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  background: var(--gray-100, #f8f9fa);
+}
+
+.center-schedule-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.center-time-control {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 4px;
+  background: var(--white);
+  margin: 0;
+
+  .form-control {
+    width: 78px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 13px;
+    box-shadow: none;
+  }
+}
+
+.center-time-separator {
+  width: 8px;
+  height: 1px;
+  background: var(--body-color);
+  opacity: 0.45;
+}
+
+.center-info-placeholder {
+  min-height: 118px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+@media (max-width: 767.98px) {
+  .center-edit-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .center-schedule-day {
+    grid-template-columns: 1fr;
+  }
+
+  .center-schedule-actions {
+    justify-content: flex-start;
+  }
+
+  .center-schedule-slot {
+    width: 100%;
+    flex-wrap: wrap;
+
+    .center-time-control {
+      flex: 1 1 120px;
+
+      .form-control {
+        width: 100%;
+      }
+    }
+  }
+}

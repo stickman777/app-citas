@@ -1,0 +1,137 @@
+<div class="content">
+  @if(isLoading){
+  <div class="text-center text-dark py-4">{{ 'centers.loading' | translate }}</div>
+  } @else {
+  <form #centerForm="ngForm" (ngSubmit)="saveCenter()">
+    <div class="center-edit-header d-flex align-items-sm-center justify-content-between flex-sm-row flex-column gap-3 mb-3 pb-3 border-bottom">
+      <div class="d-flex align-items-center gap-3">
+        <span class="avatar avatar-xl rounded-circle bg-light border d-inline-flex align-items-center justify-content-center flex-shrink-0">
+          @if(form.logoUrl){
+          <img [src]="form.logoUrl" alt="" class="center-edit-logo">
+          } @else {
+          <i class="ti ti-building-hospital text-dark fs-24"></i>
+          }
+        </span>
+        <div>
+          <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+            <h4 class="fw-bold mb-0">{{ 'centers.actions.edit' | translate }}</h4>
+            @if(center){
+            <span class="badge rounded border fs-13 fw-medium" [ngClass]="statusBadgeClass()">
+              {{ (center.active ? 'common.active' : 'common.inactive') | translate }}
+            </span>
+            }
+          </div>
+          <div class="d-flex align-items-center flex-wrap gap-3 fs-13 text-body">
+            <span class="text-dark fw-semibold">{{ form.name || center?.name || '-' }}</span>
+            <span class="d-inline-flex align-items-center">
+              <i class="ti ti-map-pin me-1"></i>{{ form.city || '-' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-white border btn-md d-inline-flex align-items-center fw-normal" routerLink="/centers">
+          <i class="ti ti-arrow-left me-1"></i>{{ 'centers.backToList' | translate }}
+        </a>
+        <button type="submit" class="btn btn-primary btn-md" [disabled]="centerForm.invalid || !isScheduleValid() || isSaving">
+          {{ (isSaving ? 'common.saving' : 'common.save') | translate }}
+        </button>
+      </div>
+    </div>
+
+    @if(errorMessage){
+    <div class="alert alert-danger py-2" role="alert">{{ errorMessage }}</div>
+    }
+    @if(successMessage){
+    <div class="alert alert-success py-2" role="alert">{{ successMessage }}</div>
+    }
+
+    <div class="row g-3 align-items-start">
+      <div class="col-xl-8 col-xxl-9">
+        <div class="card mb-3">
+          <div class="card-header d-flex align-items-center justify-content-between gap-2">
+            <h5 class="fw-semibold mb-0">{{ 'centers.fields.schedule' | translate }}</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="center-schedule">
+              @for(day of dayOptions; track trackByDay($index, day)){
+              <div class="center-schedule-day">
+                <div class="center-schedule-day-label">
+                  <span class="text-dark fw-semibold">{{ ('availability.days.' + day) | translate }}</span>
+                </div>
+
+                <div class="center-schedule-slots">
+                  @for(slot of getDaySlots(day); track trackByScheduleSlot($index, slot)){
+                  <div class="center-schedule-slot">
+                    <label class="center-time-control">
+                      <i class="ti ti-clock-hour-4 text-body"></i>
+                      <input type="time" class="form-control form-control-sm" [name]="'scheduleStart' + day + '-' + $index" [(ngModel)]="slot.startTime" required>
+                    </label>
+                    <span class="center-time-separator"></span>
+                    <label class="center-time-control">
+                      <i class="ti ti-clock-hour-8 text-body"></i>
+                      <input type="time" class="form-control form-control-sm" [name]="'scheduleEnd' + day + '-' + $index" [(ngModel)]="slot.endTime" required>
+                    </label>
+                    <button type="button" class="btn btn-sm bg-soft-danger text-danger btn-icon rounded d-inline-flex align-items-center justify-content-center" (click)="removeScheduleSlot(slot)" [attr.aria-label]="'centers.schedule.removeSlot' | translate">
+                      <i class="ti ti-trash"></i>
+                    </button>
+                  </div>
+                  } @empty {
+                  <span class="badge badge-soft-secondary border text-body fw-normal">{{ 'centers.schedule.closed' | translate }}</span>
+                  }
+                </div>
+
+                <div class="center-schedule-actions">
+                  <button type="button" class="btn btn-sm bg-light text-dark btn-icon rounded d-inline-flex align-items-center justify-content-center" (click)="addScheduleSlot(day)" [attr.aria-label]="'centers.schedule.addSlot' | translate">
+                    <i class="ti ti-plus"></i>
+                  </button>
+                </div>
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if(!isScheduleValid()){
+        <div class="text-danger fs-13 mb-3">{{ 'centers.errors.schedule' | translate }}</div>
+        }
+      </div>
+
+      <div class="col-xl-4 col-xxl-3">
+        <div class="card mb-3">
+          <div class="card-header">
+            <h5 class="fw-semibold mb-0">{{ 'centers.details.title' | translate }}</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">{{ 'centers.fields.name' | translate }}<span class="text-danger ms-1">*</span></label>
+              <input type="text" name="name" [(ngModel)]="form.name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ 'centers.fields.city' | translate }}</label>
+              <input type="text" name="city" [(ngModel)]="form.city" class="form-control">
+            </div>
+            <div class="mb-0">
+              <label class="form-label">{{ 'centers.fields.logoUrl' | translate }}</label>
+              <input type="text" name="logoUrl" [(ngModel)]="form.logoUrl" class="form-control">
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header">
+            <h5 class="fw-semibold mb-0">{{ 'centers.additionalInfo.title' | translate }}</h5>
+          </div>
+          <div class="card-body">
+            <div class="center-info-placeholder rounded border bg-light">
+              <i class="ti ti-notes text-body fs-20"></i>
+              <span class="text-body fs-13">{{ 'centers.additionalInfo.empty' | translate }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+  }
+</div>
