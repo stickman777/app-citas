@@ -17,7 +17,9 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/user.entity';
 import { AvailabilityService } from './availability.service';
+import { CreateAvailabilityExceptionDto } from './dto/create-availability-exception.dto';
 import { CreateAvailabilityDto } from './dto/create-availability.dto';
+import { UpdateAvailabilityExceptionDto } from './dto/update-availability-exception.dto';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -55,6 +57,21 @@ export class AvailabilityController {
     );
   }
 
+  @Get('exceptions')
+  findExceptions(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Query('centerId') centerId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.availabilityService.findExceptions(
+      request.user,
+      this.parseCenterId(centerId),
+      from,
+      to,
+    );
+  }
+
   @Post()
   create(
     @Req() request: { user: { id: number; role: UserRole } },
@@ -63,12 +80,44 @@ export class AvailabilityController {
     return this.availabilityService.create(availabilityData, request.user);
   }
 
+  @Post('exceptions')
+  createException(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Body() exceptionData: CreateAvailabilityExceptionDto,
+  ) {
+    return this.availabilityService.createException(
+      exceptionData,
+      request.user,
+    );
+  }
+
+  @Delete('exceptions/:id')
+  removeException(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.availabilityService.removeException(id, request.user);
+  }
+
   @Delete(':id')
   remove(
     @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.availabilityService.remove(id, request.user);
+  }
+
+  @Patch('exceptions/:id')
+  updateException(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+    @Body() exceptionData: UpdateAvailabilityExceptionDto,
+  ) {
+    return this.availabilityService.updateException(
+      id,
+      exceptionData,
+      request.user,
+    );
   }
 
   @Patch(':id')

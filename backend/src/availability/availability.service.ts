@@ -4,13 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Between, In, Repository } from 'typeorm';
 import {
   AuthUser,
   CenterAccessService,
 } from '../centers/center-access.service';
+import { Center } from '../centers/center.entity';
+import { AvailabilityException } from './availability-exception.entity';
 import { Availability } from './availability.entity';
+import { CreateAvailabilityExceptionDto } from './dto/create-availability-exception.dto';
 import { CreateAvailabilityDto } from './dto/create-availability.dto';
+import { UpdateAvailabilityExceptionDto } from './dto/update-availability-exception.dto';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 
 @Injectable()
@@ -18,6 +22,9 @@ export class AvailabilityService {
   constructor(
     @InjectRepository(Availability)
     private availabilityRepository: Repository<Availability>,
+
+    @InjectRepository(AvailabilityException)
+    private availabilityExceptionRepository: Repository<AvailabilityException>,
 
     private readonly centerAccessService: CenterAccessService,
   ) {}
@@ -56,6 +63,109 @@ export class AvailabilityService {
         startTime: 'ASC',
       },
     });
+  }
+
+  async findExceptions(
+    authUser?: AuthUser,
+    centerId?: number,
+    from?: string,
+    to?: string,
+  ) {
+    this.validateDateRange(from, to);
+
+    const centerIds = await this.getAllowedCenterIds(authUser, centerId);
+
+    if (centerIds.length === 0) return [];
+
+    return this.availabilityExceptionRepository.find({
+      where: {
+        center: {
+          id: In(centerIds),
+        },
+        ...(from && to ? { date: Between(from, to) } : {}),
+      },
+      order: {
+        date: 'ASC',
+        startTime: 'ASC',
+      },
+    });
+  }
+
+  async createException(
+    exceptionData: CreateAvailabilityExceptionDto,
+    authUser?: AuthUser,
+  ) {
+    const { centerId, label, ...exceptionPayload } = exceptionData;
+    const center = await this.centerAccessService.getCenter(
+      centerId,
+      authUser,
+    );
+
+    if (!center)
+      throw new BadRequestException('La excepcion debe tener un centro');
+
+    const normalizedLabel = label?.trim() || undefined;
+
+    await this.validateException({
+      ...exceptionPayload,
+      label: normalizedLabel,
+      center,
+    });
+
+    const exception = this.availabilityExceptionRepository.create({
+      ...exceptionPayload,
+      label: normalizedLabel,
+      center,
+    });
+
+    return this.availabilityExceptionRepository.save(exception);
+  }
+
+  async updateException(
+    id: number,
+    exceptionData: UpdateAvailabilityExceptionDto,
+    authUser?: AuthUser,
+  ) {
+    const exception = await this.findException(id, authUser);
+    const { centerId, label, ...exceptionPayload } = exceptionData;
+    const center =
+      centerId !== undefined
+        ? await this.centerAccessService.getCenter(centerId, authUser)
+        : exception.center;
+
+    if (!center)
+      throw new BadRequestException('La excepcion debe tener un centro');
+
+    const updatedException = {
+      ...exception,
+      ...exceptionPayload,
+      label: label !== undefined ? label.trim() || undefined : exception.label,
+      center,
+    };
+
+    await this.validateException(updatedException, id);
+
+    Object.assign(exception, exceptionPayload);
+
+    if (label !== undefined) {
+      exception.label = label.trim() || undefined;
+    }
+
+    if (centerId !== undefined) {
+      exception.center = center;
+    }
+
+    return this.availabilityExceptionRepository.save(exception);
+  }
+
+  async removeException(id: number, authUser?: AuthUser) {
+    const exception = await this.findException(id, authUser);
+
+    await this.availabilityExceptionRepository.remove(exception);
+
+    return {
+      message: 'Excepcion de disponibilidad eliminada correctamente',
+    };
   }
 
   // Crea una nueva franja de disponibilidad
@@ -190,6 +300,94 @@ export class AvailabilityService {
     );
 
     return availability;
+  }
+
+  private async findException(
+    id: number,
+    authUser?: AuthUser,
+  ): Promise<AvailabilityException> {
+    const exception = await this.availabilityExceptionRepository.findOne({
+      where: { id },
+    });
+
+    if (!exception)
+      throw new NotFoundException(
+        'No se ha encontrado la excepcion de disponibilidad',
+      );
+
+    await this.centerAccessService.validateCenterAccess(
+      exception.center.id,
+      authUser,
+    );
+
+    return exception;
+  }
+
+  private async validateException(
+    exception: Omit<AvailabilityException, 'id'>,
+    exceptionIdToExclude?: number,
+  ) {
+    this.validateDate(exception.date);
+
+    if (exception.startTime >= exception.endTime)
+      throw new BadRequestException(
+        'La hora de inicio debe ser anterior a la hora de fin',
+      );
+
+    const exceptionsSameDay = await this.availabilityExceptionRepository.find({
+      where: {
+        date: exception.date,
+        center: {
+          id: exception.center.id,
+        },
+      },
+    });
+
+    const hasOverlap = exceptionsSameDay.some((existingException) => {
+      if (existingException.id === exceptionIdToExclude) return false;
+
+      return (
+        existingException.startTime < exception.endTime &&
+        existingException.endTime > exception.startTime
+      );
+    });
+
+    if (hasOverlap)
+      throw new BadRequestException(
+        'La excepcion se solapa con otra excepcion existente',
+      );
+  }
+
+  private validateDateRange(from?: string, to?: string) {
+    if ((from && !to) || (!from && to))
+      throw new BadRequestException(
+        'Debe indicar fecha de inicio y fecha de fin',
+      );
+
+    if (!from || !to) return;
+
+    this.validateDate(from);
+    this.validateDate(to);
+
+    if (from > to)
+      throw new BadRequestException(
+        'La fecha de inicio debe ser anterior a la fecha de fin',
+      );
+  }
+
+  private validateDate(date: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
+      throw new BadRequestException('La fecha debe tener formato YYYY-MM-DD');
+
+    const [year, month, day] = date.split('-').map(Number);
+    const parsedDate = new Date(year, month - 1, day);
+
+    if (
+      parsedDate.getFullYear() !== year ||
+      parsedDate.getMonth() !== month - 1 ||
+      parsedDate.getDate() !== day
+    )
+      throw new BadRequestException('Fecha no valida');
   }
 
   private async getAllowedCenterIds(
