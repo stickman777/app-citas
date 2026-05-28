@@ -32,6 +32,8 @@ import {
 } from '../../../core/appointments/appointments.service';
 import {
   AvailabilityException,
+  AvailabilityExceptionPayload,
+  AvailabilityExceptionType,
   AvailabilityService,
 } from '../../../core/availability/availability.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
@@ -43,6 +45,14 @@ interface AppointmentForm {
   clientId: number | null;
   serviceId: number | null;
   allowOutsideAvailability: boolean;
+}
+
+interface AvailabilityExceptionForm {
+  date: string;
+  startTime: string;
+  endTime: string;
+  type: AvailabilityExceptionType;
+  label: string;
 }
 
 const STATUS_BADGE_CLASSES: Record<AppointmentStatus, string> = {
@@ -83,11 +93,18 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public isLoading = false;
   public isSaving = false;
   public isDeleting = false;
+  public isSavingException = false;
+  public isDeletingException = false;
   public isFormModalOpen = false;
   public isDeleteModalOpen = false;
+  public isSlotActionModalOpen = false;
+  public isExceptionModalOpen = false;
   public editingAppointment: Appointment | null = null;
   public appointmentToDelete: Appointment | null = null;
+  public editingException: AvailabilityException | null = null;
+  public selectedCalendarEvent: CalendarEvent<AppointmentCalendarEventMeta> | null = null;
   public form: AppointmentForm = this.getEmptyForm();
+  public exceptionForm: AvailabilityExceptionForm = this.getEmptyExceptionForm();
   private activeCenterSubscription?: Subscription;
   private loadedCenterId: number | null = null;
 
@@ -145,6 +162,19 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.clearMessages();
     this.editingAppointment = null;
     this.form = this.getEmptyForm();
+    this.isFormModalOpen = true;
+  }
+
+  public openCreateModalFromCalendarEvent(): void {
+    if (!this.selectedCalendarEvent) return;
+
+    this.clearMessages();
+    this.editingAppointment = null;
+    this.form = {
+      ...this.getEmptyForm(),
+      startDateTime: this.toDateTimeInputValue(this.selectedCalendarEvent.start),
+    };
+    this.isSlotActionModalOpen = false;
     this.isFormModalOpen = true;
   }
 
@@ -216,10 +246,24 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.isDeleteModalOpen = false;
   }
 
+  public closeSlotActionModal(): void {
+    this.isSlotActionModalOpen = false;
+    this.selectedCalendarEvent = null;
+  }
+
+  public closeExceptionModal(): void {
+    if (this.isSavingException || this.isDeletingException) return;
+
+    this.isExceptionModalOpen = false;
+    this.editingException = null;
+  }
+
   @HostListener('document:keydown.escape')
   public closeOpenModal(): void {
     if (this.isFormModalOpen) this.closeFormModal();
     if (this.isDeleteModalOpen) this.closeDeleteModal();
+    if (this.isSlotActionModalOpen) this.closeSlotActionModal();
+    if (this.isExceptionModalOpen) this.closeExceptionModal();
   }
 
   public deleteAppointment(): void {
@@ -290,9 +334,30 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.loadAvailabilityExceptions(false);
   }
 
+  public openExtraAvailabilityModal(): void {
+    this.clearMessages();
+    this.editingException = null;
+    this.exceptionForm = {
+      ...this.getEmptyExceptionForm(),
+      date: this.toDateQuery(this.calendarViewDate),
+      type: 'EXTRA_AVAILABLE',
+    };
+    this.isExceptionModalOpen = true;
+  }
+
   public handleCalendarEvent(event: CalendarEvent<AppointmentCalendarEventMeta>): void {
     if (event.meta?.type === 'appointment') {
       this.openEditModal(event.meta.appointment);
+      return;
+    }
+
+    if (event.meta?.type === 'exception') {
+      this.openExceptionModal(event.meta.exception);
+      return;
+    }
+
+    if (event.meta?.type === 'availability') {
+      this.openSlotActionModal(event);
     }
   }
 
@@ -334,6 +399,91 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   public statusLabel(status: AppointmentStatus): string {
     return this.translate(`appointments.status.${status.toLowerCase()}`);
+  }
+
+  public saveAvailabilityException(): void {
+    if (!this.activeCenter || !this.isExceptionFormValid()) {
+      this.errorMessage = this.translate('availability.errors.form');
+      return;
+    }
+
+    this.isSavingException = true;
+    this.clearMessages();
+
+    const payload = this.getExceptionPayload();
+    const request = this.editingException
+      ? this.availabilityService.updateAvailabilityException(
+          this.editingException.id,
+          payload
+        )
+      : this.availabilityService.createAvailabilityException(payload);
+
+    request
+      .pipe(finalize(() => (this.isSavingException = false)))
+      .subscribe({
+        next: () => {
+          this.successMessage = this.editingException
+            ? this.translate('availability.exceptions.success.updated')
+            : this.translate('availability.exceptions.success.created');
+          this.isExceptionModalOpen = false;
+          this.editingException = null;
+          this.loadAvailabilityExceptions(false);
+        },
+        error: () => {
+          this.errorMessage = this.translate('availability.errors.save');
+        },
+      });
+  }
+
+  public deleteAvailabilityException(): void {
+    if (!this.editingException) return;
+
+    this.isDeletingException = true;
+    this.clearMessages();
+
+    this.availabilityService
+      .deleteAvailabilityException(this.editingException.id)
+      .pipe(finalize(() => (this.isDeletingException = false)))
+      .subscribe({
+        next: () => {
+          this.successMessage = this.translate(
+            'availability.exceptions.success.deleted'
+          );
+          this.isExceptionModalOpen = false;
+          this.editingException = null;
+          this.loadAvailabilityExceptions(false);
+        },
+        error: () => {
+          this.errorMessage = this.translate('availability.errors.delete');
+        },
+      });
+  }
+
+  public blockSelectedCalendarSlot(): void {
+    if (!this.selectedCalendarEvent) return;
+
+    this.clearMessages();
+    this.editingException = null;
+    this.exceptionForm = {
+      date: this.toDateQuery(this.selectedCalendarEvent.start),
+      startTime: this.toTimeValue(this.selectedCalendarEvent.start),
+      endTime: this.selectedCalendarEvent.end
+        ? this.toTimeValue(this.selectedCalendarEvent.end)
+        : this.toTimeValue(this.selectedCalendarEvent.start),
+      type: 'BLOCKED',
+      label: '',
+    };
+    this.isSlotActionModalOpen = false;
+    this.isExceptionModalOpen = true;
+  }
+
+  public isExceptionFormValid(): boolean {
+    return (
+      !!this.exceptionForm.date &&
+      this.isValidTime(this.exceptionForm.startTime) &&
+      this.isValidTime(this.exceptionForm.endTime) &&
+      this.exceptionForm.startTime < this.exceptionForm.endTime
+    );
   }
 
   public isOutsideFixedSchedule(): boolean {
@@ -441,6 +591,29 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     };
   }
 
+  private getEmptyExceptionForm(): AvailabilityExceptionForm {
+    return {
+      date: '',
+      startTime: '08:00',
+      endTime: '14:00',
+      type: 'BLOCKED',
+      label: '',
+    };
+  }
+
+  private getExceptionPayload(): AvailabilityExceptionPayload {
+    const label = this.exceptionForm.label.trim();
+
+    return {
+      centerId: Number(this.activeCenter?.id),
+      date: this.exceptionForm.date,
+      startTime: this.exceptionForm.startTime,
+      endTime: this.exceptionForm.endTime,
+      type: this.exceptionForm.type,
+      label: label || null,
+    };
+  }
+
   private normalizeDateTime(value: string): string {
     return value.length === 16 ? `${value}:00` : value;
   }
@@ -533,6 +706,27 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     }
 
     return events;
+  }
+
+  private openSlotActionModal(
+    event: CalendarEvent<AppointmentCalendarEventMeta>,
+  ): void {
+    this.clearMessages();
+    this.selectedCalendarEvent = event;
+    this.isSlotActionModalOpen = true;
+  }
+
+  private openExceptionModal(exception: AvailabilityException): void {
+    this.clearMessages();
+    this.editingException = exception;
+    this.exceptionForm = {
+      date: exception.date,
+      startTime: exception.startTime,
+      endTime: exception.endTime,
+      type: exception.type,
+      label: exception.label ?? '',
+    };
+    this.isExceptionModalOpen = true;
   }
 
   private buildExceptionEvents(): CalendarEvent<AppointmentCalendarEventMeta>[] {
@@ -657,8 +851,12 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return `${hours}:${minutes}`;
   }
 
-  private toDateTimeInputValue(value: string): string {
-    const date = new Date(value);
+  private isValidTime(value: string): boolean {
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+  }
+
+  private toDateTimeInputValue(value: string | Date): string {
+    const date = value instanceof Date ? value : new Date(value);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');

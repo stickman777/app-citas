@@ -84,6 +84,9 @@
         <button type="button" class="btn btn-white border btn-sm icon-btn" (click)="goToNextPeriod()" [attr.aria-label]="'appointments.calendar.next' | translate">
           <i class="ti ti-chevron-right"></i>
         </button>
+        <button type="button" class="btn btn-white border btn-sm d-inline-flex align-items-center ms-1" (click)="openExtraAvailabilityModal()">
+          <i class="ti ti-calendar-plus me-1"></i>{{ 'availability.exceptions.extraButton' | translate }}
+        </button>
       </div>
       <h5 class="mb-0 text-dark fw-semibold appointment-calendar-title">{{ calendarTitle() }}</h5>
       <div class="btn-group" role="group" [attr.aria-label]="'appointments.calendar.view' | translate">
@@ -296,6 +299,97 @@
           <button type="button" class="btn btn-white border" (click)="closeFormModal()">{{ 'common.cancel' | translate }}</button>
           <button type="submit" class="btn btn-primary" [disabled]="appointmentForm.invalid || (isOutsideFixedSchedule() && !form.allowOutsideAvailability) || isSaving">
             {{ (isSaving ? 'common.saving' : 'common.save') | translate }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+}
+
+@if(isSlotActionModalOpen){
+<div class="modal fade show d-block appointment-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="text-dark modal-title fw-bold">{{ 'appointments.calendar.slotActions' | translate }}</h4>
+        <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.cancel' | translate" (click)="closeSlotActionModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="d-grid gap-2">
+          <button type="button" class="btn btn-primary d-inline-flex align-items-center justify-content-center" (click)="openCreateModalFromCalendarEvent()">
+            <i class="ti ti-plus me-1"></i>{{ 'appointments.calendar.createHere' | translate }}
+          </button>
+          <button type="button" class="btn btn-white border d-inline-flex align-items-center justify-content-center" (click)="blockSelectedCalendarSlot()">
+            <i class="ti ti-lock me-1"></i>{{ 'availability.exceptions.blockSlot' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+}
+
+@if(isExceptionModalOpen){
+<div class="modal fade show d-block appointment-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="text-dark modal-title fw-bold">
+          {{ (editingException ? 'availability.exceptions.edit' : 'availability.exceptions.new') | translate }}
+        </h4>
+        <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.cancel' | translate" (click)="closeExceptionModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <form #exceptionNgForm="ngForm" (ngSubmit)="saveAvailabilityException()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">{{ 'common.date' | translate }}<span class="text-danger ms-1">*</span></label>
+            <input type="date" name="exceptionDate" [(ngModel)]="exceptionForm.date" class="form-control" required>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">{{ 'availability.fields.startTime' | translate }}<span class="text-danger ms-1">*</span></label>
+                <input type="time" name="exceptionStart" [(ngModel)]="exceptionForm.startTime" class="form-control" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">{{ 'availability.fields.endTime' | translate }}<span class="text-danger ms-1">*</span></label>
+                <input type="time" name="exceptionEnd" [(ngModel)]="exceptionForm.endTime" class="form-control" required>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ 'availability.exceptions.type' | translate }}<span class="text-danger ms-1">*</span></label>
+            <select name="exceptionType" [(ngModel)]="exceptionForm.type" class="form-select" required>
+              <option [ngValue]="'BLOCKED'">{{ 'appointments.calendar.blocked' | translate }}</option>
+              <option [ngValue]="'EXTRA_AVAILABLE'">{{ 'appointments.calendar.extraAvailable' | translate }}</option>
+            </select>
+          </div>
+          <div class="mb-0">
+            <label class="form-label">{{ 'availability.exceptions.label' | translate }}</label>
+            <input type="text" name="exceptionLabel" [(ngModel)]="exceptionForm.label" class="form-control">
+          </div>
+          @if(!isExceptionFormValid()){
+          <div class="text-danger fs-13 mt-2">{{ 'availability.errors.form' | translate }}</div>
+          }
+        </div>
+        <div class="modal-footer d-flex align-items-center gap-1">
+          @if(editingException){
+          <button type="button" class="btn btn-danger me-auto" [disabled]="isDeletingException" (click)="deleteAvailabilityException()">
+            {{ (isDeletingException ? 'common.deleting' : 'common.delete') | translate }}
+          </button>
+          }
+          <button type="button" class="btn btn-white border" (click)="closeExceptionModal()">{{ 'common.cancel' | translate }}</button>
+          <button type="submit" class="btn btn-primary" [disabled]="exceptionNgForm.invalid || !isExceptionFormValid() || isSavingException">
+            {{ (isSavingException ? 'common.saving' : 'common.save') | translate }}
           </button>
         </div>
       </form>
