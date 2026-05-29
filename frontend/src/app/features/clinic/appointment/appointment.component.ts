@@ -1,9 +1,21 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  HostListener,
+  Injectable,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
+import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, forkJoin, Subscription } from 'rxjs';
-import { CalendarEvent, CalendarView } from 'angular-calendar';
+import {
+  CalendarDateFormatter,
+  CalendarEvent,
+  CalendarWeekViewBeforeRenderEvent,
+  CalendarView,
+  DateFormatterParams,
+} from 'angular-calendar';
 import {
   addDays,
   addMonths,
@@ -46,7 +58,6 @@ interface AppointmentForm {
   startDateTime: string;
   clientId: number | null;
   serviceId: number | null;
-  allowOutsideAvailability: boolean;
 }
 
 interface AvailabilityExceptionForm {
@@ -68,18 +79,65 @@ const STATUS_BADGE_CLASSES: Record<AppointmentStatus, string> = {
   CANCELLED: 'badge-soft-danger border-danger text-danger',
 };
 
+const CALENDAR_BOUNDARY_MARGIN_MINUTES = 60;
+const CALENDAR_SEGMENT_MINUTES = 30;
+const DEFAULT_CALENDAR_START_MINUTES = 6 * 60;
+const DEFAULT_CALENDAR_END_MINUTES = 22 * 60;
+const MINUTES_PER_DAY = 24 * 60;
+const AVAILABLE_SLOT_CLASS = 'appointment-slot-available';
+const UNAVAILABLE_SLOT_CLASS = 'appointment-slot-unavailable';
+
 type AppointmentViewMode = 'calendar' | 'list';
 
 type AppointmentCalendarEventMeta =
   | { type: 'appointment'; appointment: Appointment }
-  | { type: 'availability' }
   | { type: 'exception'; exception: AvailabilityException };
+
+@Injectable()
+class AppointmentCalendarDateFormatter extends CalendarDateFormatter {
+  public override weekViewHour({ date, locale }: DateFormatterParams): string {
+    return formatDate(date, 'HH:mm', locale ?? 'es');
+  }
+
+  public override dayViewHour({ date, locale }: DateFormatterParams): string {
+    return formatDate(date, 'HH:mm', locale ?? 'es');
+  }
+
+  public override monthViewColumnHeader(params: DateFormatterParams): string {
+    return capitalizeFirstLetter(super.monthViewColumnHeader(params));
+  }
+
+  public override weekViewColumnHeader(params: DateFormatterParams): string {
+    return capitalizeFirstLetter(super.weekViewColumnHeader(params));
+  }
+
+  public override weekViewColumnSubHeader({
+    date,
+    locale,
+  }: DateFormatterParams): string {
+    const safeLocale = locale ?? 'es';
+
+    return `${formatDate(date, 'd', safeLocale)} ${capitalizeFirstLetter(
+      formatDate(date, 'MMM', safeLocale)
+    )}`;
+  }
+}
+
+function capitalizeFirstLetter(value: string): string {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+}
 
 @Component({
   selector: 'app-appointment',
   templateUrl: './appointment.component.html',
   styleUrls: ['./appointment.component.scss'],
   imports: [CommonModule, FormsModule, TranslatePipe, CalendarWrapperModule],
+  providers: [
+    {
+      provide: CalendarDateFormatter,
+      useClass: AppointmentCalendarDateFormatter,
+    },
+  ],
 })
 export class AppointmentComponent implements OnInit, OnDestroy {
   public readonly CalendarView = CalendarView;
@@ -105,16 +163,19 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public isDeletingException = false;
   public isFormModalOpen = false;
   public isDeleteModalOpen = false;
-  public isSlotActionModalOpen = false;
   public isExceptionModalOpen = false;
+  public showUnavailableSlotHint = false;
+  public unavailableSlotHintLeft = 0;
+  public unavailableSlotHintTop = 0;
   public editingAppointment: Appointment | null = null;
   public appointmentToDelete: Appointment | null = null;
   public editingException: AvailabilityException | null = null;
-  public selectedCalendarEvent: CalendarEvent<AppointmentCalendarEventMeta> | null = null;
+  private forceOutsideAvailabilityWarning = false;
   public form: AppointmentForm = this.getEmptyForm();
   public exceptionForm: AvailabilityExceptionForm = this.getEmptyExceptionForm();
   private activeCenterSubscription?: Subscription;
   private loadedCenterId: number | null = null;
+  private unavailableSlotHintTimeout?: ReturnType<typeof setTimeout>;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -147,6 +208,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.activeCenterSubscription?.unsubscribe();
+    this.clearUnavailableSlotHintTimeout();
   }
 
   private applyCalendarQueryParams(): void {
@@ -155,33 +217,29 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     const calendarView = params.get('calendarView');
     const date = params.get('date');
 
-    if (viewMode === 'calendar' || viewMode === 'list') {
+    if (viewMode === 'calendar' || viewMode === 'list')
       this.viewMode = viewMode;
-    }
 
-    if (calendarView === CalendarView.Day) {
+    if (calendarView === CalendarView.Day)
       this.calendarView = CalendarView.Day;
-    } else if (calendarView === CalendarView.Week) {
+    else if (calendarView === CalendarView.Week)
       this.calendarView = CalendarView.Week;
-    } else if (calendarView === CalendarView.Month) {
+    else if (calendarView === CalendarView.Month)
       this.calendarView = CalendarView.Month;
-    }
 
     if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
       const parsedDate = this.fromDateQuery(date);
 
-      if (this.toDateQuery(parsedDate) === date) {
+      if (this.toDateQuery(parsedDate) === date)
         this.calendarViewDate = parsedDate;
-      }
     }
   }
 
   public loadAppointments(clearMessages = true): void {
     this.isLoading = true;
 
-    if (clearMessages) {
+    if (clearMessages)
       this.clearMessages();
-    }
 
     this.appointmentsService.getAppointments(this.activeCenter?.id).subscribe({
       next: appointments => {
@@ -199,32 +257,37 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   public openCreateModal(): void {
     this.clearMessages();
+    this.clearCalendarSlotHint();
     this.editingAppointment = null;
+    this.forceOutsideAvailabilityWarning = false;
     this.form = this.getEmptyForm();
     this.isFormModalOpen = true;
   }
 
-  public openCreateModalFromCalendarEvent(): void {
-    if (!this.selectedCalendarEvent) return;
-
+  public openCreateModalFromCalendarSegment(
+    date: Date,
+    forceOutsideWarning = false,
+  ): void {
     this.clearMessages();
+    this.clearCalendarSlotHint();
     this.editingAppointment = null;
+    this.forceOutsideAvailabilityWarning = forceOutsideWarning;
     this.form = {
       ...this.getEmptyForm(),
-      startDateTime: this.toDateTimeInputValue(this.selectedCalendarEvent.start),
+      startDateTime: this.toDateTimeInputValue(date),
     };
-    this.isSlotActionModalOpen = false;
     this.isFormModalOpen = true;
   }
 
   public openEditModal(appointment: Appointment): void {
     this.clearMessages();
+    this.clearCalendarSlotHint();
     this.editingAppointment = appointment;
+    this.forceOutsideAvailabilityWarning = false;
     this.form = {
       startDateTime: this.toDateTimeInputValue(appointment.startDateTime),
       clientId: appointment.client.id,
       serviceId: appointment.service.id,
-      allowOutsideAvailability: appointment.outsideAvailability,
     };
     this.isFormModalOpen = true;
   }
@@ -233,16 +296,12 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     if (this.isSaving) return;
 
     this.isFormModalOpen = false;
+    this.forceOutsideAvailabilityWarning = false;
   }
 
   public saveAppointment(): void {
     if (!this.isFormComplete()) {
       this.errorMessage = this.translate('appointments.errors.form');
-      return;
-    }
-
-    if (this.isOutsideFixedSchedule() && !this.form.allowOutsideAvailability) {
-      this.errorMessage = this.translate('appointments.errors.outsideAvailability');
       return;
     }
 
@@ -285,11 +344,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.isDeleteModalOpen = false;
   }
 
-  public closeSlotActionModal(): void {
-    this.isSlotActionModalOpen = false;
-    this.selectedCalendarEvent = null;
-  }
-
   public closeExceptionModal(): void {
     if (this.isSavingException || this.isDeletingException) return;
 
@@ -301,7 +355,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public closeOpenModal(): void {
     if (this.isFormModalOpen) this.closeFormModal();
     if (this.isDeleteModalOpen) this.closeDeleteModal();
-    if (this.isSlotActionModalOpen) this.closeSlotActionModal();
     if (this.isExceptionModalOpen) this.closeExceptionModal();
   }
 
@@ -356,43 +409,67 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public setViewMode(viewMode: AppointmentViewMode): void {
     this.viewMode = viewMode;
 
-    if (viewMode === 'calendar') {
+    if (viewMode === 'calendar')
       this.loadAvailabilityExceptions(false);
-    }
   }
 
   public setCalendarView(view: CalendarView): void {
     this.calendarView = view;
+    this.clearCalendarSlotHint();
     this.loadAvailabilityExceptions(false);
   }
 
   public goToToday(): void {
     this.calendarViewDate = new Date();
+    this.clearCalendarSlotHint();
     this.loadAvailabilityExceptions(false);
   }
 
   public goToPreviousPeriod(): void {
     this.calendarViewDate = this.changeCalendarDate(-1);
+    this.clearCalendarSlotHint();
     this.loadAvailabilityExceptions(false);
   }
 
   public goToNextPeriod(): void {
     this.calendarViewDate = this.changeCalendarDate(1);
+    this.clearCalendarSlotHint();
     this.loadAvailabilityExceptions(false);
   }
 
-  public openExtraAvailabilityModal(): void {
-    this.clearMessages();
-    this.editingException = null;
-    this.exceptionForm = {
-      ...this.getEmptyExceptionForm(),
-      date: this.toDateQuery(this.calendarViewDate),
-      type: 'EXTRA_AVAILABLE',
-    };
-    this.isExceptionModalOpen = true;
+  public handleCalendarSegmentClick(
+    date: Date,
+    sourceEvent?: MouseEvent,
+  ): void {
+    if (this.isCalendarSegmentAvailable(date)) {
+      this.openCreateModalFromCalendarSegment(date);
+      return;
+    }
+
+    if ((sourceEvent?.detail ?? 1) >= 2) {
+      this.openCreateModalFromCalendarSegment(date, true);
+      return;
+    }
+
+    this.showCalendarSlotHint(sourceEvent);
   }
 
-  public handleCalendarEvent(event: CalendarEvent<AppointmentCalendarEventMeta>): void {
+  @HostListener('document:mousemove')
+  public scheduleUnavailableSlotHintDismiss(): void {
+    if (!this.showUnavailableSlotHint || this.unavailableSlotHintTimeout)
+      return;
+
+    this.unavailableSlotHintTimeout = setTimeout(() => {
+      this.clearCalendarSlotHint();
+    }, 800);
+  }
+
+  public handleCalendarEvent(
+    event: CalendarEvent<AppointmentCalendarEventMeta>,
+    sourceEvent?: MouseEvent | KeyboardEvent,
+  ): void {
+    sourceEvent?.stopPropagation();
+
     if (event.meta?.type === 'appointment') {
       this.openEditModal(event.meta.appointment);
       return;
@@ -402,22 +479,65 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       this.openExceptionModal(event.meta.exception);
       return;
     }
-
-    if (event.meta?.type === 'availability') {
-      this.openSlotActionModal(event);
-    }
   }
 
-  public calendarTitle(): string {
-    const formatOptions: Intl.DateTimeFormatOptions =
-      this.calendarView === CalendarView.Month
-        ? { month: 'long', year: 'numeric' }
-        : this.calendarView === CalendarView.Week
-          ? { day: '2-digit', month: 'short', year: 'numeric' }
-          : { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+  public markCalendarAvailability(
+    event: CalendarWeekViewBeforeRenderEvent,
+  ): void {
+    event.hourColumns.forEach(column => {
+      column.hours.forEach(hour => {
+        hour.segments.forEach(segment => {
+          segment.cssClass = this.resolveSegmentCssClass(
+            segment.cssClass,
+            this.isCalendarSegmentAvailable(segment.date)
+          );
+        });
+      });
+    });
+  }
 
-    return new Intl.DateTimeFormat(this.i18nService.currentLanguage, formatOptions)
-      .format(this.calendarViewDate);
+  public get calendarStartHour(): number {
+    return Math.floor(this.getCalendarScheduleBounds().startMinutes / 60);
+  }
+
+  public get calendarStartMinute(): number {
+    return this.getCalendarScheduleBounds().startMinutes % 60;
+  }
+
+  public get calendarEndHour(): number {
+    return Math.floor(this.getCalendarScheduleBounds().endMinutes / 60);
+  }
+
+  public get calendarEndMinute(): number {
+    return this.getCalendarScheduleBounds().endMinutes % 60;
+  }
+
+  public get calendarLocale(): string {
+    return this.i18nService.currentLanguage === 'es' ? 'es' : 'en-US';
+  }
+
+  public calendarFullDateLabel(date: Date): string {
+    const weekday = capitalizeFirstLetter(
+      new Intl.DateTimeFormat(this.calendarLocale, { weekday: 'long' }).format(date)
+    );
+    const day = new Intl.DateTimeFormat(this.calendarLocale, {
+      day: 'numeric',
+    }).format(date);
+    const month = capitalizeFirstLetter(
+      new Intl.DateTimeFormat(this.calendarLocale, { month: 'long' }).format(date)
+    );
+
+    return this.i18nService.currentLanguage === 'es'
+      ? `${weekday} ${day} de ${month}`
+      : `${weekday}, ${month} ${day}`;
+  }
+
+  public isOutsideAvailabilityWarningVisible(): boolean {
+    return this.forceOutsideAvailabilityWarning || this.isOutsideFixedSchedule();
+  }
+
+  public clearOutsideAvailabilityWarningHint(): void {
+    this.forceOutsideAvailabilityWarning = false;
   }
 
   public get clientOptions(): AppointmentClient[] {
@@ -508,24 +628,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
           this.errorMessage = this.translate('availability.errors.delete');
         },
       });
-  }
-
-  public blockSelectedCalendarSlot(): void {
-    if (!this.selectedCalendarEvent) return;
-
-    this.clearMessages();
-    this.editingException = null;
-    this.exceptionForm = {
-      date: this.toDateQuery(this.selectedCalendarEvent.start),
-      startTime: this.toTimeValue(this.selectedCalendarEvent.start),
-      endTime: this.selectedCalendarEvent.end
-        ? this.toTimeValue(this.selectedCalendarEvent.end)
-        : this.toTimeValue(this.selectedCalendarEvent.start),
-      type: 'BLOCKED',
-      label: '',
-    };
-    this.isSlotActionModalOpen = false;
-    this.isExceptionModalOpen = true;
   }
 
   public isExceptionFormValid(): boolean {
@@ -633,9 +735,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       startDateTime: this.normalizeDateTime(this.form.startDateTime),
       clientId: Number(this.form.clientId),
       serviceId: Number(this.form.serviceId),
-      allowOutsideAvailability: this.isOutsideFixedSchedule()
-        ? this.form.allowOutsideAvailability
-        : false,
+      allowOutsideAvailability: this.isOutsideFixedSchedule(),
     };
   }
 
@@ -668,7 +768,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       startDateTime: '',
       clientId: null,
       serviceId: null,
-      allowOutsideAvailability: false,
     };
   }
 
@@ -706,9 +805,8 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (clearMessages) {
+    if (clearMessages)
       this.clearMessages();
-    }
 
     const range = this.getCalendarDateRange();
 
@@ -731,7 +829,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   private updateCalendarEvents(): void {
     this.calendarEvents = [
-      ...this.buildAvailabilityEvents(),
       ...this.buildExceptionEvents(),
       ...this.buildAppointmentEvents(),
     ].sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -759,50 +856,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
         },
       };
     });
-  }
-
-  private buildAvailabilityEvents(): CalendarEvent<AppointmentCalendarEventMeta>[] {
-    if (!this.activeCenter?.schedule?.length) return [];
-
-    const range = this.getCalendarDateRange();
-    const events: CalendarEvent<AppointmentCalendarEventMeta>[] = [];
-
-    for (const date of this.eachDate(range.start, range.end)) {
-      const dateQuery = this.toDateQuery(date);
-      const blockedExceptions = this.getExceptionsForDate(dateQuery).filter(
-        exception => exception.type === 'BLOCKED'
-      );
-      const daySchedule = this.activeCenter.schedule.filter(
-        slot => slot.dayOfWeek === date.getDay()
-      );
-
-      for (const slot of daySchedule) {
-        const availableRanges = this.removeBlockedRanges(slot, blockedExceptions);
-
-        for (const range of availableRanges) {
-          events.push({
-            start: this.buildDateTime(date, range.startTime),
-            end: this.buildDateTime(date, range.endTime),
-            title: this.translate('appointments.calendar.available'),
-            color: { primary: '#10b981', secondary: '#d1fae5' },
-            cssClass: 'appointment-event appointment-event-availability',
-            meta: {
-              type: 'availability',
-            },
-          });
-        }
-      }
-    }
-
-    return events;
-  }
-
-  private openSlotActionModal(
-    event: CalendarEvent<AppointmentCalendarEventMeta>,
-  ): void {
-    this.clearMessages();
-    this.selectedCalendarEvent = event;
-    this.isSlotActionModalOpen = true;
   }
 
   private openExceptionModal(exception: AvailabilityException): void {
@@ -853,45 +906,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     );
   }
 
-  private removeBlockedRanges(
-    slot: TimeRange,
-    blockedExceptions: AvailabilityException[],
-  ): TimeRange[] {
-    return blockedExceptions.reduce<TimeRange[]>((ranges, exception) => {
-      return ranges.flatMap(range => this.splitRange(range, exception));
-    }, [{ startTime: slot.startTime, endTime: slot.endTime }]);
-  }
-
-  private splitRange(
-    range: TimeRange,
-    blockedException: AvailabilityException,
-  ): TimeRange[] {
-    if (
-      blockedException.startTime >= range.endTime ||
-      blockedException.endTime <= range.startTime
-    ) {
-      return [range];
-    }
-
-    const ranges: TimeRange[] = [];
-
-    if (blockedException.startTime > range.startTime) {
-      ranges.push({
-        startTime: range.startTime,
-        endTime: blockedException.startTime,
-      });
-    }
-
-    if (blockedException.endTime < range.endTime) {
-      ranges.push({
-        startTime: blockedException.endTime,
-        endTime: range.endTime,
-      });
-    }
-
-    return ranges;
-  }
-
   private hasTimeOverlap(
     range: TimeRange,
     ranges: TimeRange[],
@@ -901,20 +915,103 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     );
   }
 
+  private isCalendarSegmentAvailable(date: Date): boolean {
+    const endDate = new Date(date);
+    endDate.setMinutes(endDate.getMinutes() + CALENDAR_SEGMENT_MINUTES);
+
+    const startTime = this.toTimeValue(date);
+    const endTime = this.toTimeValue(endDate);
+    const dateQuery = this.toDateQuery(date);
+    const exceptions = this.getExceptionsForDate(dateQuery);
+    const blockedRanges = exceptions
+      .filter(exception => exception.type === 'BLOCKED')
+      .map(exception => ({
+        startTime: exception.startTime,
+        endTime: exception.endTime,
+      }));
+
+    if (this.hasTimeOverlap({ startTime, endTime }, blockedRanges))
+      return false;
+
+    const scheduleRanges = (this.activeCenter?.schedule ?? [])
+      .filter(slot => slot.dayOfWeek === date.getDay())
+      .map(slot => ({
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      }));
+    const extraRanges = exceptions
+      .filter(exception => exception.type === 'EXTRA_AVAILABLE')
+      .map(exception => ({
+        startTime: exception.startTime,
+        endTime: exception.endTime,
+      }));
+
+    return [...scheduleRanges, ...extraRanges].some(range => {
+      return startTime >= range.startTime && endTime <= range.endTime;
+    });
+  }
+
+  private resolveSegmentCssClass(
+    currentClass: string | undefined,
+    isAvailable: boolean,
+  ): string {
+    const classes = (currentClass ?? '')
+      .split(' ')
+      .filter(
+        className =>
+          className &&
+          className !== AVAILABLE_SLOT_CLASS &&
+          className !== UNAVAILABLE_SLOT_CLASS
+      );
+
+    classes.push(isAvailable ? AVAILABLE_SLOT_CLASS : UNAVAILABLE_SLOT_CLASS);
+
+    return classes.join(' ');
+  }
+
+  private getCalendarScheduleBounds(): {
+    startMinutes: number;
+    endMinutes: number;
+  } {
+    const slots = this.activeCenter?.schedule ?? [];
+
+    if (slots.length === 0)
+      return {
+        startMinutes: DEFAULT_CALENDAR_START_MINUTES,
+        endMinutes: DEFAULT_CALENDAR_END_MINUTES,
+      };
+
+    const firstStart = Math.min(
+      ...slots.map(slot => this.timeToMinutes(slot.startTime))
+    );
+    const lastEnd = Math.max(
+      ...slots.map(slot => this.timeToMinutes(slot.endTime))
+    );
+    const startMinutes = this.floorToHalfHour(
+      firstStart - CALENDAR_BOUNDARY_MARGIN_MINUTES
+    );
+    const endMinutes = this.ceilToHalfHour(
+      lastEnd + CALENDAR_BOUNDARY_MARGIN_MINUTES
+    );
+
+    return {
+      startMinutes: Math.max(0, startMinutes),
+      endMinutes: Math.min(MINUTES_PER_DAY - 1, endMinutes),
+    };
+  }
+
   private getCalendarDateRange(): { start: Date; end: Date } {
-    if (this.calendarView === CalendarView.Day) {
+    if (this.calendarView === CalendarView.Day)
       return {
         start: new Date(this.calendarViewDate),
         end: new Date(this.calendarViewDate),
       };
-    }
 
-    if (this.calendarView === CalendarView.Week) {
+    if (this.calendarView === CalendarView.Week)
       return {
         start: startOfWeek(this.calendarViewDate, { weekStartsOn: 1 }),
         end: endOfWeek(this.calendarViewDate, { weekStartsOn: 1 }),
       };
-    }
 
     return {
       start: startOfMonth(this.calendarViewDate),
@@ -923,17 +1020,15 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   }
 
   private changeCalendarDate(step: number): Date {
-    if (this.calendarView === CalendarView.Day) {
+    if (this.calendarView === CalendarView.Day)
       return step > 0
         ? addDays(this.calendarViewDate, 1)
         : subDays(this.calendarViewDate, 1);
-    }
 
-    if (this.calendarView === CalendarView.Week) {
+    if (this.calendarView === CalendarView.Week)
       return step > 0
         ? addWeeks(this.calendarViewDate, 1)
         : subWeeks(this.calendarViewDate, 1);
-    }
 
     return step > 0
       ? addMonths(this.calendarViewDate, 1)
@@ -994,6 +1089,20 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return `${hours}:${minutes}`;
   }
 
+  private timeToMinutes(value: string): number {
+    const [hours, minutes] = value.split(':').map(Number);
+
+    return hours * 60 + minutes;
+  }
+
+  private floorToHalfHour(minutes: number): number {
+    return Math.floor(minutes / 30) * 30;
+  }
+
+  private ceilToHalfHour(minutes: number): number {
+    return Math.ceil(minutes / 30) * 30;
+  }
+
   private isValidTime(value: string): boolean {
     return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
   }
@@ -1013,9 +1122,8 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     options: T[],
     current?: T,
   ): T[] {
-    if (!current || options.some(option => option.id === current.id)) {
+    if (!current || options.some(option => option.id === current.id))
       return options;
-    }
 
     return [current, ...options];
   }
@@ -1023,6 +1131,29 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private clearCalendarSlotHint(): void {
+    this.clearUnavailableSlotHintTimeout();
+    this.showUnavailableSlotHint = false;
+  }
+
+  private showCalendarSlotHint(sourceEvent?: MouseEvent): void {
+    this.clearUnavailableSlotHintTimeout();
+    this.unavailableSlotHintLeft = sourceEvent
+      ? Math.min(sourceEvent.clientX + 12, window.innerWidth - 340)
+      : 24;
+    this.unavailableSlotHintTop = sourceEvent
+      ? Math.min(sourceEvent.clientY + 12, window.innerHeight - 80)
+      : 24;
+    this.showUnavailableSlotHint = true;
+  }
+
+  private clearUnavailableSlotHintTimeout(): void {
+    if (!this.unavailableSlotHintTimeout) return;
+
+    clearTimeout(this.unavailableSlotHintTimeout);
+    this.unavailableSlotHintTimeout = undefined;
   }
 
   private translate(key: string): string {

@@ -73,7 +73,10 @@
 
   @if(viewMode === 'calendar'){
   <div class="appointments-calendar">
-    <div class="appointments-calendar-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div
+      class="appointments-calendar-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3"
+      [class.appointments-calendar-toolbar-sticky]="calendarView === CalendarView.Day"
+    >
       <div class="d-flex align-items-center gap-1">
         <button type="button" class="btn btn-white border btn-sm" (click)="goToToday()">
           {{ 'appointments.calendar.today' | translate }}
@@ -84,11 +87,12 @@
         <button type="button" class="btn btn-white border btn-sm icon-btn" (click)="goToNextPeriod()" [attr.aria-label]="'appointments.calendar.next' | translate">
           <i class="ti ti-chevron-right"></i>
         </button>
-        <button type="button" class="btn btn-white border btn-sm d-inline-flex align-items-center ms-1" (click)="openExtraAvailabilityModal()">
-          <i class="ti ti-calendar-plus me-1"></i>{{ 'availability.exceptions.extraButton' | translate }}
-        </button>
       </div>
-      <h5 class="mb-0 text-dark fw-semibold appointments-calendar-title">{{ calendarTitle() }}</h5>
+      @if(calendarView === CalendarView.Day){
+      <h5 class="appointments-calendar-title mb-0 text-dark fw-semibold">
+        {{ calendarFullDateLabel(calendarViewDate) }}
+      </h5>
+      }
       <div class="btn-group" role="group" [attr.aria-label]="'appointments.calendar.view' | translate">
         <button
           type="button"
@@ -116,21 +120,24 @@
         </button>
       </div>
     </div>
-
-    <div class="appointments-calendar-legend d-flex align-items-center flex-wrap gap-3 mb-3">
-      <span><i class="appointment-legend appointment-legend-available"></i>{{ 'appointments.calendar.available' | translate }}</span>
-      <span><i class="appointment-legend appointment-legend-appointment"></i>{{ 'appointments.title' | translate }}</span>
-      <span><i class="appointment-legend appointment-legend-blocked"></i>{{ 'appointments.calendar.blocked' | translate }}</span>
-      <span><i class="appointment-legend appointment-legend-extra"></i>{{ 'appointments.calendar.extraAvailable' | translate }}</span>
-      <span><i class="appointment-legend appointment-legend-outside"></i>{{ 'appointments.outsideAvailability.badge' | translate }}</span>
+    @if(showUnavailableSlotHint){
+    <div
+      class="appointments-calendar-hint d-inline-flex align-items-center gap-2"
+      [style.left.px]="unavailableSlotHintLeft"
+      [style.top.px]="unavailableSlotHintTop"
+    >
+      <i class="ti ti-info-circle"></i>
+      <span>{{ 'appointments.calendar.unavailableSlotHint' | translate }}</span>
     </div>
+    }
 
     <mwl-calendar-month-view
       [hidden]="calendarView !== CalendarView.Month"
       [viewDate]="calendarViewDate"
       [events]="calendarEvents"
+      [locale]="calendarLocale"
       [weekStartsOn]="1"
-      (eventClicked)="handleCalendarEvent($event.event)"
+      (eventClicked)="handleCalendarEvent($event.event, $event.sourceEvent)"
     >
     </mwl-calendar-month-view>
 
@@ -138,10 +145,16 @@
       *ngIf="calendarView === CalendarView.Week"
       [viewDate]="calendarViewDate"
       [events]="calendarEvents"
+      [locale]="calendarLocale"
       [weekStartsOn]="1"
-      [dayStartHour]="6"
-      [dayEndHour]="22"
-      (eventClicked)="handleCalendarEvent($event.event)"
+      [hourSegments]="2"
+      [dayStartHour]="calendarStartHour"
+      [dayStartMinute]="calendarStartMinute"
+      [dayEndHour]="calendarEndHour"
+      [dayEndMinute]="calendarEndMinute"
+      (beforeViewRender)="markCalendarAvailability($event)"
+      (hourSegmentClicked)="handleCalendarSegmentClick($event.date, $event.sourceEvent)"
+      (eventClicked)="handleCalendarEvent($event.event, $event.sourceEvent)"
     >
     </mwl-calendar-week-view>
 
@@ -149,9 +162,15 @@
       *ngIf="calendarView === CalendarView.Day"
       [viewDate]="calendarViewDate"
       [events]="calendarEvents"
-      [dayStartHour]="6"
-      [dayEndHour]="22"
-      (eventClicked)="handleCalendarEvent($event.event)"
+      [locale]="calendarLocale"
+      [hourSegments]="2"
+      [dayStartHour]="calendarStartHour"
+      [dayStartMinute]="calendarStartMinute"
+      [dayEndHour]="calendarEndHour"
+      [dayEndMinute]="calendarEndMinute"
+      (beforeViewRender)="markCalendarAvailability($event)"
+      (hourSegmentClicked)="handleCalendarSegmentClick($event.date, $event.sourceEvent)"
+      (eventClicked)="handleCalendarEvent($event.event, $event.sourceEvent)"
     >
     </mwl-calendar-day-view>
   </div>
@@ -264,7 +283,13 @@
           </div>
           <div class="mb-3">
             <label class="form-label">{{ 'common.service' | translate }}<span class="text-danger ms-1">*</span></label>
-            <select name="serviceId" [(ngModel)]="form.serviceId" class="form-select" required>
+            <select
+              name="serviceId"
+              [(ngModel)]="form.serviceId"
+              (ngModelChange)="clearOutsideAvailabilityWarningHint()"
+              class="form-select"
+              required
+            >
               <option [ngValue]="null">{{ 'appointments.fields.selectService' | translate }}</option>
               @for(service of serviceOptions; track service.id){
               <option [ngValue]="service.id">{{ serviceOptionLabel(service) }}</option>
@@ -277,63 +302,27 @@
               type="datetime-local"
               name="startDateTime"
               [(ngModel)]="form.startDateTime"
+              (ngModelChange)="clearOutsideAvailabilityWarningHint()"
               class="form-control"
               required
             >
           </div>
-          @if(isOutsideFixedSchedule()){
-          <div class="alert alert-warning mt-3 mb-0 py-2">
+          @if(isOutsideAvailabilityWarningVisible()){
+          <div class="appointments-outside-warning mt-2">
             <div class="d-flex align-items-start gap-2">
               <i class="ti ti-alert-triangle mt-1"></i>
-              <div>
-                <p class="mb-2">{{ 'appointments.outsideAvailability.warning' | translate }}</p>
-                <label class="form-check mb-0">
-                  <input
-                    type="checkbox"
-                    name="allowOutsideAvailability"
-                    [(ngModel)]="form.allowOutsideAvailability"
-                    class="form-check-input me-2"
-                  >
-                  <span class="form-check-label">{{ 'appointments.outsideAvailability.confirm' | translate }}</span>
-                </label>
-              </div>
+              <span>{{ 'appointments.outsideAvailability.warning' | translate }}</span>
             </div>
           </div>
           }
         </div>
         <div class="modal-footer d-flex align-items-center gap-1">
           <button type="button" class="btn btn-white border" (click)="closeFormModal()">{{ 'common.cancel' | translate }}</button>
-          <button type="submit" class="btn btn-primary" [disabled]="appointmentForm.invalid || (isOutsideFixedSchedule() && !form.allowOutsideAvailability) || isSaving">
+          <button type="submit" class="btn btn-primary" [disabled]="appointmentForm.invalid || isSaving">
             {{ (isSaving ? 'common.saving' : 'common.save') | translate }}
           </button>
         </div>
       </form>
-    </div>
-  </div>
-</div>
-<div class="modal-backdrop fade show"></div>
-}
-
-@if(isSlotActionModalOpen){
-<div class="modal fade show d-block appointment-modal" tabindex="-1" role="dialog" aria-modal="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="text-dark modal-title fw-bold">{{ 'appointments.calendar.slotActions' | translate }}</h4>
-        <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.cancel' | translate" (click)="closeSlotActionModal()">
-          <i class="ti ti-x"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="d-grid gap-2">
-          <button type="button" class="btn btn-primary d-inline-flex align-items-center justify-content-center" (click)="openCreateModalFromCalendarEvent()">
-            <i class="ti ti-plus me-1"></i>{{ 'appointments.calendar.createHere' | translate }}
-          </button>
-          <button type="button" class="btn btn-white border d-inline-flex align-items-center justify-content-center" (click)="blockSelectedCalendarSlot()">
-            <i class="ti ti-lock me-1"></i>{{ 'availability.exceptions.blockSlot' | translate }}
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 </div>

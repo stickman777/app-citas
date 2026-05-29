@@ -53,24 +53,21 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'auth.success.logout': 'Sesion cerrada.',
     'appointments.actions.delete': 'Eliminar cita',
     'appointments.actions.edit': 'Editar cita',
-    'appointments.calendar.available': 'Disponible',
     'appointments.calendar.blocked': 'Bloqueado',
     'appointments.calendar.day': 'Dia',
     'appointments.calendar.extraAvailable': 'Apertura extra',
     'appointments.calendar.month': 'Mes',
     'appointments.calendar.next': 'Siguiente',
     'appointments.calendar.previous': 'Anterior',
-    'appointments.calendar.createHere': 'Crear cita aqui',
-    'appointments.calendar.slotActions': 'Acciones de franja',
     'appointments.calendar.today': 'Hoy',
+    'appointments.calendar.unavailableSlotHint':
+      'No disponible, doble click para agendar una cita',
     'appointments.calendar.view': 'Vista de calendario',
     'appointments.calendar.week': 'Semana',
     'appointments.confirm.delete': 'Seguro que quieres eliminar la cita de',
     'appointments.empty': 'No hay citas para mostrar',
     'appointments.errors.form': 'Completa todos los campos obligatorios.',
     'appointments.errors.load': 'No se han podido cargar las citas.',
-    'appointments.errors.outsideAvailability':
-      'Confirma el aviso para agendar una cita fuera del horario del centro.',
     'appointments.errors.references':
       'No se han podido cargar clientes o servicios.',
     'appointments.errors.save': 'No se ha podido guardar la cita.',
@@ -81,10 +78,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.createButton': 'Cita',
     'appointments.new': 'Nueva cita',
     'appointments.outsideAvailability.badge': 'Fuera de horario',
-    'appointments.outsideAvailability.confirm':
-      'Agendar igualmente fuera del horario del centro.',
     'appointments.outsideAvailability.warning':
-      'La cita no entra por completo dentro del horario fijo del centro.',
+      'Esta cita queda fuera del horario del centro y se guardara como extrahoraria.',
     'appointments.search': 'Buscar cita',
     'appointments.status.cancelled': 'Cancelada',
     'appointments.status.completed': 'Completada',
@@ -133,7 +128,6 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'availability.fields.startTime': 'Hora inicio',
     'availability.exceptions.blockSlot': 'Bloquear franja',
     'availability.exceptions.edit': 'Editar excepcion',
-    'availability.exceptions.extraButton': 'Apertura extra',
     'availability.exceptions.label': 'Etiqueta',
     'availability.exceptions.new': 'Nueva excepcion',
     'availability.exceptions.success.created':
@@ -302,16 +296,15 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'auth.success.logout': 'Logged out.',
     'appointments.actions.delete': 'Delete appointment',
     'appointments.actions.edit': 'Edit appointment',
-    'appointments.calendar.available': 'Available',
     'appointments.calendar.blocked': 'Blocked',
     'appointments.calendar.day': 'Day',
     'appointments.calendar.extraAvailable': 'Extra opening',
     'appointments.calendar.month': 'Month',
     'appointments.calendar.next': 'Next',
     'appointments.calendar.previous': 'Previous',
-    'appointments.calendar.createHere': 'Create appointment here',
-    'appointments.calendar.slotActions': 'Slot actions',
     'appointments.calendar.today': 'Today',
+    'appointments.calendar.unavailableSlotHint':
+      'Unavailable, double-click to schedule an appointment',
     'appointments.calendar.view': 'Calendar view',
     'appointments.calendar.week': 'Week',
     'appointments.confirm.delete':
@@ -319,8 +312,6 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.empty': 'No appointments to show',
     'appointments.errors.form': 'Complete all required fields.',
     'appointments.errors.load': 'Appointments could not be loaded.',
-    'appointments.errors.outsideAvailability':
-      'Confirm the warning to schedule an appointment outside the center schedule.',
     'appointments.errors.references':
       'Clients or services could not be loaded.',
     'appointments.errors.save': 'The appointment could not be saved.',
@@ -331,10 +322,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.createButton': 'Appointment',
     'appointments.new': 'New appointment',
     'appointments.outsideAvailability.badge': 'Outside hours',
-    'appointments.outsideAvailability.confirm':
-      'Schedule it outside the center schedule anyway.',
     'appointments.outsideAvailability.warning':
-      'The appointment does not fit completely inside the fixed center schedule.',
+      'This appointment is outside the center schedule and will be saved as outside-hours.',
     'appointments.search': 'Search appointment',
     'appointments.status.cancelled': 'Cancelled',
     'appointments.status.completed': 'Completed',
@@ -382,7 +371,6 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'availability.fields.startTime': 'Start time',
     'availability.exceptions.blockSlot': 'Block slot',
     'availability.exceptions.edit': 'Edit exception',
-    'availability.exceptions.extraButton': 'Extra opening',
     'availability.exceptions.label': 'Label',
     'availability.exceptions.new': 'New exception',
     'availability.exceptions.success.created':

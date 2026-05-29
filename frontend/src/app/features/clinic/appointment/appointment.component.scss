@@ -13,10 +13,6 @@
   background: var(--white);
 }
 
-.appointments-calendar-title {
-  text-transform: capitalize;
-}
-
 .appointments-calendar-toolbar .icon-btn {
   width: 32px;
   height: 32px;
@@ -26,37 +22,38 @@
   padding: 0;
 }
 
-.appointments-calendar-legend {
-  color: var(--body-color);
+.appointments-calendar-toolbar-sticky {
+  position: sticky;
+  top: var(--topbar-height, 55px);
+  z-index: 20;
+  padding: 10px 0;
+  background: var(--white);
+  border-bottom: 1px solid var(--border-color, #edf0f4);
+}
+
+.appointments-calendar-title {
+  text-transform: none;
+}
+
+.appointments-outside-warning {
+  color: #b45309;
   font-size: 13px;
+  line-height: 1.35;
 }
 
-.appointment-legend {
-  width: 10px;
-  height: 10px;
-  display: inline-block;
-  border-radius: 50%;
-  margin-right: 6px;
-}
-
-.appointment-legend-available {
-  background: #10b981;
-}
-
-.appointment-legend-appointment {
-  background: #2e37a4;
-}
-
-.appointment-legend-blocked {
-  background: #dc2626;
-}
-
-.appointment-legend-extra {
-  background: #0f766e;
-}
-
-.appointment-legend-outside {
-  background: #f59e0b;
+.appointments-calendar-hint {
+  position: fixed;
+  z-index: 1100;
+  max-width: 320px;
+  padding: 8px 10px;
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  border-radius: 6px;
+  background: #fffbeb;
+  color: #b45309;
+  font-size: 13px;
+  line-height: 1.35;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
 }
 
 :host ::ng-deep {
@@ -70,19 +67,67 @@
     overflow: hidden;
   }
 
+  .cal-month-view,
+  .cal-week-view,
+  .cal-day-view {
+    overflow: visible;
+  }
+
+  .cal-month-view .cal-header,
+  .cal-week-view .cal-day-headers {
+    position: sticky;
+    top: var(--topbar-height, 55px);
+    z-index: 15;
+    background: var(--white);
+    border-bottom: 1px solid var(--border-color, #edf0f4);
+  }
+
+  mwl-calendar-day-view .cal-day-headers {
+    display: none;
+  }
+
+  mwl-calendar-day-view > mwl-calendar-week-view.cal-day-view {
+    display: block;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+
+  mwl-calendar-day-view .cal-week-view {
+    border-top: 0;
+  }
+
+  mwl-calendar-day-view mwl-calendar-week-view-header {
+    display: none;
+  }
+
   .cal-month-view .cal-cell-row,
   .cal-month-view .cal-days,
   .cal-week-view .cal-day-headers,
   .cal-week-view .cal-hour-segment,
-  .cal-day-view .cal-hour-segment {
-    border-color: var(--border-color, #e7e8eb);
+  .cal-day-view .cal-hour-segment,
+  mwl-calendar-day-view .cal-hour-segment {
+    border-color: var(--border-color, #edf0f4);
   }
 
   .cal-month-view .cal-cell,
   .cal-week-view .cal-day-headers .cal-header,
+  .cal-week-view .cal-hour-even,
   .cal-week-view .cal-hour-odd,
-  .cal-day-view .cal-hour-odd {
+  .cal-day-view .cal-hour-even,
+  .cal-day-view .cal-hour-odd,
+  mwl-calendar-day-view .cal-hour-even,
+  mwl-calendar-day-view .cal-hour-odd {
     background: var(--white);
+  }
+
+  .cal-week-view .cal-hour:not(:last-child) .cal-hour-segment,
+  .cal-week-view .cal-hour:last-child :not(:last-child) .cal-hour-segment,
+  .cal-day-view .cal-hour:not(:last-child) .cal-hour-segment,
+  .cal-day-view .cal-hour:last-child :not(:last-child) .cal-hour-segment,
+  mwl-calendar-day-view .cal-hour:not(:last-child) .cal-hour-segment,
+  mwl-calendar-day-view .cal-hour:last-child :not(:last-child) .cal-hour-segment {
+    border-bottom: 1px solid var(--border-color, #edf0f4);
   }
 
   .cal-month-view .cal-day-cell.cal-today,
@@ -91,9 +136,93 @@
     background: rgba(46, 55, 164, 0.08);
   }
 
+  .cal-month-view .cal-day-cell.cal-today {
+    position: relative;
+  }
+
+  .cal-month-view .cal-day-cell.cal-today::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 0 0 2px var(--white);
+  }
+
   .cal-event {
     border-radius: 4px;
     box-shadow: none;
+    cursor: pointer;
+  }
+
+  .cal-week-view .cal-hour-segment,
+  .cal-day-view .cal-hour-segment,
+  mwl-calendar-day-view .cal-hour-segment {
+    cursor: pointer;
+  }
+
+  .cal-week-view .cal-time {
+    color: var(--body-color);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  mwl-calendar-day-view .cal-time {
+    height: 100%;
+    position: relative;
+    z-index: 1;
+    width: 70px;
+    background: var(--white);
+    border-right: 1px solid var(--border-color, #edf0f4);
+    cursor: default;
+  }
+
+  mwl-calendar-day-view .cal-week-view .cal-hour-segment.cal-after-hour-start .cal-time {
+    display: block;
+    padding-top: 5px;
+    font-weight: 500;
+    opacity: 0.72;
+  }
+
+  .cal-week-view .cal-time-label-column .cal-hour-segment,
+  .cal-week-view .cal-time-label-column .cal-hour-segment:hover {
+    background: var(--white);
+    cursor: default;
+  }
+
+  .cal-week-view .appointment-slot-unavailable,
+  .cal-day-view .appointment-slot-unavailable,
+  mwl-calendar-day-view .appointment-slot-unavailable {
+    background-color: rgba(248, 250, 252, 0.9);
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(100, 116, 139, 0.16) 0,
+      rgba(100, 116, 139, 0.16) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+  }
+
+  .cal-week-view .cal-time-events .cal-day-columns:not(.cal-resize-active) .appointment-slot-available:hover,
+  .cal-day-view .appointment-slot-available:hover,
+  mwl-calendar-day-view .cal-time-events .cal-day-columns:not(.cal-resize-active) .appointment-slot-available:hover {
+    background-color: rgba(46, 55, 164, 0.06);
+  }
+
+  .cal-week-view .cal-time-events .cal-day-columns:not(.cal-resize-active) .appointment-slot-unavailable:hover,
+  .cal-day-view .appointment-slot-unavailable:hover,
+  mwl-calendar-day-view .cal-time-events .cal-day-columns:not(.cal-resize-active) .appointment-slot-unavailable:hover {
+    background-color: rgba(241, 245, 249, 0.98);
+  }
+
+  mwl-calendar-day-view .appointment-slot-unavailable .cal-time,
+  mwl-calendar-day-view .appointment-slot-unavailable:hover .cal-time,
+  mwl-calendar-day-view .appointment-slot-available:hover .cal-time {
+    background: var(--white);
+    background-image: none;
   }
 }
 
@@ -102,16 +231,58 @@
   border-color: #202a36;
 }
 
+:host-context([data-bs-theme='dark']) .appointments-calendar-toolbar-sticky {
+  background: #0d0d0d;
+  border-color: #202a36;
+}
+
+:host-context([data-bs-theme='dark']) .appointments-outside-warning {
+  color: #fbbf24;
+}
+
+:host-context([data-bs-theme='dark']) .appointments-calendar-hint {
+  background: #1f1a0a;
+  border-color: rgba(251, 191, 36, 0.22);
+  color: #fbbf24;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
 :host-context([data-bs-theme='dark']) ::ng-deep {
   .cal-month-view,
   .cal-week-view,
   .cal-day-view,
+  mwl-calendar-day-view > mwl-calendar-week-view.cal-day-view,
   .cal-month-view .cal-cell,
   .cal-week-view .cal-day-headers .cal-header,
+  .cal-week-view .cal-hour-even,
   .cal-week-view .cal-hour-odd,
-  .cal-day-view .cal-hour-odd {
+  .cal-day-view .cal-hour-even,
+  .cal-day-view .cal-hour-odd,
+  mwl-calendar-day-view .cal-hour-even,
+  mwl-calendar-day-view .cal-hour-odd {
     background: #0d0d0d;
     color: #d9dcff;
+    border-color: #202a36;
+  }
+
+  .cal-month-view .cal-header,
+  .cal-week-view .cal-day-headers {
+    background: #0d0d0d;
+    border-bottom-color: #202a36;
+  }
+
+  .cal-month-view .cal-cell-row,
+  .cal-month-view .cal-days,
+  .cal-week-view .cal-day-headers,
+  .cal-week-view .cal-hour-segment,
+  .cal-day-view .cal-hour-segment,
+  mwl-calendar-day-view .cal-hour-segment,
+  .cal-week-view .cal-hour:not(:last-child) .cal-hour-segment,
+  .cal-week-view .cal-hour:last-child :not(:last-child) .cal-hour-segment,
+  .cal-day-view .cal-hour:not(:last-child) .cal-hour-segment,
+  .cal-day-view .cal-hour:last-child :not(:last-child) .cal-hour-segment,
+  mwl-calendar-day-view .cal-hour:not(:last-child) .cal-hour-segment,
+  mwl-calendar-day-view .cal-hour:last-child :not(:last-child) .cal-hour-segment {
     border-color: #202a36;
   }
 
@@ -119,7 +290,57 @@
   .cal-month-view .cal-cell:hover,
   .cal-week-view .cal-hour-segment:hover,
   .cal-day-view .cal-hour-segment:hover {
-    background: #111827;
+    background-color: #111827;
+  }
+
+  .cal-week-view .cal-time {
+    color: #b6bdd7;
+  }
+
+  mwl-calendar-day-view .cal-time {
+    background: #0d0d0d;
+    border-right-color: #202a36;
+  }
+
+  .cal-month-view .cal-day-cell.cal-today::after {
+    box-shadow: 0 0 0 2px #0d0d0d;
+  }
+
+  .cal-week-view .cal-time-label-column .cal-hour-segment,
+  .cal-week-view .cal-time-label-column .cal-hour-segment:hover {
+    background: #0d0d0d;
+  }
+
+  .cal-week-view .appointment-slot-unavailable,
+  .cal-day-view .appointment-slot-unavailable,
+  mwl-calendar-day-view .appointment-slot-unavailable {
+    background-color: rgba(17, 24, 39, 0.74);
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(148, 163, 184, 0.16) 0,
+      rgba(148, 163, 184, 0.16) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+  }
+
+  .cal-week-view .cal-time-events .cal-day-columns:not(.cal-resize-active) .appointment-slot-available:hover,
+  .cal-day-view .appointment-slot-available:hover,
+  mwl-calendar-day-view .cal-time-events .cal-day-columns:not(.cal-resize-active) .appointment-slot-available:hover {
+    background-color: rgba(99, 102, 241, 0.14);
+  }
+
+  .cal-week-view .cal-time-events .cal-day-columns:not(.cal-resize-active) .appointment-slot-unavailable:hover,
+  .cal-day-view .appointment-slot-unavailable:hover,
+  mwl-calendar-day-view .cal-time-events .cal-day-columns:not(.cal-resize-active) .appointment-slot-unavailable:hover {
+    background-color: rgba(30, 41, 59, 0.86);
+  }
+
+  mwl-calendar-day-view .appointment-slot-unavailable .cal-time,
+  mwl-calendar-day-view .appointment-slot-unavailable:hover .cal-time,
+  mwl-calendar-day-view .appointment-slot-available:hover .cal-time {
+    background: #0d0d0d;
+    background-image: none;
   }
 }
 
@@ -127,12 +348,6 @@
   .appointments-calendar {
     padding: 12px;
     overflow-x: auto;
-  }
-
-  .appointments-calendar-title {
-    width: 100%;
-    text-align: center;
-    order: -1;
   }
 
   :host ::ng-deep {
