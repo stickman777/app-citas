@@ -1,6 +1,7 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { finalize, forkJoin, Subscription } from 'rxjs';
 import { CalendarEvent, CalendarView } from 'angular-calendar';
 import {
@@ -116,6 +117,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   private loadedCenterId: number | null = null;
 
   constructor(
+    private readonly route: ActivatedRoute,
     private readonly appointmentsService: AppointmentsService,
     private readonly availabilityService: AvailabilityService,
     private readonly centersService: CentersService,
@@ -125,6 +127,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.applyCalendarQueryParams();
     this.loadCurrentUser();
     this.loadCenters();
     this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
@@ -144,6 +147,33 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.activeCenterSubscription?.unsubscribe();
+  }
+
+  private applyCalendarQueryParams(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const viewMode = params.get('view');
+    const calendarView = params.get('calendarView');
+    const date = params.get('date');
+
+    if (viewMode === 'calendar' || viewMode === 'list') {
+      this.viewMode = viewMode;
+    }
+
+    if (calendarView === CalendarView.Day) {
+      this.calendarView = CalendarView.Day;
+    } else if (calendarView === CalendarView.Week) {
+      this.calendarView = CalendarView.Week;
+    } else if (calendarView === CalendarView.Month) {
+      this.calendarView = CalendarView.Month;
+    }
+
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const parsedDate = this.fromDateQuery(date);
+
+      if (this.toDateQuery(parsedDate) === date) {
+        this.calendarViewDate = parsedDate;
+      }
+    }
   }
 
   public loadAppointments(clearMessages = true): void {

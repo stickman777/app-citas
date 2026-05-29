@@ -184,6 +184,7 @@
             <p-datepicker
               class="max-w-full"
               [(ngModel)]="date"
+              (onSelect)="openAppointmentsCalendar($event)"
               [inline]="true"
               [showWeek]="false"
               [ngModelOptions]="{standalone: true}" />
@@ -236,7 +237,7 @@
               </span>
             </div>
           </div>
-          <a [routerLink]="routes.appointmentList" class="btn btn-light w-100">{{ 'common.viewAllAppointments' | translate }}</a>
+          <a [routerLink]="routes.appointment" [queryParams]="appointmentsCalendarQuery()" class="btn btn-light w-100">{{ 'common.viewAllAppointments' | translate }}</a>
         </div>
       </div>
     </div>
