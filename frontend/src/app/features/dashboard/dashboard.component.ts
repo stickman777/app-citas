@@ -15,17 +15,24 @@ import { routes } from '../../shared/routes/routes';
 })
 export class DashboardComponent {
   public routes = routes;
-  public date: Date | undefined;
+  public date: Date = new Date();
+  public appointmentCalendarQuery: Record<string, string> =
+    this.buildAppointmentsCalendarQuery(this.date);
 
   constructor(private readonly router: Router) {}
 
-  public openAppointmentsCalendar(date: Date): void {
+  public openAppointmentsCalendar(date: Date | unknown): void {
+    const selectedDate = date instanceof Date ? date : this.date;
+
+    this.date = selectedDate;
+    this.appointmentCalendarQuery = this.buildAppointmentsCalendarQuery(selectedDate);
+
     void this.router.navigate([routes.appointment], {
-      queryParams: this.appointmentsCalendarQuery(date),
+      queryParams: this.appointmentCalendarQuery,
     });
   }
 
-  public appointmentsCalendarQuery(date = this.date ?? new Date()): Record<string, string> {
+  private buildAppointmentsCalendarQuery(date: Date): Record<string, string> {
     return {
       view: 'calendar',
       calendarView: 'day',

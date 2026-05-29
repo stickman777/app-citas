@@ -4,6 +4,30 @@
     <div class="col-xl-4 col-lg-6 d-flex">
       <div class="card shadow-sm flex-fill w-100">
         <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="fw-bold mb-0 text-truncate">{{ 'dashboard.appointments' | translate }}</h5>
+          <a [routerLink]="routes.appointment" [queryParams]="appointmentCalendarQuery" class="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center">
+            {{ 'common.viewAll' | translate }}
+          </a>
+        </div>
+        <div class="card-body">
+          <div class="datepic mb-3 p-inlines">
+            <p-datepicker
+              class="max-w-full"
+              [(ngModel)]="date"
+              (onSelect)="openAppointmentsCalendar($event)"
+              [inline]="true"
+              [showWeek]="false"
+              [ngModelOptions]="{standalone: true}">
+            </p-datepicker>
+          </div>
+          <a [routerLink]="routes.appointment" [queryParams]="appointmentCalendarQuery" class="btn btn-light w-100">{{ 'common.viewAllAppointments' | translate }}</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-4 col-lg-6 d-flex">
+      <div class="card shadow-sm flex-fill w-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
           <h5 class="fw-bold mb-0">{{ 'dashboard.doctorsSchedule' | translate }}</h5>
           <a [routerLink]="routes.doctorSchedule" class="btn fw-normal btn-outline-white">{{ 'common.viewAll' | translate }}</a>
         </div>
@@ -161,83 +185,6 @@
               </a>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xl-4 col-lg-12 d-flex">
-      <div class="card shadow-sm flex-fill w-100">
-        <div class="card-header d-flex align-items-center justify-content-between">
-          <h5 class="fw-bold mb-0 text-truncate">{{ 'dashboard.appointments' | translate }}</h5>
-          <div class="dropdown">
-            <a href="javascript:void(0);" class="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-              {{ 'common.status' | translate }} <i class="ti ti-chevron-down ms-1"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="javascript:void(0);">{{ 'dashboard.inPerson' | translate }}</a></li>
-              <li><a class="dropdown-item" href="javascript:void(0);">{{ 'dashboard.online' | translate }}</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="datepic mb-1 p-inlines">
-            <p-datepicker
-              class="max-w-full"
-              [(ngModel)]="date"
-              (onSelect)="openAppointmentsCalendar($event)"
-              [inline]="true"
-              [showWeek]="false"
-              [ngModelOptions]="{standalone: true}" />
-          </div>
-          <div class="mb-3 bg-light p-3 rounded-2 d-flex align-items-center justify-content-between">
-            <div>
-              <h6 class="fs-14 fw-semibold mb-1">{{ 'dashboard.generalVisit' | translate }}</h6>
-              <p class="mb-0 text-truncate">
-                <i class="ti ti-calendar-time me-1 text-dark"></i> Wed, 05 Apr 2025, 06:30 PM
-              </p>
-            </div>
-            <div class="avatar-list-stacked avatar-group-sm event flex-shrink-0">
-              <span class="avatar avatar-lg rounded-circle border-0">
-                <img src="assets/img/profiles/avatar-26.jpg" class="img-fluid rounded-circle border border-white" alt="Img">
-              </span>
-              <span class="avatar avatar-lg rounded-circle border-0">
-                <img src="assets/img/doctors/doctor-05.jpg" class="img-fluid rounded-circle border border-white" alt="Img">
-              </span>
-            </div>
-          </div>
-          <div class="mb-3 bg-soft-danger p-3 rounded-2 d-flex align-items-center justify-content-between">
-            <div>
-              <h6 class="fs-14 fw-semibold mb-1">{{ 'dashboard.generalVisit' | translate }}</h6>
-              <p class="mb-0 text-truncate">
-                <i class="ti ti-calendar-time me-1 text-dark"></i> Wed, 05 Apr 2025, 04:10 PM
-              </p>
-            </div>
-            <div class="avatar-list-stacked avatar-group-sm event flex-shrink-0">
-              <span class="avatar avatar-lg rounded-circle border-0">
-                <img src="assets/img/users/user-17.jpg" class="img-fluid rounded-circle border border-white" alt="Img">
-              </span>
-              <span class="avatar avatar-lg rounded-circle border-0">
-                <img src="assets/img/doctors/doctor-10.jpg" class="img-fluid rounded-circle border border-white" alt="Img">
-              </span>
-            </div>
-          </div>
-          <div class="mb-3 bg-soft-info p-3 rounded-2 d-flex align-items-center justify-content-between">
-            <div>
-              <h6 class="fs-14 fw-semibold mb-1">{{ 'dashboard.generalVisit' | translate }}</h6>
-              <p class="mb-0 text-truncate">
-                <i class="ti ti-calendar-time me-1 text-dark"></i> Wed, 05 Apr 2025, 10:00 AM
-              </p>
-            </div>
-            <div class="avatar-list-stacked avatar-group-sm event flex-shrink-0">
-              <span class="avatar avatar-lg rounded-circle border-0">
-                <img src="assets/img/users/user-16.jpg" class="img-fluid rounded-circle border border-white" alt="Img">
-              </span>
-              <span class="avatar avatar-lg rounded-circle border-0">
-                <img src="assets/img/doctors/doctor-09.jpg" class="img-fluid rounded-circle border border-white" alt="Img">
-              </span>
-            </div>
-          </div>
-          <a [routerLink]="routes.appointment" [queryParams]="appointmentsCalendarQuery()" class="btn btn-light w-100">{{ 'common.viewAllAppointments' | translate }}</a>
         </div>
       </div>
     </div>
