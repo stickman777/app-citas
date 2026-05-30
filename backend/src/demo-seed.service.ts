@@ -52,7 +52,7 @@ export class DemoSeedService implements OnApplicationBootstrap {
         ]),
       );
 
-      const [generalConsultation] = await manager.save(
+      const [generalConsultation, physiotherapy] = await manager.save(
         ServiceEntity,
         [
           manager.create(ServiceEntity, {
@@ -72,7 +72,7 @@ export class DemoSeedService implements OnApplicationBootstrap {
         ],
       );
 
-      const [generalSpecialist] = await manager.save(
+      const [generalSpecialist, physiotherapist] = await manager.save(
         Specialist,
         [
           manager.create(Specialist, {
@@ -88,7 +88,7 @@ export class DemoSeedService implements OnApplicationBootstrap {
         ],
       );
 
-      const [demoClient] = await manager.save(
+      const [demoClient, secondClient] = await manager.save(
         Client,
         [
           manager.create(Client, {
@@ -111,16 +111,38 @@ export class DemoSeedService implements OnApplicationBootstrap {
 
       await manager.save(
         Appointment,
-        manager.create(Appointment, {
-          startDateTime: this.nextBusinessDayAt(10, 0),
-          duration: generalConsultation.durationMinutes,
-          outsideAvailability: false,
-          status: AppointmentStatus.SCHEDULED,
-          client: demoClient,
-          service: generalConsultation,
-          center,
-          specialist: generalSpecialist,
-        }),
+        [
+          manager.create(Appointment, {
+            startDateTime: this.nextBusinessDayAt(10, 0),
+            duration: generalConsultation.durationMinutes,
+            outsideAvailability: false,
+            status: AppointmentStatus.SCHEDULED,
+            client: demoClient,
+            service: generalConsultation,
+            center,
+            specialist: generalSpecialist,
+          }),
+          manager.create(Appointment, {
+            startDateTime: this.nextBusinessDayAt(10, 0),
+            duration: physiotherapy.durationMinutes,
+            outsideAvailability: false,
+            status: AppointmentStatus.SCHEDULED,
+            client: secondClient,
+            service: physiotherapy,
+            center,
+            specialist: physiotherapist,
+          }),
+          manager.create(Appointment, {
+            startDateTime: this.nextBusinessDayAt(11, 0),
+            duration: physiotherapy.durationMinutes,
+            outsideAvailability: false,
+            status: AppointmentStatus.SCHEDULED,
+            client: demoClient,
+            service: physiotherapy,
+            center,
+            specialist: physiotherapist,
+          }),
+        ],
       );
     });
 

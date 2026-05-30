@@ -171,6 +171,7 @@ export class AppointmentsService {
       service.durationMinutes,
       center.id,
       specialist.id,
+      client.id,
       undefined,
       appointmentData.allowOutsideAvailability,
     );
@@ -224,6 +225,7 @@ export class AppointmentsService {
             service.durationMinutes,
             center.id,
             specialist.id,
+            client.id,
             appointment.id,
             appointmentData.allowOutsideAvailability ??
               appointment.outsideAvailability,
@@ -405,6 +407,7 @@ export class AppointmentsService {
     duration: number,
     centerId: number,
     specialistId: number,
+    clientId: number,
     appointmentIdToExclude?: number,
     allowOutsideAvailability = false,
   ): Promise<boolean> {
@@ -430,6 +433,18 @@ export class AppointmentsService {
     if (hasOverlap)
       throw new BadRequestException(
         'El horario seleccionado no está disponible',
+      );
+
+    const hasClientOverlap = await this.hasOverlappingClientAppointment(
+      startDate,
+      duration,
+      clientId,
+      appointmentIdToExclude,
+    );
+
+    if (hasClientOverlap)
+      throw new BadRequestException(
+        'El cliente ya tiene una cita en ese horario',
       );
 
     return !isAvailable;
@@ -460,6 +475,43 @@ export class AppointmentsService {
         },
         specialist: {
           id: specialistId,
+        },
+      },
+    });
+
+    return appointmentsSameDay.some((appointment) => {
+      if (appointment.id === appointmentIdToExclude) return false;
+
+      const existingStart = new Date(appointment.startDateTime);
+      const existingEnd = new Date(existingStart);
+
+      existingEnd.setMinutes(existingEnd.getMinutes() + appointment.duration);
+
+      return existingStart < endDate && existingEnd > startDate;
+    });
+  }
+
+  private async hasOverlappingClientAppointment(
+    startDate: Date,
+    duration: number,
+    clientId: number,
+    appointmentIdToExclude?: number,
+  ): Promise<boolean> {
+    const endDate = new Date(startDate);
+    endDate.setMinutes(endDate.getMinutes() + duration);
+
+    const dayStart = new Date(startDate);
+    dayStart.setHours(0, 0, 0, 0);
+
+    const dayEnd = new Date(startDate);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const appointmentsSameDay = await this.appointmentsRepository.find({
+      where: {
+        startDateTime: Between(dayStart, dayEnd),
+        status: AppointmentStatus.SCHEDULED,
+        client: {
+          id: clientId,
         },
       },
     });
@@ -699,6 +751,7 @@ export class AppointmentsService {
       appointment.duration,
       this.getAppointmentCenterId(appointment),
       this.getAppointmentSpecialistId(appointment),
+      appointment.client.id,
       appointment.id,
       appointmentData.allowOutsideAvailability ??
         appointment.outsideAvailability,

@@ -181,6 +181,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public calendarView: CalendarView = CalendarView.Week;
   public calendarViewDate = new Date();
   public searchTerm = '';
+  public selectedSpecialistId: number | null = null;
   public errorMessage = '';
   public successMessage = '';
   public appointmentOverlapWarning = '';
@@ -229,6 +230,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
         this.activeCenter = center;
         this.loadedCenterId = centerId;
+        this.selectedSpecialistId = null;
         this.loadReferenceData();
         this.loadAppointments();
         this.loadAvailabilityExceptions();
@@ -496,12 +498,18 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   public applySearch(): void {
     const search = this.searchTerm.trim().toLowerCase();
+    const appointments = this.getSpecialistFilteredAppointments();
 
     this.filteredAppointments = search
-      ? this.appointments.filter(appointment =>
+      ? appointments.filter(appointment =>
           this.getSearchText(appointment).includes(search)
         )
-      : [...this.appointments];
+      : appointments;
+  }
+
+  public applySpecialistFilter(): void {
+    this.applySearch();
+    this.updateCalendarEvents();
   }
 
   public statusBadgeClass(status: AppointmentStatus): string {
@@ -638,7 +646,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public monthAppointmentCount(date: Date): number {
     const dateKey = this.toDateQuery(date);
 
-    return this.appointments.filter(
+    return this.getSpecialistFilteredAppointments().filter(
       appointment =>
         this.toDateQuery(new Date(appointment.startDateTime)) === dateKey
     ).length;
@@ -726,6 +734,29 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     const specialty = specialist.specialty ? ` - ${specialist.specialty}` : '';
 
     return `${specialist.name}${specialty}${status}`;
+  }
+
+  public get selectedSpecialist(): AppointmentSpecialist | null {
+    if (!this.selectedSpecialistId) return null;
+
+    return (
+      this.specialists.find(
+        specialist => specialist.id === this.selectedSpecialistId
+      ) ?? null
+    );
+  }
+
+  public selectedSpecialistInitials(): string {
+    const specialist = this.selectedSpecialist;
+
+    if (!specialist) return '';
+
+    return specialist.name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
   }
 
   public statusLabel(status: AppointmentStatus): string {
@@ -865,6 +896,9 @@ export class AppointmentComponent implements OnInit, OnDestroy {
         this.clients = clients;
         this.services = services;
         this.specialists = specialists;
+        this.ensureSelectedSpecialistIsAvailable();
+        this.applySearch();
+        this.updateCalendarEvents();
       },
       error: () => {
         this.errorMessage = this.translate('appointments.errors.references');
@@ -973,6 +1007,24 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return value.length === 16 ? `${value}:00` : value;
   }
 
+  private getSpecialistFilteredAppointments(): Appointment[] {
+    if (!this.selectedSpecialistId) return [...this.appointments];
+
+    return this.appointments.filter(
+      appointment => appointment.specialist.id === this.selectedSpecialistId
+    );
+  }
+
+  private ensureSelectedSpecialistIsAvailable(): void {
+    if (
+      this.selectedSpecialistId &&
+      !this.specialists.some(
+        specialist => specialist.id === this.selectedSpecialistId
+      )
+    )
+      this.selectedSpecialistId = null;
+  }
+
   private loadAvailabilityExceptions(clearMessages = true): void {
     if (!this.activeCenter) {
       this.availabilityExceptions = [];
@@ -1010,7 +1062,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   }
 
   private buildAppointmentEvents(): CalendarEvent<AppointmentCalendarEventMeta>[] {
-    return this.appointments.map(appointment => {
+    return this.getSpecialistFilteredAppointments().map(appointment => {
       const start = new Date(appointment.startDateTime);
       const end = new Date(start);
       end.setMinutes(end.getMinutes() + appointment.duration);

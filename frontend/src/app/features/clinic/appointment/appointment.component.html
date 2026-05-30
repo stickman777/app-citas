@@ -22,8 +22,8 @@
   <div class="alert alert-success py-2" role="alert">{{ successMessage }}</div>
   }
 
-  <div class="d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-    <div class="search-set mb-3">
+  <div class="appointments-list-toolbar d-flex align-items-center flex-wrap row-gap-3 mb-3">
+    <div class="search-set mb-0">
       <div class="d-flex align-items-center flex-wrap gap-2">
         <div class="table-search d-flex align-items-center mb-0">
           <div class="search-input">
@@ -46,7 +46,28 @@
       </div>
     </div>
 
-    <div class="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap row-gap-3">
+    <div class="appointments-specialist-filter d-flex align-items-center">
+      <span class="appointments-specialist-avatar rounded-circle border d-inline-flex align-items-center justify-content-center">
+        @if(selectedSpecialist){
+        <span>{{ selectedSpecialistInitials() }}</span>
+        } @else {
+        <i class="ti ti-user"></i>
+        }
+      </span>
+      <select
+        class="form-select"
+        [(ngModel)]="selectedSpecialistId"
+        (ngModelChange)="applySpecialistFilter()"
+        [attr.aria-label]="'appointments.filters.specialist' | translate"
+      >
+        <option [ngValue]="null">{{ 'appointments.filters.allSpecialists' | translate }}</option>
+        @for(specialist of specialists; track specialist.id){
+        <option [ngValue]="specialist.id">{{ specialistOptionLabel(specialist) }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="d-flex table-dropdown pb-1 right-content align-items-center flex-wrap row-gap-3">
       <div class="btn-group me-2" role="group" [attr.aria-label]="'appointments.view.toggle' | translate">
         <button
           type="button"
