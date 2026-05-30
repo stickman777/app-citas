@@ -23,4 +23,9 @@ export class UpdateServiceDto {
   @IsInt()
   @Min(1)
   centerId?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  specialistId?: number;
 }

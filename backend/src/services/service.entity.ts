@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Center } from '../centers/center.entity';
+import { Specialist } from '../specialists/specialist.entity';
 
 @Entity()
 export class ServiceEntity {
@@ -34,6 +35,13 @@ export class ServiceEntity {
     onDelete: 'SET NULL',
   })
   center?: Center | null;
+
+  @ManyToOne(() => Specialist, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  specialist?: Specialist | null;
 
   @CreateDateColumn()
   createdAt: Date;

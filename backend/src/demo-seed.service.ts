@@ -52,26 +52,6 @@ export class DemoSeedService implements OnApplicationBootstrap {
         ]),
       );
 
-      const [generalConsultation, physiotherapy] = await manager.save(
-        ServiceEntity,
-        [
-          manager.create(ServiceEntity, {
-            name: 'Consulta general',
-            description: 'Primera valoracion y seguimiento',
-            durationMinutes: 30,
-            price: 45,
-            center,
-          }),
-          manager.create(ServiceEntity, {
-            name: 'Fisioterapia',
-            description: 'Sesion individual de fisioterapia',
-            durationMinutes: 45,
-            price: 55,
-            center,
-          }),
-        ],
-      );
-
       const [generalSpecialist, physiotherapist] = await manager.save(
         Specialist,
         [
@@ -84,6 +64,28 @@ export class DemoSeedService implements OnApplicationBootstrap {
             name: 'Carlos Ruiz',
             specialty: 'Fisioterapia',
             center,
+          }),
+        ],
+      );
+
+      const [generalConsultation, physiotherapy] = await manager.save(
+        ServiceEntity,
+        [
+          manager.create(ServiceEntity, {
+            name: 'Consulta general',
+            description: 'Primera valoracion y seguimiento',
+            durationMinutes: 30,
+            price: 45,
+            center,
+            specialist: generalSpecialist,
+          }),
+          manager.create(ServiceEntity, {
+            name: 'Fisioterapia',
+            description: 'Sesion individual de fisioterapia',
+            durationMinutes: 45,
+            price: 55,
+            center,
+            specialist: physiotherapist,
           }),
         ],
       );

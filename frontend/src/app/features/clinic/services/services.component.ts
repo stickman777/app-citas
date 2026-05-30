@@ -13,6 +13,10 @@ import { Center, CentersService } from '../../../core/centers/centers.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AuthService, CurrentUser } from '../../../core/auth/auth.service';
+import {
+  Specialist,
+  SpecialistsService,
+} from '../../../core/specialists/specialists.service';
 
 interface ServiceForm {
   name: string;
@@ -20,6 +24,7 @@ interface ServiceForm {
   durationMinutes: number | null;
   price: number | null;
   centerId: number | null;
+  specialistId: number | null;
 }
 
 @Component({
@@ -32,6 +37,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
   public services: Service[] = [];
   public filteredServices: Service[] = [];
   public centers: Center[] = [];
+  public specialists: Specialist[] = [];
   public searchTerm = '';
   public errorMessage = '';
   public successMessage = '';
@@ -53,6 +59,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly servicesService: ServicesService,
+    private readonly specialistsService: SpecialistsService,
     private readonly centersService: CentersService,
     private readonly activeCenterService: ActiveCenterService,
     private readonly authService: AuthService,
@@ -70,6 +77,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
 
         this.activeCenter = center;
         this.loadedCenterId = centerId;
+        this.loadSpecialists(centerId);
         this.loadServices();
       }
     );
@@ -111,6 +119,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
     this.clearMessages();
     this.editingService = null;
     this.form = this.getEmptyForm();
+    this.loadSpecialists(this.form.centerId);
     this.isFormModalOpen = true;
   }
 
@@ -123,7 +132,9 @@ export class ServicesComponent implements OnInit, OnDestroy {
       durationMinutes: service.durationMinutes,
       price: service.price == null ? null : Number(service.price),
       centerId: service.center?.id ?? this.activeCenter?.id ?? null,
+      specialistId: service.specialist?.id ?? null,
     };
+    this.loadSpecialists(this.form.centerId);
     this.isFormModalOpen = true;
   }
 
@@ -218,7 +229,16 @@ export class ServicesComponent implements OnInit, OnDestroy {
 
     this.filteredServices = search
       ? this.services.filter(service =>
-          `${service.id} ${service.name} ${service.description ?? ''} ${service.durationMinutes} ${service.price ?? ''} ${service.center?.name ?? ''}`
+          [
+            service.id,
+            service.name,
+            service.description ?? '',
+            service.durationMinutes,
+            service.price ?? '',
+            service.center?.name ?? '',
+            service.specialist?.name ?? '',
+          ]
+            .join(' ')
             .toLowerCase()
             .includes(search)
         )
@@ -245,12 +265,28 @@ export class ServicesComponent implements OnInit, OnDestroy {
     return this.withCurrentOption(this.centers, this.editingService?.center);
   }
 
+  public get specialistOptions(): Specialist[] {
+    const currentSpecialist = this.editingService?.specialist;
+
+    if (
+      currentSpecialist?.center?.id &&
+      currentSpecialist.center.id !== this.form.centerId
+    ) {
+      return this.specialists;
+    }
+
+    return this.withCurrentOption(
+      this.specialists,
+      currentSpecialist
+    );
+  }
+
   public get isAdmin(): boolean {
     return this.currentUser?.role === 'ADMIN';
   }
 
   public get serviceTableColumnCount(): number {
-    return this.isAdmin ? 7 : 6;
+    return this.isAdmin ? 8 : 7;
   }
 
   public trackByCenterId(_: number, center: Center): number {
@@ -261,6 +297,17 @@ export class ServicesComponent implements OnInit, OnDestroy {
     return service.center?.name ?? this.translate('centers.none');
   }
 
+  public specialistName(service: Service): string {
+    return (
+      service.specialist?.name ?? this.translate('services.fields.noSpecialist')
+    );
+  }
+
+  public handleCenterChange(): void {
+    this.form.specialistId = null;
+    this.loadSpecialists(this.form.centerId);
+  }
+
   private loadCenters(): void {
     this.centersService.getCenters().subscribe({
       next: centers => {
@@ -269,6 +316,17 @@ export class ServicesComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.errorMessage = this.translate('centers.errors.load');
+      },
+    });
+  }
+
+  private loadSpecialists(centerId?: number | null): void {
+    this.specialistsService.getSpecialists(centerId).subscribe({
+      next: specialists => {
+        this.specialists = specialists;
+      },
+      error: () => {
+        this.errorMessage = this.translate('specialists.errors.load');
       },
     });
   }
@@ -296,6 +354,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
       durationMinutes: Number(this.form.durationMinutes),
       price: this.form.price == null ? null : Number(this.form.price),
       centerId: this.form.centerId ?? undefined,
+      specialistId: this.form.specialistId ?? undefined,
     };
   }
 
@@ -308,7 +367,8 @@ export class ServicesComponent implements OnInit, OnDestroy {
       Number.isFinite(duration) &&
       duration > 0 &&
       (price == null || Number(price) >= 0) &&
-      !!this.form.centerId
+      !!this.form.centerId &&
+      !!this.form.specialistId
     );
   }
 
@@ -319,6 +379,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
       durationMinutes: null,
       price: null,
       centerId: this.activeCenter?.id ?? null,
+      specialistId: null,
     };
   }
 

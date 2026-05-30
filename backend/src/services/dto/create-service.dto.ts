@@ -20,4 +20,8 @@ export class CreateServiceDto {
   @IsInt()
   @Min(1)
   centerId: number;
+
+  @IsInt()
+  @Min(1)
+  specialistId: number;
 }

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Center } from '../centers/centers.service';
+import { Specialist } from '../specialists/specialists.service';
 
 export interface Service {
   id: number;
@@ -13,6 +14,7 @@ export interface Service {
   price?: number | string | null;
   active: boolean;
   center?: Center | null;
+  specialist?: Specialist | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +25,7 @@ export interface ServicePayload {
   durationMinutes: number;
   price?: number | null;
   centerId?: number | null;
+  specialistId?: number | null;
 }
 
 @Injectable({

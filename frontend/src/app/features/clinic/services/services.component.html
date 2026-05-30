@@ -65,6 +65,7 @@
           }
           <th>{{ 'services.title' | translate }}</th>
           <th>{{ 'common.center' | translate }}</th>
+          <th>{{ 'common.specialist' | translate }}</th>
           <th>{{ 'services.fields.duration' | translate }}</th>
           <th>{{ 'services.fields.price' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
@@ -96,6 +97,7 @@
               </div>
             </td>
             <td>{{ centerName(service) }}</td>
+            <td>{{ specialistName(service) }}</td>
             <td>{{ service.durationMinutes }} min</td>
             <td>{{ formatPrice(service.price) }}</td>
             <td>
@@ -153,9 +155,23 @@
           </div>
           <div class="mb-3">
             <label class="form-label">{{ 'common.center' | translate }}<span class="text-danger ms-1">*</span></label>
-            <select name="centerId" [(ngModel)]="form.centerId" class="form-select">
+            <select
+              name="centerId"
+              [(ngModel)]="form.centerId"
+              (ngModelChange)="handleCenterChange()"
+              class="form-select"
+            >
               @for(center of centerOptions; track trackByCenterId($index, center)){
               <option [ngValue]="center.id">{{ center.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ 'common.specialist' | translate }}<span class="text-danger ms-1">*</span></label>
+            <select name="specialistId" [(ngModel)]="form.specialistId" class="form-select" required>
+              <option [ngValue]="null">{{ 'appointments.fields.selectSpecialist' | translate }}</option>
+              @for(specialist of specialistOptions; track specialist.id){
+              <option [ngValue]="specialist.id">{{ specialist.name }}</option>
               }
             </select>
           </div>
