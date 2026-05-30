@@ -48,6 +48,8 @@ export class AppointmentsService {
 
   // Obtiene todas las citas, con opción de filtrar por fecha
   async findAll(authUser?: AuthUser, date?: string, centerId?: number) {
+    await this.completePastScheduledAppointments();
+
     const centerIds = await this.getAllowedCenterIds(authUser, centerId);
 
     if (centerIds?.length === 0) return [];
@@ -66,6 +68,8 @@ export class AppointmentsService {
     serviceId: number,
     authUser?: AuthUser,
   ) {
+    await this.completePastScheduledAppointments();
+
     const service = await this.getActiveService(serviceId);
     const centerId = this.getServiceCenterId(service);
 
@@ -148,6 +152,8 @@ export class AppointmentsService {
 
   // Crea una nueva cita
   async create(appointmentData: CreateAppointmentDto, authUser?: AuthUser) {
+    await this.completePastScheduledAppointments();
+
     const client = await this.getActiveClient(appointmentData.clientId);
     const service = await this.getActiveService(appointmentData.serviceId);
     const startDate = new Date(appointmentData.startDateTime);
@@ -302,6 +308,8 @@ export class AppointmentsService {
     id: number,
     authUser?: AuthUser,
   ): Promise<Appointment> {
+    await this.completePastScheduledAppointments();
+
     const appointment = await this.appointmentsRepository.findOne({
       where: { id },
     });
@@ -550,6 +558,22 @@ export class AppointmentsService {
       );
 
     return service.center.id;
+  }
+
+  private async completePastScheduledAppointments(): Promise<void> {
+    await this.appointmentsRepository
+      .createQueryBuilder()
+      .update(Appointment)
+      .set({
+        status: AppointmentStatus.COMPLETED,
+      })
+      .where('"status" = :status', {
+        status: AppointmentStatus.SCHEDULED,
+      })
+      .andWhere(
+        `"startDateTime" + ("duration" * INTERVAL '1 minute') <= CURRENT_TIMESTAMP`,
+      )
+      .execute();
   }
 
   // Cancela una cita existente
