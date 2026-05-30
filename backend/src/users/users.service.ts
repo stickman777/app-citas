@@ -2,7 +2,9 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -16,13 +18,19 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserRole } from './user.entity';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
 
     private readonly centerAccessService: CenterAccessService,
   ) {}
+
+  async onModuleInit() {
+    await this.ensureDefaultAdmin();
+  }
 
   async findAll(authUser?: AuthUser) {
     if (!authUser || authUser.role === UserRole.ADMIN) {
@@ -239,5 +247,48 @@ export class UsersService {
     const { password, ...userWithoutPassword } = user;
 
     return userWithoutPassword;
+  }
+
+  private async ensureDefaultAdmin() {
+    const existingAdmin = await this.usersRepository.findOne({
+      where: {
+        role: UserRole.ADMIN,
+      },
+    });
+
+    if (existingAdmin) return;
+
+    const email = process.env.ADMIN_EMAIL?.trim();
+    const password = process.env.ADMIN_PASSWORD?.trim();
+
+    if (!email || !password) {
+      this.logger.warn(
+        'No se ha creado el admin inicial porque faltan ADMIN_EMAIL o ADMIN_PASSWORD',
+      );
+      return;
+    }
+
+    const existingUser = await this.usersRepository.findOne({
+      where: {
+        email,
+      },
+    });
+
+    if (existingUser) {
+      this.logger.warn(
+        `No se ha creado el admin inicial porque ya existe un usuario con el email ${email}`,
+      );
+      return;
+    }
+
+    const admin = this.usersRepository.create({
+      email,
+      password: await bcrypt.hash(password, 10),
+      role: UserRole.ADMIN,
+      centers: [],
+    });
+
+    await this.usersRepository.save(admin);
+    this.logger.log(`Admin inicial creado: ${email}`);
   }
 }
