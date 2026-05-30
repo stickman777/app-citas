@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ServiceEntity } from '../services/service.entity';
+import { Specialist } from '../specialists/specialist.entity';
 
 @Entity()
 export class Center {
@@ -33,4 +34,7 @@ export class Center {
 
   @OneToMany(() => ServiceEntity, (service) => service.center)
   services?: ServiceEntity[];
+
+  @OneToMany(() => Specialist, (specialist) => specialist.center)
+  specialists?: Specialist[];
 }
