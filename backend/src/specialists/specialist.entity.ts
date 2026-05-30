@@ -8,6 +8,12 @@ import {
 } from 'typeorm';
 import { Center } from '../centers/center.entity';
 
+export enum SpecialistStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  VACATION = 'VACATION',
+}
+
 @Entity()
 export class Specialist {
   @PrimaryGeneratedColumn()
@@ -21,6 +27,13 @@ export class Specialist {
 
   @Column({ default: true })
   active: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: SpecialistStatus,
+    default: SpecialistStatus.ACTIVE,
+  })
+  status: SpecialistStatus;
 
   @ManyToOne(() => Center, (center) => center.specialists, {
     eager: true,

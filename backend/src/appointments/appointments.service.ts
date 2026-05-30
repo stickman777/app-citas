@@ -10,7 +10,7 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { Center } from '../centers/center.entity';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
-import { Specialist } from '../specialists/specialist.entity';
+import { Specialist, SpecialistStatus } from '../specialists/specialist.entity';
 import { AppointmentStatus } from './appointment.entity';
 import {
   AvailabilityException,
@@ -292,9 +292,9 @@ export class AppointmentsService {
     if (!specialist)
       throw new NotFoundException('No se ha encontrado el especialista');
 
-    if (!specialist.active)
+    if (!this.isSpecialistSchedulable(specialist))
       throw new BadRequestException(
-        'No se pueden crear citas con un especialista inactivo',
+        'No se pueden crear citas con un especialista no disponible',
       );
 
     return specialist;
@@ -366,6 +366,10 @@ export class AppointmentsService {
       throw new BadRequestException(
         'El especialista debe pertenecer al mismo centro que la cita',
       );
+  }
+
+  private isSpecialistSchedulable(specialist: Specialist): boolean {
+    return specialist.active && specialist.status === SpecialistStatus.ACTIVE;
   }
 
   private async findAppointment(

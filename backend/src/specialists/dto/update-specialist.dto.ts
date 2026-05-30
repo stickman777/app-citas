@@ -1,4 +1,5 @@
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { SpecialistStatus } from '../specialist.entity';
 
 export class UpdateSpecialistDto {
   @IsOptional()
@@ -8,6 +9,10 @@ export class UpdateSpecialistDto {
   @IsOptional()
   @IsString()
   specialty?: string;
+
+  @IsOptional()
+  @IsEnum(SpecialistStatus)
+  status?: SpecialistStatus;
 
   @IsOptional()
   @IsInt()

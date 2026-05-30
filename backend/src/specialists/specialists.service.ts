@@ -13,7 +13,7 @@ import {
 import { UserRole } from '../users/user.entity';
 import { CreateSpecialistDto } from './dto/create-specialist.dto';
 import { UpdateSpecialistDto } from './dto/update-specialist.dto';
-import { Specialist } from './specialist.entity';
+import { Specialist, SpecialistStatus } from './specialist.entity';
 
 @Injectable()
 export class SpecialistsService {
@@ -32,6 +32,7 @@ export class SpecialistsService {
     return this.specialistsRepository.find({
       where: {
         active: true,
+        status: SpecialistStatus.ACTIVE,
         center: {
           id: In(centerIds),
         },
@@ -73,7 +74,7 @@ export class SpecialistsService {
   }
 
   async create(specialistData: CreateSpecialistDto, authUser?: AuthUser) {
-    const { centerId, name, specialty } = specialistData;
+    const { centerId, name, specialty, status } = specialistData;
 
     if (!centerId) throw new BadRequestException('Centro requerido');
 
@@ -84,6 +85,8 @@ export class SpecialistsService {
     const specialist = this.specialistsRepository.create({
       name: name.trim(),
       specialty: specialty?.trim() || undefined,
+      status: status ?? SpecialistStatus.ACTIVE,
+      active: (status ?? SpecialistStatus.ACTIVE) === SpecialistStatus.ACTIVE,
       center,
     });
 
@@ -96,7 +99,7 @@ export class SpecialistsService {
     authUser?: AuthUser,
   ) {
     const specialist = await this.findOne(id, authUser);
-    const { centerId, name, specialty } = specialistData;
+    const { centerId, name, specialty, status } = specialistData;
     const center =
       centerId !== undefined
         ? await this.centerAccessService.getCenter(centerId, authUser)
@@ -112,6 +115,11 @@ export class SpecialistsService {
       specialist.specialty = specialty.trim() || undefined;
     }
 
+    if (status !== undefined) {
+      specialist.status = status;
+      specialist.active = status === SpecialistStatus.ACTIVE;
+    }
+
     if (centerId !== undefined) {
       specialist.center = center;
     }
@@ -123,6 +131,7 @@ export class SpecialistsService {
     const specialist = await this.findOne(id, authUser);
 
     specialist.active = true;
+    specialist.status = SpecialistStatus.ACTIVE;
 
     return this.specialistsRepository.save(specialist);
   }
@@ -131,6 +140,7 @@ export class SpecialistsService {
     const specialist = await this.findOne(id, authUser);
 
     specialist.active = false;
+    specialist.status = SpecialistStatus.INACTIVE;
 
     return this.specialistsRepository.save(specialist);
   }
