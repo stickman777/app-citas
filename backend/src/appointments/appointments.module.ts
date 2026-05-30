@@ -8,6 +8,7 @@ import { ServiceEntity } from '../services/service.entity';
 import { Availability } from '../availability/availability.entity';
 import { AvailabilityException } from '../availability/availability-exception.entity';
 import { CentersModule } from '../centers/centers.module';
+import { Specialist } from '../specialists/specialist.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CentersModule } from '../centers/centers.module';
       Appointment,
       Client,
       ServiceEntity,
+      Specialist,
       Availability,
       AvailabilityException,
     ]),

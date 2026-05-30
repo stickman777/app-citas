@@ -26,6 +26,10 @@ export class CreateAppointmentDto {
   @Min(1)
   serviceId: number;
 
+  @IsInt()
+  @Min(1)
+  specialistId: number;
+
   @IsOptional()
   @IsBoolean()
   allowOutsideAvailability?: boolean;

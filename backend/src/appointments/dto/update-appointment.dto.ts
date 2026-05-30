@@ -31,6 +31,11 @@ export class UpdateAppointmentDto {
   serviceId?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  specialistId?: number;
+
+  @IsOptional()
   @IsBoolean()
   allowOutsideAvailability?: boolean;
 

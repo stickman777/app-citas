@@ -7,8 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindOptionsWhere, In, Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { Center } from '../centers/center.entity';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
+import { Specialist } from '../specialists/specialist.entity';
 import { AppointmentStatus } from './appointment.entity';
 import {
   AvailabilityException,
@@ -25,7 +27,6 @@ import {
 @Injectable()
 export class AppointmentsService {
   constructor(
-    // Repositorios necesarios para manejar las citas, clientes y servicios
     @InjectRepository(Appointment)
     private appointmentsRepository: Repository<Appointment>,
 
@@ -34,6 +35,9 @@ export class AppointmentsService {
 
     @InjectRepository(ServiceEntity)
     private servicesRepository: Repository<ServiceEntity>,
+
+    @InjectRepository(Specialist)
+    private specialistsRepository: Repository<Specialist>,
 
     @InjectRepository(Availability)
     private availabilityRepository: Repository<Availability>,
@@ -46,7 +50,6 @@ export class AppointmentsService {
 
   private readonly SLOT_STEP_MINUTES = 15;
 
-  // Obtiene todas las citas, con opción de filtrar por fecha
   async findAll(authUser?: AuthUser, date?: string, centerId?: number) {
     await this.completePastScheduledAppointments();
 
@@ -62,16 +65,18 @@ export class AppointmentsService {
     });
   }
 
-  // Obtiene los horarios disponibles para un servicio en una fecha determinada
   async findAvailableSlots(
     date: string,
     serviceId: number,
+    specialistId: number,
     authUser?: AuthUser,
   ) {
     await this.completePastScheduledAppointments();
 
     const service = await this.getActiveService(serviceId);
     const centerId = this.getServiceCenterId(service);
+    const specialist = await this.getActiveSpecialist(specialistId);
+    this.validateSpecialistCenter(specialist, centerId);
 
     await this.centerAccessService.validateCenterAccess(centerId, authUser);
 
@@ -105,7 +110,6 @@ export class AppointmentsService {
 
     const slots = new Set<string>();
 
-    // Para cada franja de disponibilidad, se generan los posibles horarios de cita
     for (const availability of availableRanges) {
       const availabilityStart = this.buildDateWithTime(
         targetDate,
@@ -119,7 +123,6 @@ export class AppointmentsService {
 
       const currentSlot = new Date(availabilityStart);
 
-      // Se generan los horarios disponibles en intervalos de 15 minutos
       while (currentSlot < availabilityEnd) {
         const slotEnd = new Date(currentSlot);
         slotEnd.setMinutes(slotEnd.getMinutes() + service.durationMinutes);
@@ -134,6 +137,7 @@ export class AppointmentsService {
             currentSlot,
             service.durationMinutes,
             centerId,
+            specialist.id,
           );
 
           if (!hasBlockedTime && !hasOverlap) {
@@ -150,37 +154,40 @@ export class AppointmentsService {
     return [...slots].sort();
   }
 
-  // Crea una nueva cita
   async create(appointmentData: CreateAppointmentDto, authUser?: AuthUser) {
     await this.completePastScheduledAppointments();
 
     const client = await this.getActiveClient(appointmentData.clientId);
     const service = await this.getActiveService(appointmentData.serviceId);
+    const specialist = await this.getActiveSpecialist(
+      appointmentData.specialistId,
+    );
     const startDate = new Date(appointmentData.startDateTime);
-    const centerId = this.validateAppointmentCenter(client, service);
+    const center = this.validateAppointmentCenter(client, service, specialist);
 
-    await this.centerAccessService.validateCenterAccess(centerId, authUser);
+    await this.centerAccessService.validateCenterAccess(center.id, authUser);
     const outsideAvailability = await this.validateAppointmentSlot(
       startDate,
       service.durationMinutes,
-      centerId,
+      center.id,
+      specialist.id,
       undefined,
       appointmentData.allowOutsideAvailability,
     );
 
-    // Si todo es correcto, se crea la cita
     const appointment = this.appointmentsRepository.create({
       startDateTime: startDate,
       duration: service.durationMinutes,
       outsideAvailability,
       client,
       service,
+      center,
+      specialist,
     });
 
     return this.appointmentsRepository.save(appointment);
   }
 
-  // Actualiza una cita existente
   async update(
     id: number,
     appointmentData: UpdateAppointmentDto,
@@ -198,19 +205,25 @@ export class AppointmentsService {
       appointmentData.serviceId,
     );
 
+    const specialist = await this.resolveSpecialistForUpdate(
+      appointment,
+      appointmentData.specialistId,
+    );
+
     const startDate = appointmentData.startDateTime
       ? new Date(appointmentData.startDateTime)
       : new Date(appointment.startDateTime);
-    const centerId = this.validateAppointmentCenter(client, service);
+    const center = this.validateAppointmentCenter(client, service, specialist);
     const status = appointmentData.status ?? appointment.status;
 
-    await this.centerAccessService.validateCenterAccess(centerId, authUser);
+    await this.centerAccessService.validateCenterAccess(center.id, authUser);
     const outsideAvailability =
       status === AppointmentStatus.SCHEDULED
         ? await this.validateAppointmentSlot(
             startDate,
             service.durationMinutes,
-            centerId,
+            center.id,
+            specialist.id,
             appointment.id,
             appointmentData.allowOutsideAvailability ??
               appointment.outsideAvailability,
@@ -222,12 +235,13 @@ export class AppointmentsService {
     appointment.outsideAvailability = outsideAvailability;
     appointment.client = client;
     appointment.service = service;
+    appointment.center = center;
+    appointment.specialist = specialist;
     appointment.status = status;
 
     return this.appointmentsRepository.save(appointment);
   }
 
-  // Elimina una cita existente
   async remove(id: number, authUser?: AuthUser) {
     const appointment = await this.findAppointment(id, authUser);
     const appointmentToReturn = { ...appointment };
@@ -268,6 +282,22 @@ export class AppointmentsService {
     return service;
   }
 
+  private async getActiveSpecialist(id: number): Promise<Specialist> {
+    const specialist = await this.specialistsRepository.findOne({
+      where: { id },
+    });
+
+    if (!specialist)
+      throw new NotFoundException('No se ha encontrado el especialista');
+
+    if (!specialist.active)
+      throw new BadRequestException(
+        'No se pueden crear citas con un especialista inactivo',
+      );
+
+    return specialist;
+  }
+
   private async resolveClientForUpdate(
     appointment: Appointment,
     clientId?: number,
@@ -288,10 +318,27 @@ export class AppointmentsService {
     return this.getActiveService(serviceId);
   }
 
+  private async resolveSpecialistForUpdate(
+    appointment: Appointment,
+    specialistId?: number,
+  ): Promise<Specialist> {
+    if (!specialistId || specialistId === appointment.specialist?.id) {
+      if (!appointment.specialist)
+        throw new BadRequestException(
+          'La cita debe tener un especialista asignado',
+        );
+
+      return appointment.specialist;
+    }
+
+    return this.getActiveSpecialist(specialistId);
+  }
+
   private validateAppointmentCenter(
     client: Client,
     service: ServiceEntity,
-  ): number {
+    specialist: Specialist,
+  ): Center {
     if (!client.center?.id || !service.center?.id)
       throw new BadRequestException(
         'El cliente y el servicio deben tener un centro asignado',
@@ -302,7 +349,21 @@ export class AppointmentsService {
         'El cliente y el servicio deben pertenecer al mismo centro',
       );
 
-    return service.center.id;
+    this.validateSpecialistCenter(specialist, service.center.id);
+
+    return service.center;
+  }
+
+  private validateSpecialistCenter(specialist: Specialist, centerId: number) {
+    if (!specialist.center?.id)
+      throw new BadRequestException(
+        'El especialista debe tener un centro asignado',
+      );
+
+    if (specialist.center.id !== centerId)
+      throw new BadRequestException(
+        'El especialista debe pertenecer al mismo centro que la cita',
+      );
   }
 
   private async findAppointment(
@@ -319,7 +380,7 @@ export class AppointmentsService {
       throw new NotFoundException('No se ha encontrado la cita');
 
     await this.centerAccessService.validateCenterAccess(
-      this.getServiceCenterId(appointment.service),
+      this.getAppointmentCenterId(appointment),
       authUser,
     );
 
@@ -343,6 +404,7 @@ export class AppointmentsService {
     startDate: Date,
     duration: number,
     centerId: number,
+    specialistId: number,
     appointmentIdToExclude?: number,
     allowOutsideAvailability = false,
   ): Promise<boolean> {
@@ -361,6 +423,7 @@ export class AppointmentsService {
       startDate,
       duration,
       centerId,
+      specialistId,
       appointmentIdToExclude,
     );
 
@@ -372,11 +435,11 @@ export class AppointmentsService {
     return !isAvailable;
   }
 
-  // Verifica si hay citas que se solapan en el mismo día
   private async hasOverlappingAppointment(
     startDate: Date,
     duration: number,
     centerId: number,
+    specialistId: number,
     appointmentIdToExclude?: number,
   ): Promise<boolean> {
     const endDate = new Date(startDate);
@@ -392,16 +455,16 @@ export class AppointmentsService {
       where: {
         startDateTime: Between(dayStart, dayEnd),
         status: AppointmentStatus.SCHEDULED,
-        service: {
-          center: {
-            id: centerId,
-          },
+        center: {
+          id: centerId,
+        },
+        specialist: {
+          id: specialistId,
         },
       },
     });
 
     return appointmentsSameDay.some((appointment) => {
-      // Si se proporciona un ID de cita para excluir, se omite esa cita en la verificación
       if (appointment.id === appointmentIdToExclude) return false;
 
       const existingStart = new Date(appointment.startDateTime);
@@ -413,7 +476,6 @@ export class AppointmentsService {
     });
   }
 
-  // Verifica si el horario de la cita está dentro de la disponibilidad
   private async isInsideAvailability(
     startDate: Date,
     duration: number,
@@ -501,7 +563,6 @@ export class AppointmentsService {
     return `${year}-${month}-${day}`;
   }
 
-  // Construye un objeto Date combinando fecha y hora
   private buildDateWithTime(date: Date, time: string): Date {
     const [hours, minutes] = time.split(':').map(Number);
 
@@ -511,7 +572,6 @@ export class AppointmentsService {
     return result;
   }
 
-  // Construye un objeto Date a partir de una cadena con formato YYYY-MM-DD
   private buildDateFromDateQuery(date: string): Date {
     const [year, month, day] = date.split('-').map(Number);
 
@@ -535,10 +595,8 @@ export class AppointmentsService {
     }
 
     if (centerIds?.length) {
-      where.service = {
-        center: {
-          id: In(centerIds),
-        },
+      where.center = {
+        id: In(centerIds),
       };
     }
 
@@ -561,6 +619,23 @@ export class AppointmentsService {
     return service.center.id;
   }
 
+  private getAppointmentCenterId(appointment: Appointment): number {
+    if (!appointment.center?.id) {
+      throw new BadRequestException('La cita debe tener un centro asignado');
+    }
+
+    return appointment.center.id;
+  }
+
+  private getAppointmentSpecialistId(appointment: Appointment): number {
+    if (!appointment.specialist?.id)
+      throw new BadRequestException(
+        'La cita debe tener un especialista asignado',
+      );
+
+    return appointment.specialist.id;
+  }
+
   private async completePastScheduledAppointments(): Promise<void> {
     await this.appointmentsRepository
       .createQueryBuilder()
@@ -577,7 +652,6 @@ export class AppointmentsService {
       .execute();
   }
 
-  // Cancela una cita existente
   async cancel(id: number, authUser?: AuthUser) {
     const appointment = await this.findScheduledAppointment(
       id,
@@ -590,7 +664,6 @@ export class AppointmentsService {
     return this.appointmentsRepository.save(appointment);
   }
 
-  // Marca una cita como completada
   async complete(id: number, authUser?: AuthUser) {
     const appointment = await this.findScheduledAppointment(
       id,
@@ -603,7 +676,6 @@ export class AppointmentsService {
     return this.appointmentsRepository.save(appointment);
   }
 
-  // Reprograma una cita existente
   async reschedule(
     id: number,
     appointmentData: RescheduleAppointmentDto,
@@ -625,7 +697,8 @@ export class AppointmentsService {
     const outsideAvailability = await this.validateAppointmentSlot(
       startDate,
       appointment.duration,
-      this.getServiceCenterId(appointment.service),
+      this.getAppointmentCenterId(appointment),
+      this.getAppointmentSpecialistId(appointment),
       appointment.id,
       appointmentData.allowOutsideAvailability ??
         appointment.outsideAvailability,

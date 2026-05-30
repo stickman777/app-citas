@@ -1,6 +1,8 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Center } from '../centers/center.entity';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
+import { Specialist } from '../specialists/specialist.entity';
 
 export enum AppointmentStatus {
   SCHEDULED = 'SCHEDULED',
@@ -29,7 +31,6 @@ export class Appointment {
   })
   status: AppointmentStatus;
 
-  // Me traigo la relación con cliente y servicio
   @ManyToOne(() => Client, {
     eager: true,
     nullable: false,
@@ -43,4 +44,18 @@ export class Appointment {
     onDelete: 'RESTRICT',
   })
   service: ServiceEntity;
+
+  @ManyToOne(() => Center, {
+    eager: true,
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
+  center: Center;
+
+  @ManyToOne(() => Specialist, {
+    eager: true,
+    nullable: false,
+    onDelete: 'RESTRICT',
+  })
+  specialist: Specialist;
 }

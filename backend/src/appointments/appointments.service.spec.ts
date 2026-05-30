@@ -5,6 +5,7 @@ import { Availability } from '../availability/availability.entity';
 import { CenterAccessService } from '../centers/center-access.service';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
+import { Specialist } from '../specialists/specialist.entity';
 import { Appointment } from './appointment.entity';
 import { AppointmentsService } from './appointments.service';
 
@@ -25,6 +26,10 @@ describe('AppointmentsService', () => {
         },
         {
           provide: getRepositoryToken(ServiceEntity),
+          useValue: {},
+        },
+        {
+          provide: getRepositoryToken(Specialist),
           useValue: {},
         },
         {
