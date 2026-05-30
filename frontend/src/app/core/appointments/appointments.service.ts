@@ -25,6 +25,14 @@ export interface AppointmentServiceOption {
   center?: Center | null;
 }
 
+export interface AppointmentSpecialist {
+  id: number;
+  name: string;
+  specialty?: string | null;
+  active: boolean;
+  center?: Center | null;
+}
+
 export interface Appointment {
   id: number;
   startDateTime: string;
@@ -33,12 +41,15 @@ export interface Appointment {
   status: AppointmentStatus;
   client: AppointmentClient;
   service: AppointmentServiceOption;
+  center: Center;
+  specialist: AppointmentSpecialist;
 }
 
 export interface AppointmentPayload {
   startDateTime: string;
   clientId: number;
   serviceId: number;
+  specialistId: number;
   allowOutsideAvailability?: boolean;
   status?: AppointmentStatus;
 }
@@ -50,6 +61,7 @@ export class AppointmentsService {
   private readonly appointmentsUrl = `${environment.apiUrl}/appointments`;
   private readonly clientsUrl = `${environment.apiUrl}/clients`;
   private readonly servicesUrl = `${environment.apiUrl}/services`;
+  private readonly specialistsUrl = `${environment.apiUrl}/specialists`;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -82,6 +94,12 @@ export class AppointmentsService {
 
   getServices(centerId?: number | null): Observable<AppointmentServiceOption[]> {
     return this.http.get<AppointmentServiceOption[]>(this.servicesUrl, {
+      params: this.getCenterParams(centerId),
+    });
+  }
+
+  getSpecialists(centerId?: number | null): Observable<AppointmentSpecialist[]> {
+    return this.http.get<AppointmentSpecialist[]>(this.specialistsUrl, {
       params: this.getCenterParams(centerId),
     });
   }
