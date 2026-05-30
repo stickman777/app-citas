@@ -30,3 +30,29 @@
     background: #dc2626;
   }
 }
+
+.dashboard-specialists-list {
+  max-height: 258px;
+}
+
+.dashboard-specialist-item {
+  gap: 8px;
+  padding: 10px 0;
+
+  &:first-child {
+    padding-top: 0;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.dashboard-specialist-avatar {
+  background: #eef2ff;
+  color: #2e37a4;
+  font-size: 13px;
+  font-weight: 700;
+  height: 38px;
+  width: 38px;
+}

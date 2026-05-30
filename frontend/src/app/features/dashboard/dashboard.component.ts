@@ -15,6 +15,11 @@ import { AvailabilityService } from '../../core/availability/availability.servic
 import { ActiveCenterService } from '../../core/centers/active-center.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { I18nService } from '../../core/i18n/i18n.service';
+import {
+  Specialist,
+  SpecialistStatus,
+  SpecialistsService,
+} from '../../core/specialists/specialists.service';
 import { routes } from '../../shared/routes/routes';
 
 interface DashboardCalendarDate {
@@ -34,8 +39,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   public date: Date = new Date();
   public appointmentCalendarQuery: Record<string, string> =
     this.buildAppointmentsCalendarQuery(this.date);
+  public appointmentListQuery: Record<string, string> = { view: 'list' };
   public appointmentDates = new Set<string>();
   public blockedDates = new Set<string>();
+  public specialists: Specialist[] = [];
+  public isLoadingSpecialists = false;
   private visibleMonthDate = new Date(this.date);
   private activeCenterSubscription?: Subscription;
   private activeCenterId: number | null = null;
@@ -46,6 +54,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private readonly i18nService: I18nService,
     private readonly appointmentsService: AppointmentsService,
     private readonly availabilityService: AvailabilityService,
+    private readonly specialistsService: SpecialistsService,
     private readonly activeCenterService: ActiveCenterService,
   ) {}
 
@@ -55,6 +64,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.activeCenterService.activeCenter$.subscribe(center => {
         this.activeCenterId = center?.id ?? null;
         this.loadCalendarIndicators();
+        this.loadSpecialists();
       });
   }
 
@@ -90,6 +100,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.blockedDates.has(this.toDateMetaQuery(date));
   }
 
+  public trackBySpecialistId(_: number, specialist: Specialist): number {
+    return specialist.id;
+  }
+
+  public specialistStatusLabel(specialist: Specialist): string {
+    const status = this.resolveSpecialistStatus(specialist);
+
+    return this.i18nService.translate(
+      `specialists.status.${status.toLowerCase()}`,
+    );
+  }
+
+  public specialistStatusBadgeClass(specialist: Specialist): string {
+    const status = this.resolveSpecialistStatus(specialist);
+
+    if (status === 'ACTIVE')
+      return 'badge-soft-success border-success text-success';
+
+    if (status === 'VACATION')
+      return 'badge-soft-warning border-warning text-warning';
+
+    return 'badge-soft-danger border-danger text-danger';
+  }
+
+  public specialistInitials(specialist: Specialist): string {
+    return specialist.name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
+  }
+
   private loadCalendarIndicators(): void {
     const range = this.getVisibleMonthRange();
 
@@ -120,6 +163,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.blockedDates = new Set();
       },
     });
+  }
+
+  private loadSpecialists(): void {
+    this.isLoadingSpecialists = true;
+
+    this.specialistsService
+      .getAllSpecialists(this.activeCenterId)
+      .subscribe({
+        next: specialists => {
+          this.specialists = specialists;
+          this.isLoadingSpecialists = false;
+        },
+        error: () => {
+          this.specialists = [];
+          this.isLoadingSpecialists = false;
+        },
+      });
   }
 
   private getVisibleMonthRange(): { start: Date; end: Date } {
@@ -173,6 +233,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return Array.from({ length: 12 }, (_, index) =>
       formatter.format(new Date(2026, index, 1))
     );
+  }
+
+  private resolveSpecialistStatus(specialist: Specialist): SpecialistStatus {
+    return specialist.status ?? (specialist.active ? 'ACTIVE' : 'INACTIVE');
   }
 
   private buildAppointmentsCalendarQuery(date: Date): Record<string, string> {

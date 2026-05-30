@@ -5,7 +5,7 @@
       <div class="card shadow-sm flex-fill w-100">
         <div class="card-header d-flex align-items-center justify-content-between">
           <h5 class="fw-bold mb-0 text-truncate">{{ 'dashboard.appointments' | translate }}</h5>
-          <a [routerLink]="routes.appointment" [queryParams]="appointmentCalendarQuery" class="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center">
+          <a [routerLink]="routes.appointment" [queryParams]="appointmentListQuery" class="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center">
             {{ 'common.viewAll' | translate }}
           </a>
         </div>
@@ -47,78 +47,34 @@
       <div class="card shadow-sm flex-fill w-100">
         <div class="card-header d-flex align-items-center justify-content-between">
           <h5 class="fw-bold mb-0">{{ 'dashboard.doctorsSchedule' | translate }}</h5>
-          <a [routerLink]="routes.doctorSchedule" class="btn fw-normal btn-outline-white">{{ 'common.viewAll' | translate }}</a>
+          <a [routerLink]="routes.specialists" class="btn fw-normal btn-outline-white">{{ 'common.viewAll' | translate }}</a>
         </div>
         <div class="card-body">
-          <div class="row g-2 mb-4">
-            <div class="col d-flex border-end">
-              <div class="text-center flex-fill">
-                <p class="mb-1">{{ 'dashboard.available' | translate }}</p>
-                <h3 class="fw-bold mb-0">48</h3>
-              </div>
-            </div>
-            <div class="col d-flex border-end">
-              <div class="text-center flex-fill">
-                <p class="mb-1">{{ 'dashboard.unavailable' | translate }}</p>
-                <h3 class="fw-bold mb-0">28</h3>
-              </div>
-            </div>
-            <div class="col d-flex">
-              <div class="text-center flex-fill">
-                <p class="mb-1">{{ 'dashboard.leave' | translate }}</p>
-                <h3 class="fw-bold mb-0">12</h3>
-              </div>
-            </div>
-          </div>
-          <div class="overflow-auto">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <div class="d-flex align-items-center flex-shrink-0">
-                <a [routerLink]="routes.doctorDetails" class="avatar flex-shrink-0">
-                  <img src="assets/img/doctors/doctor-02.jpg" class="rounded-circle" alt="img">
-                </a>
-                <div class="ms-2 flex-shrink-0">
-                  <h6 class="fw-semibold fs-14 text-truncate mb-1">
-                    <a [routerLink]="routes.doctorDetails">Dr. Sarah Johnson</a>
-                  </h6>
-                  <p class="fs-13">{{ 'dashboard.orthopedicSurgeon' | translate }}</p>
+          <div class="dashboard-specialists-list overflow-auto">
+            @if(isLoadingSpecialists){
+            <div class="text-center text-dark py-4">{{ 'specialists.loading' | translate }}</div>
+            } @else {
+              @for(specialist of specialists; track trackBySpecialistId($index, specialist)){
+              <div class="dashboard-specialist-item d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center min-w-0">
+                  <span class="dashboard-specialist-avatar rounded-circle flex-shrink-0 d-inline-flex align-items-center justify-content-center">
+                    {{ specialistInitials(specialist) }}
+                  </span>
+                  <div class="ms-2 min-w-0">
+                    <h6 class="fw-semibold fs-14 text-truncate mb-1">{{ specialist.name }}</h6>
+                    <p class="fs-13 text-body text-truncate mb-0">
+                      {{ specialist.specialty || ('specialists.fields.specialty' | translate) }}
+                    </p>
+                  </div>
                 </div>
+                <span class="badge border px-2 py-1 fs-13 fw-medium ms-2 flex-shrink-0" [ngClass]="specialistStatusBadgeClass(specialist)">
+                  {{ specialistStatusLabel(specialist) }}
+                </span>
               </div>
-              <div class="flex-shrink-0 ms-2">
-                <a href="javascript:void(0);" class="btn btn-primary btn-sm py-1 flex-shrink-0">{{ 'dashboard.bookNow' | translate }}</a>
-              </div>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <div class="d-flex align-items-center flex-shrink-0">
-                <a [routerLink]="routes.doctorDetails" class="avatar flex-shrink-0">
-                  <img src="assets/img/doctors/doctor-03.jpg" class="rounded-circle" alt="img">
-                </a>
-                <div class="ms-2 flex-shrink-0">
-                  <h6 class="fw-semibold fs-14 text-truncate mb-1">
-                    <a [routerLink]="routes.doctorDetails">Dr. Emily Carter</a>
-                  </h6>
-                  <p class="fs-13">{{ 'dashboard.pediatrician' | translate }}</p>
-                </div>
-              </div>
-              <div class="flex-shrink-0 ms-2">
-                <a href="javascript:void(0);" class="btn btn-primary btn-sm py-1">{{ 'dashboard.bookNow' | translate }}</a>
-              </div>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mb-0">
-              <div class="d-flex align-items-center flex-shrink-0">
-                <a [routerLink]="routes.doctorDetails" class="avatar flex-shrink-0">
-                  <img src="assets/img/doctors/doctor-04.jpg" class="rounded-circle" alt="img">
-                </a>
-                <div class="ms-2 flex-shrink-0">
-                  <h6 class="fw-semibold fs-14 text-truncate mb-1">
-                    <a [routerLink]="routes.doctorDetails">Dr. David Lee</a>
-                  </h6>
-                  <p class="fs-13">{{ 'dashboard.gynecologist' | translate }}</p>
-                </div>
-              </div>
-              <div class="flex-shrink-0 ms-2">
-                <a href="javascript:void(0);" class="btn btn-primary btn-sm py-1">{{ 'dashboard.bookNow' | translate }}</a>
-              </div>
-            </div>
+              } @empty {
+              <div class="text-center text-dark py-4">{{ 'specialists.empty' | translate }}</div>
+              }
+            }
           </div>
         </div>
       </div>
