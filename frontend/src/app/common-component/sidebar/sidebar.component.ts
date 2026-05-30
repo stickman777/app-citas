@@ -191,8 +191,8 @@ public selectCenter(center: Center): void {
   this.sidebartop = false;
 }
 
-public centerLogo(center: Center | null): string {
-  return center?.logoUrl || 'assets/img/icons/trustcare.svg';
+public centerLogo(center: Center | null): string | null {
+  return center?.logoUrl ?? null;
 }
 
 public centerCity(center: Center | null): string {

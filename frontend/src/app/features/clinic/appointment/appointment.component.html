@@ -184,6 +184,7 @@
           }
           <th>{{ 'common.client' | translate }}</th>
           <th>{{ 'common.service' | translate }}</th>
+          <th>{{ 'common.specialist' | translate }}</th>
           @if(isAdmin){
           <th>{{ 'common.center' | translate }}</th>
           }
@@ -223,6 +224,15 @@
             <td>
               {{ appointment.service.name }}
               @if(!appointment.service.active){
+              <span class="badge badge-soft-danger border border-danger text-danger ms-1">{{ 'common.inactive' | translate }}</span>
+              }
+            </td>
+            <td>
+              {{ appointment.specialist.name }}
+              @if(appointment.specialist.specialty){
+              <span class="text-body fs-13 d-block">{{ appointment.specialist.specialty }}</span>
+              }
+              @if(!appointment.specialist.active){
               <span class="badge badge-soft-danger border border-danger text-danger ms-1">{{ 'common.inactive' | translate }}</span>
               }
             </td>
@@ -297,6 +307,15 @@
               <option [ngValue]="null">{{ 'appointments.fields.selectService' | translate }}</option>
               @for(service of serviceOptions; track service.id){
               <option [ngValue]="service.id">{{ serviceOptionLabel(service) }}</option>
+              }
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ 'common.specialist' | translate }}<span class="text-danger ms-1">*</span></label>
+            <select name="specialistId" [(ngModel)]="form.specialistId" class="form-select" required>
+              <option [ngValue]="null">{{ 'appointments.fields.selectSpecialist' | translate }}</option>
+              @for(specialist of specialistOptions; track specialist.id){
+              <option [ngValue]="specialist.id">{{ specialistOptionLabel(specialist) }}</option>
               }
             </select>
           </div>
