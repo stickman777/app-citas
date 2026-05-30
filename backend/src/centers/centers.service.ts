@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -23,7 +22,7 @@ type CenterWithSchedule = Center & {
 };
 
 @Injectable()
-export class CentersService implements OnModuleInit {
+export class CentersService {
   constructor(
     @InjectRepository(Center)
     private centersRepository: Repository<Center>,
@@ -36,10 +35,6 @@ export class CentersService implements OnModuleInit {
 
     private readonly centerAccessService: CenterAccessService,
   ) {}
-
-  async onModuleInit() {
-    await this.ensureDefaultCenter();
-  }
 
   async findAll(authUser?: AuthUser) {
     if (authUser?.role === UserRole.GESTOR)
@@ -156,34 +151,6 @@ export class CentersService implements OnModuleInit {
     const savedCenter = await this.centersRepository.save(center);
 
     return this.attachSchedule(savedCenter);
-  }
-
-  private async ensureDefaultCenter() {
-    const defaultCenterName = 'Trustcare Clinic';
-    const existingCenter = await this.centersRepository.findOne({
-      where: { name: defaultCenterName },
-    });
-
-    if (existingCenter) {
-      await this.ensureCenterHasDefaultSchedule(existingCenter);
-      await this.ensureExistingCentersHaveDefaultSchedule();
-      return;
-    }
-
-    const center = this.centersRepository.create({
-      name: defaultCenterName,
-      city: 'Las Vegas',
-      logoUrl: 'assets/img/icons/trustcare.svg',
-    });
-
-    const savedCenter = await this.centersRepository.save(center);
-
-    await this.replaceSchedule(
-      this.availabilityRepository,
-      savedCenter,
-      DEFAULT_CENTER_SCHEDULE,
-    );
-    await this.ensureExistingCentersHaveDefaultSchedule();
   }
 
   private async assignCenterToManager(center: Center, authUser: AuthUser) {
@@ -362,29 +329,4 @@ export class CentersService implements OnModuleInit {
     await repository.save(availability);
   }
 
-  private async ensureCenterHasDefaultSchedule(center: Center) {
-    const existingSchedule = await this.availabilityRepository.count({
-      where: {
-        center: {
-          id: center.id,
-        },
-      },
-    });
-
-    if (existingSchedule > 0) return;
-
-    await this.replaceSchedule(
-      this.availabilityRepository,
-      center,
-      DEFAULT_CENTER_SCHEDULE,
-    );
-  }
-
-  private async ensureExistingCentersHaveDefaultSchedule() {
-    const centers = await this.centersRepository.find();
-
-    for (const center of centers) {
-      await this.ensureCenterHasDefaultSchedule(center);
-    }
-  }
 }

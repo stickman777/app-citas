@@ -11,6 +11,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { CentersModule } from './centers/centers.module';
 import { SpecialistsModule } from './specialists/specialists.module';
+import { DemoSeedService } from './demo-seed.service';
 
 @Module({
   imports: [
@@ -40,6 +41,6 @@ import { SpecialistsModule } from './specialists/specialists.module';
     SpecialistsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, DemoSeedService],
 })
 export class AppModule {}
