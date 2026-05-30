@@ -8,7 +8,7 @@ import {
   DatePickerMonthChangeEvent,
   DatePickerYearChangeEvent,
 } from 'primeng/types/datepicker';
-import { forkJoin, Subscription } from 'rxjs';
+import { finalize, forkJoin, Subscription } from 'rxjs';
 
 import { AppointmentsService } from '../../core/appointments/appointments.service';
 import { AvailabilityService } from '../../core/availability/availability.service';
@@ -20,6 +20,10 @@ import {
   SpecialistStatus,
   SpecialistsService,
 } from '../../core/specialists/specialists.service';
+import {
+  Service,
+  ServicesService,
+} from '../../core/services/services.service';
 import { routes } from '../../shared/routes/routes';
 
 interface DashboardCalendarDate {
@@ -35,15 +39,19 @@ interface DashboardCalendarDate {
   imports: [CommonModule, RouterLink, DatePickerModule, FormsModule, TranslatePipe],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  public routes = routes;
+  public readonly routes = routes;
+  public readonly appointmentListQuery: Record<string, string> = {
+    view: 'list',
+  };
   public date: Date = new Date();
   public appointmentCalendarQuery: Record<string, string> =
     this.buildAppointmentsCalendarQuery(this.date);
-  public appointmentListQuery: Record<string, string> = { view: 'list' };
   public appointmentDates = new Set<string>();
   public blockedDates = new Set<string>();
   public specialists: Specialist[] = [];
+  public services: Service[] = [];
   public isLoadingSpecialists = false;
+  public isLoadingServices = false;
   private visibleMonthDate = new Date(this.date);
   private activeCenterSubscription?: Subscription;
   private activeCenterId: number | null = null;
@@ -55,6 +63,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private readonly appointmentsService: AppointmentsService,
     private readonly availabilityService: AvailabilityService,
     private readonly specialistsService: SpecialistsService,
+    private readonly servicesService: ServicesService,
     private readonly activeCenterService: ActiveCenterService,
   ) {}
 
@@ -63,8 +72,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.activeCenterSubscription =
       this.activeCenterService.activeCenter$.subscribe(center => {
         this.activeCenterId = center?.id ?? null;
-        this.loadCalendarIndicators();
-        this.loadSpecialists();
+        this.loadCenterDashboardData();
       });
   }
 
@@ -104,6 +112,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return specialist.id;
   }
 
+  public trackByServiceId(_: number, service: Service): number {
+    return service.id;
+  }
+
   public specialistStatusLabel(specialist: Specialist): string {
     const status = this.resolveSpecialistStatus(specialist);
 
@@ -125,7 +137,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   public specialistInitials(specialist: Specialist): string {
-    return specialist.name
+    return this.getInitials(specialist.name);
+  }
+
+  public serviceSpecialistName(service: Service): string {
+    return (
+      service.specialist?.name ??
+      this.i18nService.translate('services.fields.noSpecialist')
+    );
+  }
+
+  private loadCenterDashboardData(): void {
+    this.loadCalendarIndicators();
+    this.loadSpecialists();
+    this.loadServices();
+  }
+
+  private getInitials(name: string): string {
+    return name
       .split(' ')
       .filter(Boolean)
       .slice(0, 2)
@@ -135,13 +164,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private loadCalendarIndicators(): void {
     const range = this.getVisibleMonthRange();
+    const startDate = this.toDateQuery(range.start);
+    const endDate = this.toDateQuery(range.end);
 
     forkJoin({
       appointments: this.appointmentsService.getAppointments(this.activeCenterId),
       exceptions: this.availabilityService.getAvailabilityExceptions(
         this.activeCenterId,
-        this.toDateQuery(range.start),
-        this.toDateQuery(range.end),
+        startDate,
+        endDate,
       ),
     }).subscribe({
       next: ({ appointments, exceptions }) => {
@@ -150,7 +181,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             .map(appointment =>
               this.toDateQuery(new Date(appointment.startDateTime)),
             )
-            .filter(date => date >= this.toDateQuery(range.start) && date <= this.toDateQuery(range.end)),
+            .filter(date => date >= startDate && date <= endDate),
         );
         this.blockedDates = new Set(
           exceptions
@@ -170,14 +201,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.specialistsService
       .getAllSpecialists(this.activeCenterId)
+      .pipe(finalize(() => (this.isLoadingSpecialists = false)))
       .subscribe({
         next: specialists => {
           this.specialists = specialists;
-          this.isLoadingSpecialists = false;
         },
         error: () => {
           this.specialists = [];
-          this.isLoadingSpecialists = false;
+        },
+      });
+  }
+
+  private loadServices(): void {
+    this.isLoadingServices = true;
+
+    this.servicesService
+      .getServices(this.activeCenterId)
+      .pipe(finalize(() => (this.isLoadingServices = false)))
+      .subscribe({
+        next: services => {
+          this.services = services;
+        },
+        error: () => {
+          this.services = [];
         },
       });
   }

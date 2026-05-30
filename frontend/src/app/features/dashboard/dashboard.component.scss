@@ -31,11 +31,11 @@
   }
 }
 
-.dashboard-specialists-list {
+.dashboard-card-list {
   max-height: 258px;
 }
 
-.dashboard-specialist-item {
+.dashboard-card-list-item {
   gap: 8px;
   padding: 10px 0;
 
@@ -48,11 +48,19 @@
   }
 }
 
-.dashboard-specialist-avatar {
+.dashboard-initials-avatar,
+.dashboard-service-icon {
   background: #eef2ff;
   color: #2e37a4;
-  font-size: 13px;
-  font-weight: 700;
   height: 38px;
   width: 38px;
+}
+
+.dashboard-initials-avatar {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-service-icon {
+  font-size: 18px;
 }
