@@ -8,7 +8,7 @@ import {
 import { CommonModule, formatDate } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { finalize, forkJoin, Subscription } from 'rxjs';
 import {
   CalendarDateFormatter,
@@ -204,11 +204,13 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public exceptionForm: AvailabilityExceptionForm = this.getEmptyExceptionForm();
   private activeCenterSubscription?: Subscription;
   private currentUserSubscription?: Subscription;
+  private queryParamSubscription?: Subscription;
   private loadedCenterId: number | null = null;
   private unavailableSlotHintTimeout?: ReturnType<typeof setTimeout>;
 
   constructor(
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly appointmentsService: AppointmentsService,
     private readonly availabilityService: AvailabilityService,
     private readonly centersService: CentersService,
@@ -219,7 +221,9 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.applyStoredViewState();
-    this.applyCalendarQueryParams();
+    this.queryParamSubscription = this.route.queryParamMap.subscribe(params => {
+      this.applyNavigationQueryParams(params);
+    });
     this.watchCurrentUser();
     this.loadCenters();
     this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
@@ -228,9 +232,14 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
         if (centerId === this.loadedCenterId) return;
 
+        const isCenterChange = this.loadedCenterId !== null;
+
         this.activeCenter = center;
         this.loadedCenterId = centerId;
-        this.selectedSpecialistId = null;
+        if (isCenterChange) {
+          this.selectedSpecialistId = null;
+          this.syncNavigationStateToUrl(true);
+        }
         this.loadReferenceData();
         this.loadAppointments();
         this.loadAvailabilityExceptions();
@@ -241,14 +250,20 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.activeCenterSubscription?.unsubscribe();
     this.currentUserSubscription?.unsubscribe();
+    this.queryParamSubscription?.unsubscribe();
     this.clearUnavailableSlotHintTimeout();
   }
 
-  private applyCalendarQueryParams(): void {
-    const params = this.route.snapshot.queryParamMap;
+  private applyNavigationQueryParams(params: ParamMap): void {
+    const previousViewMode = this.viewMode;
+    const previousCalendarView = this.calendarView;
+    const previousDate = this.toDateQuery(this.calendarViewDate);
+    const previousSearchTerm = this.searchTerm;
+    const previousSelectedSpecialistId = this.selectedSpecialistId;
     const viewMode = params.get('view');
     const calendarView = params.get('calendarView');
     const date = params.get('date');
+    const specialistId = params.get('specialistId');
     let hasViewStateQueryParam = false;
 
     if (viewMode === 'calendar' || viewMode === 'list') {
@@ -274,8 +289,33 @@ export class AppointmentComponent implements OnInit, OnDestroy {
         this.calendarViewDate = parsedDate;
     }
 
+    this.searchTerm = params.get('q') ?? '';
+    this.selectedSpecialistId = this.parsePositiveNumberQueryParam(
+      specialistId,
+    );
+
     if (hasViewStateQueryParam)
       this.persistViewState();
+
+    const calendarChanged =
+      previousCalendarView !== this.calendarView ||
+      previousDate !== this.toDateQuery(this.calendarViewDate);
+    const filtersChanged =
+      previousSearchTerm !== this.searchTerm ||
+      previousSelectedSpecialistId !== this.selectedSpecialistId;
+
+    if (filtersChanged) {
+      this.applySearch();
+      this.updateCalendarEvents();
+    }
+
+    if (calendarChanged) {
+      this.clearCalendarSlotHint();
+      this.loadAvailabilityExceptions(false);
+    }
+
+    if (previousViewMode !== this.viewMode)
+      this.clearCalendarSlotHint();
   }
 
   private applyStoredViewState(): void {
@@ -339,6 +379,34 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       value === CalendarView.Week ||
       value === CalendarView.Month
     );
+  }
+
+  private syncNavigationStateToUrl(replaceUrl = false): void {
+    const searchTerm = this.searchTerm.trim();
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        view: this.viewMode,
+        calendarView: this.calendarView,
+        date: this.toDateQuery(this.calendarViewDate),
+        specialistId: this.selectedSpecialistId
+          ? String(this.selectedSpecialistId)
+          : null,
+        q: searchTerm || null,
+      },
+      replaceUrl,
+    });
+  }
+
+  private parsePositiveNumberQueryParam(value: string | null): number | null {
+    if (!value) return null;
+
+    const parsedValue = Number(value);
+
+    if (!Number.isInteger(parsedValue) || parsedValue <= 0) return null;
+
+    return parsedValue;
   }
 
   public loadAppointments(clearMessages = true): void {
@@ -507,9 +575,15 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       : appointments;
   }
 
+  public handleSearchChange(): void {
+    this.applySearch();
+    this.syncNavigationStateToUrl(true);
+  }
+
   public applySpecialistFilter(): void {
     this.applySearch();
     this.updateCalendarEvents();
+    this.syncNavigationStateToUrl();
   }
 
   public statusBadgeClass(status: AppointmentStatus): string {
@@ -531,6 +605,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public setViewMode(viewMode: AppointmentViewMode): void {
     this.viewMode = viewMode;
     this.persistViewState();
+    this.syncNavigationStateToUrl();
 
     if (viewMode === 'calendar')
       this.loadAvailabilityExceptions(false);
@@ -541,6 +616,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.persistViewState();
     this.clearCalendarSlotHint();
     this.loadAvailabilityExceptions(false);
+    this.syncNavigationStateToUrl();
   }
 
   public openCalendarDayFromMonth(date: Date): void {
@@ -552,18 +628,21 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.calendarViewDate = new Date();
     this.clearCalendarSlotHint();
     this.loadAvailabilityExceptions(false);
+    this.syncNavigationStateToUrl();
   }
 
   public goToPreviousPeriod(): void {
     this.calendarViewDate = this.changeCalendarDate(-1);
     this.clearCalendarSlotHint();
     this.loadAvailabilityExceptions(false);
+    this.syncNavigationStateToUrl();
   }
 
   public goToNextPeriod(): void {
     this.calendarViewDate = this.changeCalendarDate(1);
     this.clearCalendarSlotHint();
     this.loadAvailabilityExceptions(false);
+    this.syncNavigationStateToUrl();
   }
 
   public handleCalendarSegmentClick(
@@ -1059,8 +1138,10 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       !this.specialists.some(
         specialist => specialist.id === this.selectedSpecialistId
       )
-    )
+    ) {
       this.selectedSpecialistId = null;
+      this.syncNavigationStateToUrl(true);
+    }
   }
 
   private isSelectedServiceSpecialistValid(): boolean {

@@ -35,7 +35,7 @@
                 <input
                   type="search"
                   [(ngModel)]="searchTerm"
-                  (ngModelChange)="applySearch()"
+                  (ngModelChange)="handleSearchChange()"
                   class="form-control form-control-sm"
                   [placeholder]="'appointments.search' | translate"
                 >

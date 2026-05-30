@@ -15,9 +15,27 @@
               class="max-w-full"
               [(ngModel)]="date"
               (onSelect)="openAppointmentsCalendar($event)"
+              (onMonthChange)="handleCalendarMonthChange($event)"
+              (onYearChange)="handleCalendarMonthChange($event)"
               [inline]="true"
+              [firstDayOfWeek]="1"
               [showWeek]="false"
               [ngModelOptions]="{standalone: true}">
+              <ng-template #date let-date>
+                <span class="dashboard-calendar-day">
+                  <span>{{ date.day }}</span>
+                  @if(hasAppointmentIndicator(date) || hasBlockedIndicator(date)){
+                  <span class="dashboard-calendar-markers" aria-hidden="true">
+                    @if(hasAppointmentIndicator(date)){
+                    <span class="dashboard-calendar-dot dashboard-calendar-dot-appointment"></span>
+                    }
+                    @if(hasBlockedIndicator(date)){
+                    <span class="dashboard-calendar-dot dashboard-calendar-dot-blocked"></span>
+                    }
+                  </span>
+                  }
+                </span>
+              </ng-template>
             </p-datepicker>
           </div>
           <a [routerLink]="routes.appointment" [queryParams]="appointmentCalendarQuery" class="btn btn-light w-100">{{ 'common.viewAllAppointments' | translate }}</a>

@@ -1,0 +1,32 @@
+.datepic {
+  .dashboard-calendar-day {
+    align-items: center;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: center;
+    min-height: 32px;
+    min-width: 32px;
+  }
+
+  .dashboard-calendar-markers {
+    display: inline-flex;
+    gap: 3px;
+    height: 6px;
+    justify-content: center;
+  }
+
+  .dashboard-calendar-dot {
+    border-radius: 50%;
+    height: 5px;
+    width: 5px;
+  }
+
+  .dashboard-calendar-dot-appointment {
+    background: #2e37a4;
+  }
+
+  .dashboard-calendar-dot-blocked {
+    background: #dc2626;
+  }
+}
