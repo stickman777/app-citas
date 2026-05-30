@@ -110,6 +110,5 @@ ngOnInit(): void {
   const html = document.documentElement;
   const dataLayout = html.getAttribute('data-layout');
   this.dataLayoutHidden = dataLayout === 'hidden';
-  console.log(this.dataLayoutHidden)
 }
 }

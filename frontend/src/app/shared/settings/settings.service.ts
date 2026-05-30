@@ -198,7 +198,6 @@ togglehidden(): void {
   const body = document.body;
 
   this.layoutHidden = !this.layoutHidden;
-  console.log('Toggled layoutHidden:', this.layoutHidden);
 
   localStorage.setItem('layoutHidden', this.layoutHidden.toString());
 
