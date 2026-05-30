@@ -44,6 +44,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/clinic/services/services.component').then(m => m.ServicesComponent),
       },
       {
+        path: 'specialists',
+        loadComponent: () => import('./features/clinic/specialists/specialists.component').then(m => m.SpecialistsComponent),
+      },
+      {
         path: 'appointment/appointment-list',
         redirectTo: 'appointment',
         pathMatch: 'full',

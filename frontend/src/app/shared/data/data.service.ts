@@ -51,6 +51,16 @@ export class DataService {
             subMenus: [],
           },
           {
+            menuValue: 'Especialistas',
+            labelKey: 'sidebar.specialists',
+            hasSubRoute: false,
+            showSubRoute: false,
+            route: routes.specialists,
+            base: 'specialists',
+            icon: 'user-star',
+            subMenus: [],
+          },
+          {
             menuValue: 'Clientes',
             labelKey: 'sidebar.clients',
             hasSubRoute: false,

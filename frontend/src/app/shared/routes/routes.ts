@@ -209,6 +209,7 @@ export const routes = {
   newAppointment: '/appointment/new-appointment',
   locations: '/locations',
   services: '/services',
+  specialists: '/specialists',
   specializations: '/specializations',
   assets: '/assets',
   activities: '/activities',

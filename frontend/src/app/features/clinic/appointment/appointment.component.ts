@@ -40,6 +40,7 @@ import {
   AppointmentClient,
   AppointmentPayload,
   AppointmentServiceOption,
+  AppointmentSpecialist,
   AppointmentStatus,
   AppointmentsService,
 } from '../../../core/appointments/appointments.service';
@@ -58,6 +59,7 @@ interface AppointmentForm {
   startDateTime: string;
   clientId: number | null;
   serviceId: number | null;
+  specialistId: number | null;
   status: AppointmentStatus;
 }
 
@@ -162,6 +164,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public availabilityExceptions: AvailabilityException[] = [];
   public clients: AppointmentClient[] = [];
   public services: AppointmentServiceOption[] = [];
+  public specialists: AppointmentSpecialist[] = [];
   public centers: Center[] = [];
   public activeCenter: Center | null = null;
   public currentUser: CurrentUser | null = null;
@@ -305,6 +308,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       startDateTime: this.toDateTimeInputValue(appointment.startDateTime),
       clientId: appointment.client.id,
       serviceId: appointment.service.id,
+      specialistId: appointment.specialist.id,
       status: appointment.status,
     };
     this.isFormModalOpen = true;
@@ -421,7 +425,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   }
 
   public get appointmentTableColumnCount(): number {
-    return this.isAdmin ? 8 : 6;
+    return this.isAdmin ? 9 : 7;
   }
 
   public setViewMode(viewMode: AppointmentViewMode): void {
@@ -566,6 +570,13 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return this.withCurrentOption(this.services, this.editingAppointment?.service);
   }
 
+  public get specialistOptions(): AppointmentSpecialist[] {
+    return this.withCurrentOption(
+      this.specialists,
+      this.editingAppointment?.specialist
+    );
+  }
+
   public clientOptionLabel(client: AppointmentClient): string {
     const status = client.active
       ? ''
@@ -582,12 +593,21 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return `${service.name} (${service.durationMinutes} min)${status}`;
   }
 
+  public specialistOptionLabel(specialist: AppointmentSpecialist): string {
+    const status = specialist.active
+      ? ''
+      : ` (${this.translate('common.inactive').toLowerCase()})`;
+    const specialty = specialist.specialty ? ` - ${specialist.specialty}` : '';
+
+    return `${specialist.name}${specialty}${status}`;
+  }
+
   public statusLabel(status: AppointmentStatus): string {
     return this.translate(`appointments.status.${status.toLowerCase()}`);
   }
 
   public appointmentCenterName(appointment: Appointment): string {
-    return appointment.service.center?.name ?? this.translate('centers.none');
+    return appointment.center?.name ?? this.translate('centers.none');
   }
 
   public saveAvailabilityException(): void {
@@ -713,10 +733,12 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     forkJoin({
       clients: this.appointmentsService.getClients(this.activeCenter?.id),
       services: this.appointmentsService.getServices(this.activeCenter?.id),
+      specialists: this.appointmentsService.getSpecialists(this.activeCenter?.id),
     }).subscribe({
-      next: ({ clients, services }) => {
+      next: ({ clients, services, specialists }) => {
         this.clients = clients;
         this.services = services;
+        this.specialists = specialists;
       },
       error: () => {
         this.errorMessage = this.translate('appointments.errors.references');
@@ -756,6 +778,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       startDateTime: this.normalizeDateTime(this.form.startDateTime),
       clientId: Number(this.form.clientId),
       serviceId: Number(this.form.serviceId),
+      specialistId: Number(this.form.specialistId),
       allowOutsideAvailability: this.isOutsideFixedSchedule(),
       ...(this.editingAppointment ? { status: this.form.status } : {}),
     };
@@ -765,6 +788,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return (
       !!this.form.clientId &&
       !!this.form.serviceId &&
+      !!this.form.specialistId &&
       !!this.form.startDateTime
     );
   }
@@ -775,6 +799,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       appointment.client.name,
       appointment.client.phone,
       appointment.service.name,
+      appointment.specialist.name,
       this.statusLabel(appointment.status),
       appointment.outsideAvailability
         ? this.translate('appointments.outsideAvailability.badge')
@@ -790,6 +815,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       startDateTime: '',
       clientId: null,
       serviceId: null,
+      specialistId: null,
       status: 'SCHEDULED',
     };
   }
@@ -866,7 +892,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       return {
         start,
         end,
-        title: `${appointment.client.name} - ${appointment.service.name}`,
+        title: `${appointment.client.name} - ${appointment.service.name} - ${appointment.specialist.name}`,
         color: STATUS_EVENT_COLORS[appointment.status],
         cssClass: this.appointmentEventClass(appointment),
         meta: {
