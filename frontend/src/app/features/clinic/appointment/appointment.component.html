@@ -330,7 +330,7 @@
             <select
               name="serviceId"
               [(ngModel)]="form.serviceId"
-              (ngModelChange)="clearOutsideAvailabilityWarningHint(); clearAppointmentOverlapWarning()"
+              (ngModelChange)="handleServiceChange()"
               class="form-select"
               required
             >

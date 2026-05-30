@@ -705,6 +705,16 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   }
 
   public get specialistOptions(): AppointmentSpecialist[] {
+    const service = this.selectedService;
+
+    if (service?.specialist?.id) {
+      const specialists = this.specialists.filter(
+        specialist => specialist.id === service.specialist?.id
+      );
+
+      return this.withCurrentOption(specialists, service.specialist);
+    }
+
     return this.withCurrentOption(
       this.specialists,
       this.editingAppointment?.specialist
@@ -723,8 +733,11 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     const status = service.active
       ? ''
       : ` (${this.translate('common.inactive').toLowerCase()})`;
+    const specialist = service.specialist?.name
+      ? ` - ${service.specialist.name}`
+      : '';
 
-    return `${service.name} (${service.durationMinutes} min)${status}`;
+    return `${service.name}${specialist} (${service.durationMinutes} min)${status}`;
   }
 
   public specialistOptionLabel(specialist: AppointmentSpecialist): string {
@@ -734,6 +747,30 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     const specialty = specialist.specialty ? ` - ${specialist.specialty}` : '';
 
     return `${specialist.name}${specialty}${status}`;
+  }
+
+  public handleServiceChange(): void {
+    this.clearOutsideAvailabilityWarningHint();
+    this.clearAppointmentOverlapWarning();
+
+    const service = this.selectedService;
+
+    if (service?.specialist?.id) {
+      this.form.specialistId = service.specialist.id;
+      return;
+    }
+
+    this.form.specialistId = null;
+  }
+
+  private get selectedService(): AppointmentServiceOption | null {
+    if (!this.form.serviceId) return null;
+
+    return (
+      this.serviceOptions.find(
+        service => service.id === Number(this.form.serviceId)
+      ) ?? null
+    );
   }
 
   public get selectedSpecialist(): AppointmentSpecialist | null {
@@ -949,7 +986,8 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       !!this.form.clientId &&
       !!this.form.serviceId &&
       !!this.form.specialistId &&
-      !!this.form.startDateTime
+      !!this.form.startDateTime &&
+      this.isSelectedServiceSpecialistValid()
     );
   }
 
@@ -1023,6 +1061,14 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       )
     )
       this.selectedSpecialistId = null;
+  }
+
+  private isSelectedServiceSpecialistValid(): boolean {
+    const service = this.selectedService;
+
+    if (!service?.specialist?.id) return true;
+
+    return service.specialist.id === Number(this.form.specialistId);
   }
 
   private loadAvailabilityExceptions(clearMessages = true): void {

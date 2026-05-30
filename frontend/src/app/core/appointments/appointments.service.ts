@@ -23,6 +23,7 @@ export interface AppointmentServiceOption {
   price?: number | string | null;
   active: boolean;
   center?: Center | null;
+  specialist?: AppointmentSpecialist | null;
 }
 
 export interface AppointmentSpecialist {

@@ -77,6 +77,7 @@ export class AppointmentsService {
     const centerId = this.getServiceCenterId(service);
     const specialist = await this.getActiveSpecialist(specialistId);
     this.validateSpecialistCenter(specialist, centerId);
+    this.validateServiceSpecialist(service, specialist);
 
     await this.centerAccessService.validateCenterAccess(centerId, authUser);
 
@@ -164,6 +165,7 @@ export class AppointmentsService {
     );
     const startDate = new Date(appointmentData.startDateTime);
     const center = this.validateAppointmentCenter(client, service, specialist);
+    this.validateServiceSpecialist(service, specialist);
 
     await this.centerAccessService.validateCenterAccess(center.id, authUser);
     const outsideAvailability = await this.validateAppointmentSlot(
@@ -215,6 +217,7 @@ export class AppointmentsService {
       ? new Date(appointmentData.startDateTime)
       : new Date(appointment.startDateTime);
     const center = this.validateAppointmentCenter(client, service, specialist);
+    this.validateServiceSpecialist(service, specialist);
     const status = appointmentData.status ?? appointment.status;
 
     await this.centerAccessService.validateCenterAccess(center.id, authUser);
@@ -365,6 +368,18 @@ export class AppointmentsService {
     if (specialist.center.id !== centerId)
       throw new BadRequestException(
         'El especialista debe pertenecer al mismo centro que la cita',
+      );
+  }
+
+  private validateServiceSpecialist(
+    service: ServiceEntity,
+    specialist: Specialist,
+  ): void {
+    if (!service.specialist?.id) return;
+
+    if (service.specialist.id !== specialist.id)
+      throw new BadRequestException(
+        'El servicio seleccionado no lo ofrece ese especialista',
       );
   }
 
