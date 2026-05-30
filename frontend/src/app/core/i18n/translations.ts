@@ -70,6 +70,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.empty': 'No hay citas para mostrar',
     'appointments.errors.form': 'Completa todos los campos obligatorios.',
     'appointments.errors.load': 'No se han podido cargar las citas.',
+    'appointments.errors.overlap':
+      'Ya existe una cita para ese especialista en ese horario. Cambia la fecha, la hora o el especialista para continuar.',
     'appointments.errors.references':
       'No se han podido cargar clientes, servicios o especialistas.',
     'appointments.errors.save': 'No se ha podido guardar la cita.',
@@ -345,6 +347,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.empty': 'No appointments to show',
     'appointments.errors.form': 'Complete all required fields.',
     'appointments.errors.load': 'Appointments could not be loaded.',
+    'appointments.errors.overlap':
+      'That specialist already has an appointment at that time. Change the date, time or specialist to continue.',
     'appointments.errors.references':
       'Clients, services or specialists could not be loaded.',
     'appointments.errors.save': 'The appointment could not be saved.',

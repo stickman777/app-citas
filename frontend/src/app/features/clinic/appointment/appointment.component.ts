@@ -6,6 +6,7 @@ import {
   OnInit,
 } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, forkJoin, Subscription } from 'rxjs';
@@ -174,6 +175,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public searchTerm = '';
   public errorMessage = '';
   public successMessage = '';
+  public appointmentOverlapWarning = '';
   public isLoading = false;
   public isSaving = false;
   public isDeleting = false;
@@ -345,10 +347,18 @@ export class AppointmentComponent implements OnInit, OnDestroy {
           this.successMessage = this.editingAppointment
             ? this.translate('appointments.success.updated')
             : this.translate('appointments.success.created');
+          this.clearCalendarSlotHint();
           this.isFormModalOpen = false;
           this.loadAppointments(false);
         },
-        error: () => {
+        error: (error: unknown) => {
+          if (this.isAppointmentOverlapError(error)) {
+            this.appointmentOverlapWarning = this.translate(
+              'appointments.errors.overlap',
+            );
+            return;
+          }
+
           this.errorMessage = this.translate('appointments.errors.save');
         },
       });
@@ -474,6 +484,10 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     }
 
     this.showCalendarSlotHint(sourceEvent);
+  }
+
+  public clearAppointmentOverlapWarning(): void {
+    this.appointmentOverlapWarning = '';
   }
 
   @HostListener('document:mousemove')
@@ -1188,6 +1202,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+    this.appointmentOverlapWarning = '';
   }
 
   private clearCalendarSlotHint(): void {
@@ -1204,6 +1219,31 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       ? Math.min(sourceEvent.clientY + 12, window.innerHeight - 80)
       : 24;
     this.showUnavailableSlotHint = true;
+  }
+
+  private isAppointmentOverlapError(error: unknown): boolean {
+    if (!(error instanceof HttpErrorResponse)) return false;
+
+    const message = error.error?.message;
+    const messages = Array.isArray(message) ? message : [message];
+
+    return messages.some(value => {
+      if (typeof value !== 'string') return false;
+
+      const normalizedValue = this.normalizeErrorText(value);
+
+      return (
+        normalizedValue.includes('horario seleccionado') &&
+        normalizedValue.includes('disponible')
+      );
+    });
+  }
+
+  private normalizeErrorText(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 
   private clearUnavailableSlotHintTimeout(): void {

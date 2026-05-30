@@ -41,6 +41,17 @@
   line-height: 1.35;
 }
 
+.appointments-overlap-warning {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
 .appointments-calendar-hint {
   position: fixed;
   z-index: 1100;
@@ -238,6 +249,12 @@
 
 :host-context([data-bs-theme='dark']) .appointments-outside-warning {
   color: #fbbf24;
+}
+
+:host-context([data-bs-theme='dark']) .appointments-overlap-warning {
+  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(127, 29, 29, 0.24);
+  color: #fecaca;
 }
 
 :host-context([data-bs-theme='dark']) .appointments-calendar-hint {
