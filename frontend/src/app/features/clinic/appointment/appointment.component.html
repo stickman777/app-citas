@@ -176,9 +176,10 @@
   </div>
   } @else {
   <div class="table-responsive">
-    <table class="table table-nowrap dataTable datatable">
+    <table class="table table-nowrap dataTable datatable appointments-table">
       <thead class="thead-light">
         <tr>
+          <th class="appointments-actions-col">{{ 'common.actions' | translate }}</th>
           @if(isAdmin){
           <th>ID</th>
           }
@@ -189,9 +190,7 @@
           <th>{{ 'common.center' | translate }}</th>
           }
           <th>{{ 'common.dateTime' | translate }}</th>
-          <th>{{ 'common.duration' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
-          <th class="text-end">{{ 'common.actions' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -202,24 +201,27 @@
         } @else {
           @for(appointment of filteredAppointments; track trackByAppointmentId($index, appointment)){
           <tr>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <button type="button" class="appointments-action-btn shadow-sm border bg-white" (click)="openEditModal(appointment)" [attr.aria-label]="'appointments.actions.edit' | translate">
+                  <i class="ti ti-edit"></i>
+                </button>
+                <button type="button" class="appointments-action-btn shadow-sm border bg-white text-danger" (click)="openDeleteModal(appointment)" [attr.aria-label]="'appointments.actions.delete' | translate">
+                  <i class="ti ti-trash"></i>
+                </button>
+              </div>
+            </td>
             @if(isAdmin){
             <td class="fw-medium">#{{ appointment.id }}</td>
             }
             <td>
-              <div class="d-flex align-items-center">
-                <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">
-                  <i class="ti ti-user text-dark"></i>
-                </span>
-                <div>
-                  <span class="text-dark fw-semibold d-block">
-                    {{ appointment.client.name }}
-                    @if(!appointment.client.active){
-                    <span class="badge badge-soft-danger border border-danger text-danger ms-1">{{ 'common.inactive' | translate }}</span>
-                    }
-                  </span>
-                  <span class="text-body fs-13">{{ appointment.client.phone }}</span>
-                </div>
-              </div>
+              <span class="text-dark fw-semibold d-block">
+                {{ appointment.client.name }}
+                @if(!appointment.client.active){
+                <span class="badge badge-soft-danger border border-danger text-danger ms-1">{{ 'common.inactive' | translate }}</span>
+                }
+              </span>
+              <span class="text-body fs-13">{{ appointment.client.phone }}</span>
             </td>
             <td>
               {{ appointment.service.name }}
@@ -239,8 +241,10 @@
             @if(isAdmin){
             <td>{{ appointmentCenterName(appointment) }}</td>
             }
-            <td>{{ appointment.startDateTime | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td>{{ appointment.duration }} min</td>
+            <td>
+              <span class="text-dark fw-medium d-block">{{ appointment.startDateTime | date:'d/M/yyyy HH:mm' }}</span>
+              <span class="text-body fs-13">{{ appointment.duration }} min</span>
+            </td>
             <td>
               <span class="badge border px-2 py-1 fs-13 fw-medium" [ngClass]="statusBadgeClass(appointment.status)">
                 {{ statusLabel(appointment.status) }}
@@ -250,16 +254,6 @@
                 {{ 'appointments.outsideAvailability.badge' | translate }}
               </span>
               }
-            </td>
-            <td>
-              <div class="d-flex align-items-center justify-content-end gap-1">
-                <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white" (click)="openEditModal(appointment)" [attr.aria-label]="'appointments.actions.edit' | translate">
-                  <i class="ti ti-edit"></i>
-                </button>
-                <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white text-danger" (click)="openDeleteModal(appointment)" [attr.aria-label]="'appointments.actions.delete' | translate">
-                  <i class="ti ti-trash"></i>
-                </button>
-              </div>
             </td>
           </tr>
           } @empty {

@@ -106,6 +106,13 @@ type AppointmentCalendarEventMeta =
   | { type: 'appointment'; appointment: Appointment }
   | { type: 'exception'; exception: AvailabilityException };
 
+interface AppointmentViewState {
+  viewMode: AppointmentViewMode;
+  calendarView: CalendarView;
+}
+
+const APPOINTMENT_VIEW_STATE_STORAGE_KEY = 'appointments.viewState';
+
 @Injectable()
 class AppointmentCalendarDateFormatter extends CalendarDateFormatter {
   public override weekViewHour({ date, locale }: DateFormatterParams): string {
@@ -209,6 +216,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.applyStoredViewState();
     this.applyCalendarQueryParams();
     this.watchCurrentUser();
     this.loadCenters();
@@ -238,16 +246,23 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     const viewMode = params.get('view');
     const calendarView = params.get('calendarView');
     const date = params.get('date');
+    let hasViewStateQueryParam = false;
 
-    if (viewMode === 'calendar' || viewMode === 'list')
+    if (viewMode === 'calendar' || viewMode === 'list') {
       this.viewMode = viewMode;
+      hasViewStateQueryParam = true;
+    }
 
-    if (calendarView === CalendarView.Day)
+    if (calendarView === CalendarView.Day) {
       this.calendarView = CalendarView.Day;
-    else if (calendarView === CalendarView.Week)
+      hasViewStateQueryParam = true;
+    } else if (calendarView === CalendarView.Week) {
       this.calendarView = CalendarView.Week;
-    else if (calendarView === CalendarView.Month)
+      hasViewStateQueryParam = true;
+    } else if (calendarView === CalendarView.Month) {
       this.calendarView = CalendarView.Month;
+      hasViewStateQueryParam = true;
+    }
 
     if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
       const parsedDate = this.fromDateQuery(date);
@@ -255,6 +270,72 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       if (this.toDateQuery(parsedDate) === date)
         this.calendarViewDate = parsedDate;
     }
+
+    if (hasViewStateQueryParam)
+      this.persistViewState();
+  }
+
+  private applyStoredViewState(): void {
+    const storedState = this.getStoredViewState();
+
+    if (!storedState) return;
+
+    this.viewMode = storedState.viewMode;
+    this.calendarView = storedState.calendarView;
+  }
+
+  private getStoredViewState(): AppointmentViewState | null {
+    if (typeof window === 'undefined') return null;
+
+    try {
+      const value = window.localStorage.getItem(
+        APPOINTMENT_VIEW_STATE_STORAGE_KEY,
+      );
+      if (!value) return null;
+
+      const parsedValue = JSON.parse(value) as Partial<AppointmentViewState>;
+
+      if (
+        !this.isAppointmentViewMode(parsedValue.viewMode) ||
+        !this.isAppointmentCalendarView(parsedValue.calendarView)
+      )
+        return null;
+
+      return {
+        viewMode: parsedValue.viewMode,
+        calendarView: parsedValue.calendarView,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private persistViewState(): void {
+    if (typeof window === 'undefined') return;
+
+    const state: AppointmentViewState = {
+      viewMode: this.viewMode,
+      calendarView: this.calendarView,
+    };
+
+    window.localStorage.setItem(
+      APPOINTMENT_VIEW_STATE_STORAGE_KEY,
+      JSON.stringify(state),
+    );
+  }
+
+  private isAppointmentViewMode(
+    value: unknown,
+  ): value is AppointmentViewMode {
+    return value === 'calendar' || value === 'list';
+  }
+
+  private isAppointmentCalendarView(value: unknown): value is CalendarView {
+    return (
+      value === CalendarView.Day ||
+      value === CalendarView.Week ||
+      value === CalendarView.Month
+    );
   }
 
   public loadAppointments(clearMessages = true): void {
@@ -435,11 +516,12 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   }
 
   public get appointmentTableColumnCount(): number {
-    return this.isAdmin ? 9 : 7;
+    return this.isAdmin ? 8 : 6;
   }
 
   public setViewMode(viewMode: AppointmentViewMode): void {
     this.viewMode = viewMode;
+    this.persistViewState();
 
     if (viewMode === 'calendar')
       this.loadAvailabilityExceptions(false);
@@ -447,6 +529,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   public setCalendarView(view: CalendarView): void {
     this.calendarView = view;
+    this.persistViewState();
     this.clearCalendarSlotHint();
     this.loadAvailabilityExceptions(false);
   }
