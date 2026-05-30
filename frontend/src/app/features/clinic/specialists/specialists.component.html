@@ -98,7 +98,7 @@
                 [ngClass]="statusBadgeClass(specialist)"
                 (click)="openStatusModal(specialist)"
               >
-                {{ (specialist.active ? 'common.active' : 'common.inactive') | translate }}
+                {{ specialistStatusLabel(specialist) }}
               </button>
             </td>
             <td>
@@ -140,6 +140,14 @@
             <label class="form-label">{{ 'specialists.fields.specialty' | translate }}</label>
             <input type="text" name="specialty" [(ngModel)]="form.specialty" class="form-control">
           </div>
+          <div class="mb-3">
+            <label class="form-label">{{ 'common.status' | translate }}<span class="text-danger ms-1">*</span></label>
+            <select name="status" [(ngModel)]="form.status" class="form-select" required>
+              @for(status of statusOptions; track status){
+              <option [ngValue]="status">{{ specialistStatusLabel(status) }}</option>
+              }
+            </select>
+          </div>
           <div class="mb-0">
             <label class="form-label">{{ 'common.center' | translate }}<span class="text-danger ms-1">*</span></label>
             <select name="centerId" [(ngModel)]="form.centerId" class="form-select" required>
@@ -176,8 +184,9 @@
         <div class="modal-body">
           <label class="form-label">{{ 'specialists.status.of' | translate }} {{ specialistToChangeStatus?.name }}</label>
           <select name="selectedStatus" [(ngModel)]="selectedStatus" class="form-select">
-            <option [ngValue]="true">{{ 'common.active' | translate }}</option>
-            <option [ngValue]="false">{{ 'common.inactive' | translate }}</option>
+            @for(status of statusOptions; track status){
+            <option [ngValue]="status">{{ specialistStatusLabel(status) }}</option>
+            }
           </select>
         </div>
         <div class="modal-footer d-flex align-items-center gap-1">

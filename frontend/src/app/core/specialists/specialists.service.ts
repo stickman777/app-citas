@@ -5,11 +5,14 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Center } from '../centers/centers.service';
 
+export type SpecialistStatus = 'ACTIVE' | 'INACTIVE' | 'VACATION';
+
 export interface Specialist {
   id: number;
   name: string;
   specialty?: string | null;
   active: boolean;
+  status?: SpecialistStatus;
   center?: Center | null;
   createdAt: string;
   updatedAt: string;
@@ -18,6 +21,7 @@ export interface Specialist {
 export interface SpecialistPayload {
   name: string;
   specialty?: string | null;
+  status?: SpecialistStatus;
   centerId: number;
 }
 

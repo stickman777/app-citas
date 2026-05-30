@@ -11,12 +11,14 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import {
   Specialist,
   SpecialistPayload,
+  SpecialistStatus,
   SpecialistsService,
 } from '../../../core/specialists/specialists.service';
 
 interface SpecialistForm {
   name: string;
   specialty: string;
+  status: SpecialistStatus;
   centerId: number | null;
 }
 
@@ -43,7 +45,12 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   public specialistToChangeStatus: Specialist | null = null;
   public activeCenter: Center | null = null;
   public currentUser: CurrentUser | null = null;
-  public selectedStatus = true;
+  public readonly statusOptions: SpecialistStatus[] = [
+    'ACTIVE',
+    'INACTIVE',
+    'VACATION',
+  ];
+  public selectedStatus: SpecialistStatus = 'ACTIVE';
   public form: SpecialistForm = this.getEmptyForm();
   private activeCenterSubscription?: Subscription;
   private currentUserSubscription?: Subscription;
@@ -115,6 +122,7 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
     this.form = {
       name: specialist.name,
       specialty: specialist.specialty ?? '',
+      status: this.resolveStatus(specialist),
       centerId: specialist.center?.id ?? this.activeCenter?.id ?? null,
     };
     this.isFormModalOpen = true;
@@ -160,7 +168,7 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   public openStatusModal(specialist: Specialist): void {
     this.clearMessages();
     this.specialistToChangeStatus = specialist;
-    this.selectedStatus = specialist.active;
+    this.selectedStatus = this.resolveStatus(specialist);
     this.isStatusModalOpen = true;
   }
 
@@ -181,7 +189,7 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
 
     const specialist = this.specialistToChangeStatus;
 
-    if (specialist.active === this.selectedStatus) {
+    if (this.resolveStatus(specialist) === this.selectedStatus) {
       this.isStatusModalOpen = false;
       this.specialistToChangeStatus = null;
       return;
@@ -190,15 +198,24 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
     this.isChangingStatus = true;
     this.clearMessages();
 
-    const request = this.selectedStatus
-      ? this.specialistsService.activateSpecialist(specialist.id)
-      : this.specialistsService.deactivateSpecialist(specialist.id);
+    const centerId = specialist.center?.id ?? this.activeCenter?.id;
+
+    if (!centerId) {
+      this.errorMessage = this.translate('specialists.errors.form');
+      this.isChangingStatus = false;
+      return;
+    }
+
+    const request = this.specialistsService.updateSpecialist(specialist.id, {
+      name: specialist.name,
+      specialty: specialist.specialty ?? null,
+      status: this.selectedStatus,
+      centerId,
+    });
 
     request.pipe(finalize(() => (this.isChangingStatus = false))).subscribe({
       next: () => {
-        this.successMessage = this.selectedStatus
-          ? this.translate('specialists.success.activated')
-          : this.translate('specialists.success.deactivated');
+        this.successMessage = this.translate('specialists.success.updated');
         this.isStatusModalOpen = false;
         this.specialistToChangeStatus = null;
         this.loadSpecialists(false);
@@ -214,7 +231,14 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
 
     this.filteredSpecialists = search
       ? this.specialists.filter(specialist =>
-          `${specialist.id} ${specialist.name} ${specialist.specialty ?? ''} ${specialist.center?.name ?? ''}`
+          [
+            specialist.id,
+            specialist.name,
+            specialist.specialty ?? '',
+            this.specialistStatusLabel(specialist),
+            specialist.center?.name ?? '',
+          ]
+            .join(' ')
             .toLowerCase()
             .includes(search)
         )
@@ -222,9 +246,26 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   }
 
   public statusBadgeClass(specialist: Specialist): string {
-    return specialist.active
-      ? 'badge-soft-success border-success text-success'
-      : 'badge-soft-danger border-danger text-danger';
+    const status = this.resolveStatus(specialist);
+
+    if (status === 'ACTIVE')
+      return 'badge-soft-success border-success text-success';
+
+    if (status === 'VACATION')
+      return 'badge-soft-warning border-warning text-warning';
+
+    return 'badge-soft-danger border-danger text-danger';
+  }
+
+  public specialistStatusLabel(
+    specialistOrStatus: Specialist | SpecialistStatus,
+  ): string {
+    const status =
+      typeof specialistOrStatus === 'string'
+        ? specialistOrStatus
+        : this.resolveStatus(specialistOrStatus);
+
+    return this.translate(`specialists.status.${status.toLowerCase()}`);
   }
 
   public trackBySpecialistId(_: number, specialist: Specialist): number {
@@ -255,7 +296,7 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   }
 
   public isFormValid(): boolean {
-    return !!this.form.name.trim() && !!this.form.centerId;
+    return !!this.form.name.trim() && !!this.form.centerId && !!this.form.status;
   }
 
   private loadCenters(): void {
@@ -290,6 +331,7 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
     return {
       name: this.form.name.trim(),
       specialty: specialty || null,
+      status: this.form.status,
       centerId: Number(this.form.centerId),
     };
   }
@@ -298,8 +340,13 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
     return {
       name: '',
       specialty: '',
+      status: 'ACTIVE',
       centerId: this.activeCenter?.id ?? null,
     };
+  }
+
+  private resolveStatus(specialist: Specialist): SpecialistStatus {
+    return specialist.status ?? (specialist.active ? 'ACTIVE' : 'INACTIVE');
   }
 
   private withCurrentOption<T extends { id: number }>(

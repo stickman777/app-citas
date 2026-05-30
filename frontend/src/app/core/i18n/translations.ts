@@ -253,6 +253,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'specialists.showAll': 'Ver todos',
     'specialists.status.edit': 'Editar estado',
     'specialists.status.of': 'Estado de',
+    'specialists.status.active': 'Activo',
+    'specialists.status.inactive': 'Inactivo',
+    'specialists.status.vacation': 'Vacaciones',
     'specialists.success.activated':
       'Especialista activado correctamente.',
     'specialists.success.created':
@@ -531,6 +534,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'specialists.showAll': 'View all',
     'specialists.status.edit': 'Edit status',
     'specialists.status.of': 'Status of',
+    'specialists.status.active': 'Active',
+    'specialists.status.inactive': 'Inactive',
+    'specialists.status.vacation': 'Vacation',
     'specialists.success.activated': 'Specialist activated successfully.',
     'specialists.success.created': 'Specialist created successfully.',
     'specialists.success.deactivated':
