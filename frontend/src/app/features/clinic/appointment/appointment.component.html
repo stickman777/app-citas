@@ -311,6 +311,16 @@
               required
             >
           </div>
+          @if(editingAppointment){
+          <div class="mb-0 mt-3">
+            <label class="form-label">{{ 'common.status' | translate }}<span class="text-danger ms-1">*</span></label>
+            <select name="status" [(ngModel)]="form.status" class="form-select" required>
+              @for(status of statusOptions; track status){
+              <option [ngValue]="status">{{ statusLabel(status) }}</option>
+              }
+            </select>
+          </div>
+          }
           @if(isOutsideAvailabilityWarningVisible()){
           <div class="appointments-outside-warning mt-2">
             <div class="d-flex align-items-start gap-2">

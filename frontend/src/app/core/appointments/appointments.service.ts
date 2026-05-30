@@ -40,6 +40,7 @@ export interface AppointmentPayload {
   clientId: number;
   serviceId: number;
   allowOutsideAvailability?: boolean;
+  status?: AppointmentStatus;
 }
 
 @Injectable({

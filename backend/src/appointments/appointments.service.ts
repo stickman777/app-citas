@@ -186,11 +186,7 @@ export class AppointmentsService {
     appointmentData: UpdateAppointmentDto,
     authUser?: AuthUser,
   ) {
-    const appointment = await this.findScheduledAppointment(
-      id,
-      'Solo se pueden actualizar citas programadas',
-      authUser,
-    );
+    const appointment = await this.findAppointment(id, authUser);
 
     const client = await this.resolveClientForUpdate(
       appointment,
@@ -206,22 +202,27 @@ export class AppointmentsService {
       ? new Date(appointmentData.startDateTime)
       : new Date(appointment.startDateTime);
     const centerId = this.validateAppointmentCenter(client, service);
+    const status = appointmentData.status ?? appointment.status;
 
     await this.centerAccessService.validateCenterAccess(centerId, authUser);
-    const outsideAvailability = await this.validateAppointmentSlot(
-      startDate,
-      service.durationMinutes,
-      centerId,
-      appointment.id,
-      appointmentData.allowOutsideAvailability ??
-        appointment.outsideAvailability,
-    );
+    const outsideAvailability =
+      status === AppointmentStatus.SCHEDULED
+        ? await this.validateAppointmentSlot(
+            startDate,
+            service.durationMinutes,
+            centerId,
+            appointment.id,
+            appointmentData.allowOutsideAvailability ??
+              appointment.outsideAvailability,
+          )
+        : appointment.outsideAvailability;
 
     appointment.startDateTime = startDate;
     appointment.duration = service.durationMinutes;
     appointment.outsideAvailability = outsideAvailability;
     appointment.client = client;
     appointment.service = service;
+    appointment.status = status;
 
     return this.appointmentsRepository.save(appointment);
   }

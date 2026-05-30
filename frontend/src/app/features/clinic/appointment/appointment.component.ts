@@ -58,6 +58,7 @@ interface AppointmentForm {
   startDateTime: string;
   clientId: number | null;
   serviceId: number | null;
+  status: AppointmentStatus;
 }
 
 interface AvailabilityExceptionForm {
@@ -77,6 +78,15 @@ const STATUS_BADGE_CLASSES: Record<AppointmentStatus, string> = {
   SCHEDULED: 'badge-soft-primary border-primary text-primary',
   COMPLETED: 'badge-soft-success border-success text-success',
   CANCELLED: 'badge-soft-danger border-danger text-danger',
+};
+
+const STATUS_EVENT_COLORS: Record<
+  AppointmentStatus,
+  { primary: string; secondary: string }
+> = {
+  SCHEDULED: { primary: '#2e37a4', secondary: '#e6e8ff' },
+  COMPLETED: { primary: '#15803d', secondary: '#dcfce7' },
+  CANCELLED: { primary: '#dc2626', secondary: '#fee2e2' },
 };
 
 const CALENDAR_BOUNDARY_MARGIN_MINUTES = 60;
@@ -141,6 +151,11 @@ function capitalizeFirstLetter(value: string): string {
 })
 export class AppointmentComponent implements OnInit, OnDestroy {
   public readonly CalendarView = CalendarView;
+  public readonly statusOptions: AppointmentStatus[] = [
+    'SCHEDULED',
+    'COMPLETED',
+    'CANCELLED',
+  ];
   public appointments: Appointment[] = [];
   public filteredAppointments: Appointment[] = [];
   public calendarEvents: CalendarEvent<AppointmentCalendarEventMeta>[] = [];
@@ -290,6 +305,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       startDateTime: this.toDateTimeInputValue(appointment.startDateTime),
       clientId: appointment.client.id,
       serviceId: appointment.service.id,
+      status: appointment.status,
     };
     this.isFormModalOpen = true;
   }
@@ -741,6 +757,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       clientId: Number(this.form.clientId),
       serviceId: Number(this.form.serviceId),
       allowOutsideAvailability: this.isOutsideFixedSchedule(),
+      ...(this.editingAppointment ? { status: this.form.status } : {}),
     };
   }
 
@@ -773,6 +790,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       startDateTime: '',
       clientId: null,
       serviceId: null,
+      status: 'SCHEDULED',
     };
   }
 
@@ -849,12 +867,8 @@ export class AppointmentComponent implements OnInit, OnDestroy {
         start,
         end,
         title: `${appointment.client.name} - ${appointment.service.name}`,
-        color: appointment.outsideAvailability
-          ? { primary: '#f59e0b', secondary: '#fef3c7' }
-          : { primary: '#2e37a4', secondary: '#e6e8ff' },
-        cssClass: appointment.outsideAvailability
-          ? 'appointment-event appointment-event-outside'
-          : 'appointment-event',
+        color: STATUS_EVENT_COLORS[appointment.status],
+        cssClass: this.appointmentEventClass(appointment),
         meta: {
           type: 'appointment',
           appointment,
@@ -954,6 +968,18 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return [...scheduleRanges, ...extraRanges].some(range => {
       return startTime >= range.startTime && endTime <= range.endTime;
     });
+  }
+
+  private appointmentEventClass(appointment: Appointment): string {
+    const classes = [
+      'appointment-event',
+      `appointment-event-${appointment.status.toLowerCase()}`,
+    ];
+
+    if (appointment.outsideAvailability)
+      classes.push('appointment-event-outside');
+
+    return classes.join(' ');
   }
 
   private resolveSegmentCssClass(
