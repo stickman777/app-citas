@@ -174,7 +174,7 @@
     position: relative;
   }
 
-  .cal-month-view .cal-day-cell.cal-today::after {
+  .cal-month-view .cal-day-cell.cal-today::before {
     content: '';
     position: absolute;
     top: 10px;
@@ -184,6 +184,80 @@
     border-radius: 50%;
     background: #16a34a;
     box-shadow: 0 0 0 2px var(--white);
+    z-index: 2;
+  }
+
+  .cal-month-view .cal-day-cell {
+    cursor: pointer;
+    position: relative;
+  }
+
+  .cal-month-view .cal-day-cell:hover {
+    background-color: rgba(46, 55, 164, 0.06);
+  }
+
+  .cal-month-view .cal-events,
+  .cal-month-view .cal-day-badge {
+    display: none;
+  }
+
+  .appointments-month-cell-content {
+    position: relative;
+    min-height: 76px;
+    padding: 8px 10px;
+  }
+
+  .appointments-month-appointment-marker {
+    position: absolute;
+    left: 10px;
+    bottom: -10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 28px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #2e37a4;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 0 0 1px rgba(46, 55, 164, 0.12);
+  }
+
+  .appointments-month-appointment-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #2e37a4;
+  }
+
+  .cal-month-view .cal-day-cell.appointments-month-day-blocked {
+    background-color: rgba(254, 242, 242, 0.92);
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(220, 38, 38, 0.14) 0,
+      rgba(220, 38, 38, 0.14) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+  }
+
+  .cal-month-view .cal-day-cell.appointments-month-day-blocked::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--white);
+    z-index: 2;
+  }
+
+  .cal-month-view .cal-day-cell.appointments-month-day-blocked::after {
+    background: #dc2626;
   }
 
   .cal-event {
@@ -342,8 +416,37 @@
     border-right-color: #202a36;
   }
 
-  .cal-month-view .cal-day-cell.cal-today::after {
+  .cal-month-view .cal-day-cell.cal-today::before {
     box-shadow: 0 0 0 2px #0d0d0d;
+  }
+
+  .cal-month-view .cal-day-cell.appointments-month-day-blocked {
+    background-color: rgba(127, 29, 29, 0.26);
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(248, 113, 113, 0.2) 0,
+      rgba(248, 113, 113, 0.2) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+  }
+
+  .cal-month-view .cal-day-cell.appointments-month-day-blocked::after {
+    box-shadow: 0 0 0 2px #0d0d0d;
+  }
+
+  .cal-month-view .cal-day-cell.appointments-month-day-blocked::after {
+    background: #f87171;
+  }
+
+  .appointments-month-appointment-marker {
+    background: rgba(46, 55, 164, 0.28);
+    color: #dbe4ff;
+    box-shadow: 0 0 0 1px rgba(142, 160, 255, 0.24);
+  }
+
+  .appointments-month-appointment-dot {
+    background: #8ea0ff;
   }
 
   .cal-week-view .cal-time-label-column .cal-hour-segment,

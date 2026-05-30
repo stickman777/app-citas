@@ -13,6 +13,7 @@ import { finalize, forkJoin, Subscription } from 'rxjs';
 import {
   CalendarDateFormatter,
   CalendarEvent,
+  CalendarMonthViewBeforeRenderEvent,
   CalendarWeekViewBeforeRenderEvent,
   CalendarView,
   DateFormatterParams,
@@ -534,6 +535,11 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.loadAvailabilityExceptions(false);
   }
 
+  public openCalendarDayFromMonth(date: Date): void {
+    this.calendarViewDate = date;
+    this.setCalendarView(CalendarView.Day);
+  }
+
   public goToToday(): void {
     this.calendarViewDate = new Date();
     this.clearCalendarSlotHint();
@@ -613,6 +619,29 @@ export class AppointmentComponent implements OnInit, OnDestroy {
         });
       });
     });
+  }
+
+  public markMonthDays(event: CalendarMonthViewBeforeRenderEvent): void {
+    event.body.forEach(day => {
+      const dateKey = this.toDateQuery(day.date);
+      const cssClasses = [
+        day.cssClass,
+        this.hasBlockedExceptionOnDate(dateKey)
+          ? 'appointments-month-day-blocked'
+          : '',
+      ];
+
+      day.cssClass = cssClasses.filter(Boolean).join(' ');
+    });
+  }
+
+  public monthAppointmentCount(date: Date): number {
+    const dateKey = this.toDateQuery(date);
+
+    return this.appointments.filter(
+      appointment =>
+        this.toDateQuery(new Date(appointment.startDateTime)) === dateKey
+    ).length;
   }
 
   public get calendarStartHour(): number {
@@ -1045,6 +1074,12 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   private getExceptionsForDate(date: string): AvailabilityException[] {
     return this.availabilityExceptions.filter(
       exception => exception.date === date
+    );
+  }
+
+  private hasBlockedExceptionOnDate(date: string): boolean {
+    return this.availabilityExceptions.some(
+      exception => exception.date === date && exception.type === 'BLOCKED'
     );
   }
 

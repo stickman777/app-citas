@@ -131,13 +131,28 @@
     </div>
     }
 
+    <ng-template #appointmentMonthCellTemplate let-day="day">
+      <div class="appointments-month-cell-content">
+        <span class="cal-day-number">{{ day.date | date:'d' }}</span>
+        @if(monthAppointmentCount(day.date) > 0){
+        <span class="appointments-month-appointment-marker">
+          <span class="appointments-month-appointment-dot"></span>
+          <span class="appointments-month-appointment-count">{{ monthAppointmentCount(day.date) }}</span>
+        </span>
+        }
+      </div>
+    </ng-template>
+
     <mwl-calendar-month-view
       [hidden]="calendarView !== CalendarView.Month"
       [viewDate]="calendarViewDate"
       [events]="calendarEvents"
       [locale]="calendarLocale"
       [weekStartsOn]="1"
-      (eventClicked)="handleCalendarEvent($event.event, $event.sourceEvent)"
+      [cellTemplate]="appointmentMonthCellTemplate"
+      (beforeViewRender)="markMonthDays($event)"
+      (dayClicked)="openCalendarDayFromMonth($event.day.date)"
+      (eventClicked)="openCalendarDayFromMonth($event.event.start)"
     >
     </mwl-calendar-month-view>
 
