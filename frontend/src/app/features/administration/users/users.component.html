@@ -57,7 +57,9 @@
     <table class="table table-nowrap dataTable datatable">
       <thead class="thead-light">
         <tr>
+          @if(isAdmin){
           <th>ID</th>
+          }
           <th>{{ 'common.email' | translate }}</th>
           <th>{{ 'common.role' | translate }}</th>
           <th>{{ 'common.center' | translate }}</th>
@@ -67,12 +69,14 @@
       <tbody>
         @if(isLoading){
         <tr>
-          <td colspan="5" class="text-center text-dark py-4">{{ 'users.loading' | translate }}</td>
+          <td [attr.colspan]="userTableColumnCount" class="text-center text-dark py-4">{{ 'users.loading' | translate }}</td>
         </tr>
         } @else {
           @for(user of filteredUsers; track trackByUserId($index, user)){
           <tr>
+            @if(isAdmin){
             <td class="fw-medium">#{{ user.id }}</td>
+            }
             <td>
               <div class="d-flex align-items-center">
                 <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">
@@ -100,7 +104,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="5" class="text-center text-dark py-4">{{ 'users.empty' | translate }}</td>
+            <td [attr.colspan]="userTableColumnCount" class="text-center text-dark py-4">{{ 'users.empty' | translate }}</td>
           </tr>
           }
         }

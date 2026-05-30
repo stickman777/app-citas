@@ -12,6 +12,7 @@ import {
 } from '../../../../core/clients/clients.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { AuthService, CurrentUser } from '../../../../core/auth/auth.service';
 
 interface ClientForm {
   name: string;
@@ -33,6 +34,7 @@ export class PatientListComponent implements OnInit, OnDestroy {
   public filteredClients: Client[] = [];
   public centers: Center[] = [];
   public activeCenter: Center | null = null;
+  public currentUser: CurrentUser | null = null;
   public searchTerm = '';
   public errorMessage = '';
   public successMessage = '';
@@ -46,16 +48,19 @@ export class PatientListComponent implements OnInit, OnDestroy {
   public selectedStatus = true;
   public form: ClientForm = this.getEmptyForm();
   private activeCenterSubscription?: Subscription;
+  private currentUserSubscription?: Subscription;
   private loadedCenterId?: number | null;
 
   constructor(
     private readonly clientsService: ClientsService,
     private readonly centersService: CentersService,
     private readonly activeCenterService: ActiveCenterService,
+    private readonly authService: AuthService,
     private readonly i18nService: I18nService
   ) {}
 
   ngOnInit(): void {
+    this.watchCurrentUser();
     this.loadCenters();
     this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
       center => {
@@ -72,6 +77,7 @@ export class PatientListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.activeCenterSubscription?.unsubscribe();
+    this.currentUserSubscription?.unsubscribe();
   }
 
   public loadClients(clearMessages = true): void {
@@ -226,6 +232,14 @@ export class PatientListComponent implements OnInit, OnDestroy {
     return this.withCurrentOption(this.centers, this.editingClient?.center);
   }
 
+  public get isAdmin(): boolean {
+    return this.currentUser?.role === 'ADMIN';
+  }
+
+  public get clientTableColumnCount(): number {
+    return this.isAdmin ? 9 : 8;
+  }
+
   public trackByCenterId(_: number, center: Center): number {
     return center.id;
   }
@@ -267,6 +281,20 @@ export class PatientListComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.errorMessage = this.translate('centers.errors.load');
+      },
+    });
+  }
+
+  private watchCurrentUser(): void {
+    this.currentUser = this.authService.currentUser;
+    this.currentUserSubscription = this.authService.currentUser$.subscribe(
+      user => {
+        this.currentUser = user;
+      }
+    );
+    this.authService.loadCurrentUser().subscribe({
+      error: () => {
+        this.currentUser = null;
       },
     });
   }

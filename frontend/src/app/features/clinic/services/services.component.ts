@@ -12,6 +12,7 @@ import { ActiveCenterService } from '../../../core/centers/active-center.service
 import { Center, CentersService } from '../../../core/centers/centers.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { AuthService, CurrentUser } from '../../../core/auth/auth.service';
 
 interface ServiceForm {
   name: string;
@@ -43,19 +44,23 @@ export class ServicesComponent implements OnInit, OnDestroy {
   public editingService: Service | null = null;
   public serviceToChangeStatus: Service | null = null;
   public activeCenter: Center | null = null;
+  public currentUser: CurrentUser | null = null;
   public selectedStatus = true;
   public form: ServiceForm = this.getEmptyForm();
   private activeCenterSubscription?: Subscription;
+  private currentUserSubscription?: Subscription;
   private loadedCenterId?: number | null;
 
   constructor(
     private readonly servicesService: ServicesService,
     private readonly centersService: CentersService,
     private readonly activeCenterService: ActiveCenterService,
+    private readonly authService: AuthService,
     private readonly i18nService: I18nService
   ) {}
 
   ngOnInit(): void {
+    this.watchCurrentUser();
     this.loadCenters();
     this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
       center => {
@@ -72,6 +77,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.activeCenterSubscription?.unsubscribe();
+    this.currentUserSubscription?.unsubscribe();
   }
 
   public loadServices(clearMessages = true): void {
@@ -239,6 +245,14 @@ export class ServicesComponent implements OnInit, OnDestroy {
     return this.withCurrentOption(this.centers, this.editingService?.center);
   }
 
+  public get isAdmin(): boolean {
+    return this.currentUser?.role === 'ADMIN';
+  }
+
+  public get serviceTableColumnCount(): number {
+    return this.isAdmin ? 7 : 6;
+  }
+
   public trackByCenterId(_: number, center: Center): number {
     return center.id;
   }
@@ -255,6 +269,20 @@ export class ServicesComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.errorMessage = this.translate('centers.errors.load');
+      },
+    });
+  }
+
+  private watchCurrentUser(): void {
+    this.currentUser = this.authService.currentUser;
+    this.currentUserSubscription = this.authService.currentUser$.subscribe(
+      user => {
+        this.currentUser = user;
+      }
+    );
+    this.authService.loadCurrentUser().subscribe({
+      error: () => {
+        this.currentUser = null;
       },
     });
   }

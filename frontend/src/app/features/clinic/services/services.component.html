@@ -60,7 +60,9 @@
     <table class="table table-nowrap dataTable datatable">
       <thead class="thead-light">
         <tr>
+          @if(isAdmin){
           <th>ID</th>
+          }
           <th>{{ 'services.title' | translate }}</th>
           <th>{{ 'common.center' | translate }}</th>
           <th>{{ 'services.fields.duration' | translate }}</th>
@@ -72,12 +74,14 @@
       <tbody>
         @if(isLoading){
         <tr>
-          <td colspan="7" class="text-center text-dark py-4">{{ 'services.loading' | translate }}</td>
+          <td [attr.colspan]="serviceTableColumnCount" class="text-center text-dark py-4">{{ 'services.loading' | translate }}</td>
         </tr>
         } @else {
           @for(service of filteredServices; track trackByServiceId($index, service)){
           <tr>
+            @if(isAdmin){
             <td class="fw-medium">#{{ service.id }}</td>
+            }
             <td>
               <div class="d-flex align-items-center">
                 <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">
@@ -114,7 +118,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="7" class="text-center text-dark py-4">{{ 'services.empty' | translate }}</td>
+            <td [attr.colspan]="serviceTableColumnCount" class="text-center text-dark py-4">{{ 'services.empty' | translate }}</td>
           </tr>
           }
         }

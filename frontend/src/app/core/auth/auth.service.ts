@@ -1,7 +1,16 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  finalize,
+  Observable,
+  of,
+  shareReplay,
+  switchMap,
+  tap,
+  throwError,
+} from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { routes } from '../../shared/routes/routes';
@@ -27,24 +36,71 @@ export interface CurrentUser {
 })
 export class AuthService {
   private readonly tokenKey = 'auth_token';
+  private readonly currentUserSubject = new BehaviorSubject<CurrentUser | null>(
+    null
+  );
+  private currentUserRequest$?: Observable<CurrentUser>;
+
+  public readonly currentUser$ = this.currentUserSubject.asObservable();
+
+  public get currentUser(): CurrentUser | null {
+    return this.currentUserSubject.value;
+  }
 
   constructor(
     private readonly http: HttpClient,
     private readonly router: Router
   ) {}
 
-  login(credentials: LoginCredentials): Observable<LoginResponse> {
+  login(credentials: LoginCredentials): Observable<CurrentUser> {
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, credentials)
-      .pipe(tap(response => localStorage.setItem(this.tokenKey, response.access_token)));
+      .pipe(
+        tap(response =>
+          localStorage.setItem(this.tokenKey, response.access_token)
+        ),
+        switchMap(() => this.loadCurrentUser(true))
+      );
   }
 
   getCurrentUser(): Observable<CurrentUser> {
-    return this.http.get<CurrentUser>(`${environment.apiUrl}/auth/me`);
+    return this.loadCurrentUser();
+  }
+
+  loadCurrentUser(forceRefresh = false): Observable<CurrentUser> {
+    if (!this.isAuthenticated()) {
+      this.currentUserSubject.next(null);
+
+      return throwError(() => new Error('Usuario no autenticado'));
+    }
+
+    if (!forceRefresh && this.currentUser) {
+      return of(this.currentUser);
+    }
+
+    if (!forceRefresh && this.currentUserRequest$) {
+      return this.currentUserRequest$;
+    }
+
+    this.currentUserRequest$ = this.fetchCurrentUser().pipe(
+      finalize(() => {
+        this.currentUserRequest$ = undefined;
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+
+    return this.currentUserRequest$;
+  }
+
+  private fetchCurrentUser(): Observable<CurrentUser> {
+    return this.http
+      .get<CurrentUser>(`${environment.apiUrl}/auth/me`)
+      .pipe(tap(user => this.currentUserSubject.next(user)));
   }
 
   logout(): void {
     localStorage.removeItem(this.tokenKey);
+    this.currentUserSubject.next(null);
     void this.router.navigate([routes.login]);
   }
 

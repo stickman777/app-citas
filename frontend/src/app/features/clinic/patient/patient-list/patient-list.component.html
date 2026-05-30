@@ -57,7 +57,9 @@
     <table class="table table-nowrap dataTable datatable">
       <thead>
         <tr>
+          @if(isAdmin){
           <th>ID</th>
+          }
           <th>{{ 'clients.client' | translate }}</th>
           <th>{{ 'clients.fields.phone' | translate }}</th>
           <th>{{ 'common.email' | translate }}</th>
@@ -71,12 +73,14 @@
       <tbody>
         @if(isLoading){
         <tr>
-          <td colspan="9" class="text-center text-dark py-4">{{ 'clients.loading' | translate }}</td>
+          <td [attr.colspan]="clientTableColumnCount" class="text-center text-dark py-4">{{ 'clients.loading' | translate }}</td>
         </tr>
         } @else {
           @for(client of filteredClients; track trackByClientId($index, client)){
           <tr>
+            @if(isAdmin){
             <td class="fw-medium">#{{ client.id }}</td>
+            }
             <td>
               <div class="d-flex align-items-center">
                 <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">
@@ -128,7 +132,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="9" class="text-center text-dark py-4">{{ 'clients.empty' | translate }}</td>
+            <td [attr.colspan]="clientTableColumnCount" class="text-center text-dark py-4">{{ 'clients.empty' | translate }}</td>
           </tr>
           }
         }

@@ -179,7 +179,9 @@
     <table class="table table-nowrap dataTable datatable">
       <thead class="thead-light">
         <tr>
+          @if(isAdmin){
           <th>ID</th>
+          }
           <th>{{ 'common.client' | translate }}</th>
           <th>{{ 'common.service' | translate }}</th>
           @if(isAdmin){
@@ -199,7 +201,9 @@
         } @else {
           @for(appointment of filteredAppointments; track trackByAppointmentId($index, appointment)){
           <tr>
+            @if(isAdmin){
             <td class="fw-medium">#{{ appointment.id }}</td>
+            }
             <td>
               <div class="d-flex align-items-center">
                 <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">

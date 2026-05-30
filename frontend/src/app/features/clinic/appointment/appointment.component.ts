@@ -174,6 +174,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public form: AppointmentForm = this.getEmptyForm();
   public exceptionForm: AvailabilityExceptionForm = this.getEmptyExceptionForm();
   private activeCenterSubscription?: Subscription;
+  private currentUserSubscription?: Subscription;
   private loadedCenterId: number | null = null;
   private unavailableSlotHintTimeout?: ReturnType<typeof setTimeout>;
 
@@ -189,7 +190,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.applyCalendarQueryParams();
-    this.loadCurrentUser();
+    this.watchCurrentUser();
     this.loadCenters();
     this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
       center => {
@@ -208,6 +209,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.activeCenterSubscription?.unsubscribe();
+    this.currentUserSubscription?.unsubscribe();
     this.clearUnavailableSlotHintTimeout();
   }
 
@@ -403,7 +405,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   }
 
   public get appointmentTableColumnCount(): number {
-    return this.isAdmin ? 8 : 7;
+    return this.isAdmin ? 8 : 6;
   }
 
   public setViewMode(viewMode: AppointmentViewMode): void {
@@ -706,11 +708,14 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadCurrentUser(): void {
-    this.authService.getCurrentUser().subscribe({
-      next: user => {
+  private watchCurrentUser(): void {
+    this.currentUser = this.authService.currentUser;
+    this.currentUserSubscription = this.authService.currentUser$.subscribe(
+      user => {
         this.currentUser = user;
-      },
+      }
+    );
+    this.authService.loadCurrentUser().subscribe({
       error: () => {
         this.currentUser = null;
       },
