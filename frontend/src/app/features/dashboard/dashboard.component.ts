@@ -10,7 +10,10 @@ import {
 } from 'primeng/types/datepicker';
 import { finalize, forkJoin, Subscription } from 'rxjs';
 
-import { AppointmentsService } from '../../core/appointments/appointments.service';
+import {
+  Appointment,
+  AppointmentsService,
+} from '../../core/appointments/appointments.service';
 import { AvailabilityService } from '../../core/availability/availability.service';
 import { ActiveCenterService } from '../../core/centers/active-center.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
@@ -49,12 +52,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   public appointmentDates = new Set<string>();
   public blockedDates = new Set<string>();
   public specialists: Specialist[] = [];
+  public sortedSpecialists: Specialist[] = [];
   public services: Service[] = [];
   public isLoadingSpecialists = false;
   public isLoadingServices = false;
   private visibleMonthDate = new Date(this.date);
   private activeCenterSubscription?: Subscription;
   private activeCenterId: number | null = null;
+  private appointmentCountBySpecialistId = new Map<number, number>();
 
   constructor(
     private readonly router: Router,
@@ -124,20 +129,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
   }
 
-  public specialistStatusBadgeClass(specialist: Specialist): string {
+  public specialistStatusDotClass(specialist: Specialist): string {
     const status = this.resolveSpecialistStatus(specialist);
 
-    if (status === 'ACTIVE')
-      return 'badge-soft-success border-success text-success';
+    if (status === 'ACTIVE') return 'dashboard-status-dot-active';
 
-    if (status === 'VACATION')
-      return 'badge-soft-warning border-warning text-warning';
+    if (status === 'VACATION') return 'dashboard-status-dot-vacation';
 
-    return 'badge-soft-danger border-danger text-danger';
+    return 'dashboard-status-dot-inactive';
   }
 
   public specialistInitials(specialist: Specialist): string {
     return this.getInitials(specialist.name);
+  }
+
+  public specialistAppointmentCount(specialist: Specialist): number {
+    return this.getSpecialistAppointmentCount(specialist.id);
   }
 
   public serviceSpecialistName(service: Service): string {
@@ -176,6 +183,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ),
     }).subscribe({
       next: ({ appointments, exceptions }) => {
+        this.appointmentCountBySpecialistId =
+          this.buildSpecialistAppointmentCounts(appointments);
+        this.updateSortedSpecialists();
         this.appointmentDates = new Set(
           appointments
             .map(appointment =>
@@ -190,6 +200,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         );
       },
       error: () => {
+        this.appointmentCountBySpecialistId = new Map();
+        this.updateSortedSpecialists();
         this.appointmentDates = new Set();
         this.blockedDates = new Set();
       },
@@ -205,9 +217,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: specialists => {
           this.specialists = specialists;
+          this.updateSortedSpecialists();
         },
         error: () => {
           this.specialists = [];
+          this.updateSortedSpecialists();
         },
       });
   }
@@ -283,6 +297,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private resolveSpecialistStatus(specialist: Specialist): SpecialistStatus {
     return specialist.status ?? (specialist.active ? 'ACTIVE' : 'INACTIVE');
+  }
+
+  private buildSpecialistAppointmentCounts(
+    appointments: Appointment[],
+  ): Map<number, number> {
+    const counts = new Map<number, number>();
+
+    appointments.forEach(appointment => {
+      const specialistId = appointment.specialist.id;
+
+      counts.set(specialistId, (counts.get(specialistId) ?? 0) + 1);
+    });
+
+    return counts;
+  }
+
+  private updateSortedSpecialists(): void {
+    this.sortedSpecialists = [...this.specialists].sort((first, second) => {
+      const appointmentDiff =
+        this.getSpecialistAppointmentCount(second.id) -
+        this.getSpecialistAppointmentCount(first.id);
+
+      return appointmentDiff || first.name.localeCompare(second.name);
+    });
+  }
+
+  private getSpecialistAppointmentCount(specialistId: number): number {
+    return this.appointmentCountBySpecialistId.get(specialistId) ?? 0;
   }
 
   private buildAppointmentsCalendarQuery(date: Date): Record<string, string> {

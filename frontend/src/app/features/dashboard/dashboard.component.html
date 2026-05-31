@@ -46,7 +46,7 @@
     <div class="col-xl-4 col-lg-6 d-flex">
       <div class="card shadow-sm flex-fill w-100">
         <div class="card-header d-flex align-items-center justify-content-between">
-          <h5 class="fw-bold mb-0">{{ 'dashboard.doctorsSchedule' | translate }}</h5>
+          <h5 class="fw-bold mb-0">{{ 'specialists.title' | translate }}</h5>
           <a [routerLink]="routes.specialists" class="btn fw-normal btn-outline-white">{{ 'common.viewAll' | translate }}</a>
         </div>
         <div class="card-body">
@@ -54,7 +54,7 @@
             @if(isLoadingSpecialists){
             <div class="text-center text-dark py-4">{{ 'specialists.loading' | translate }}</div>
             } @else {
-              @for(specialist of specialists; track trackBySpecialistId($index, specialist)){
+              @for(specialist of sortedSpecialists; track trackBySpecialistId($index, specialist)){
               <div class="dashboard-card-list-item d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center min-w-0">
                   <span class="dashboard-initials-avatar rounded-circle flex-shrink-0 d-inline-flex align-items-center justify-content-center">
@@ -67,9 +67,18 @@
                     </p>
                   </div>
                 </div>
-                <span class="badge border px-2 py-1 fs-13 fw-medium ms-2 flex-shrink-0" [ngClass]="specialistStatusBadgeClass(specialist)">
-                  {{ specialistStatusLabel(specialist) }}
-                </span>
+                <div class="dashboard-specialist-meta d-inline-flex align-items-center flex-shrink-0 ms-2">
+                  <span class="dashboard-appointment-count d-inline-flex align-items-center" [attr.title]="'appointments.title' | translate">
+                    <i class="ti ti-calendar-event"></i>
+                    {{ specialistAppointmentCount(specialist) }}
+                  </span>
+                  <span
+                    class="dashboard-status-dot"
+                    [ngClass]="specialistStatusDotClass(specialist)"
+                    [attr.aria-label]="specialistStatusLabel(specialist)"
+                    [attr.title]="specialistStatusLabel(specialist)"
+                  ></span>
+                </div>
               </div>
               } @empty {
               <div class="text-center text-dark py-4">{{ 'specialists.empty' | translate }}</div>

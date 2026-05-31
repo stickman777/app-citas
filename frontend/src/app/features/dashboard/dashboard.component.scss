@@ -64,3 +64,38 @@
 .dashboard-service-icon {
   font-size: 18px;
 }
+
+.dashboard-specialist-meta {
+  gap: 8px;
+}
+
+.dashboard-appointment-count {
+  background: #f5f7fb;
+  border: 1px solid #e3e7ef;
+  border-radius: 999px;
+  color: #2e37a4;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 4px;
+  line-height: 1;
+  min-width: 34px;
+  padding: 5px 8px;
+}
+
+.dashboard-status-dot {
+  border-radius: 50%;
+  height: 9px;
+  width: 9px;
+}
+
+.dashboard-status-dot-active {
+  background: #16a34a;
+}
+
+.dashboard-status-dot-inactive {
+  background: #dc2626;
+}
+
+.dashboard-status-dot-vacation {
+  background: #f59e0b;
+}
