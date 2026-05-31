@@ -3,6 +3,7 @@ import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize, Subscription } from 'rxjs';
 
+import { CrudFilterComponent } from '../../../common-component/crud-filter/crud-filter.component';
 import { AuthService, CurrentUser } from '../../../core/auth/auth.service';
 import { ActiveCenterService } from '../../../core/centers/active-center.service';
 import { Center, CentersService } from '../../../core/centers/centers.service';
@@ -15,6 +16,8 @@ import {
   SpecialistsService,
 } from '../../../core/specialists/specialists.service';
 
+type SpecialistStatusFilter = SpecialistStatus | 'all';
+
 interface SpecialistForm {
   name: string;
   specialty: string;
@@ -26,19 +29,19 @@ interface SpecialistForm {
   selector: 'app-specialists',
   templateUrl: './specialists.component.html',
   styleUrls: ['./specialists.component.scss'],
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, CrudFilterComponent],
 })
 export class SpecialistsComponent implements OnInit, OnDestroy {
   public specialists: Specialist[] = [];
   public filteredSpecialists: Specialist[] = [];
   public centers: Center[] = [];
   public searchTerm = '';
+  public filterStatus: SpecialistStatusFilter = 'ACTIVE';
   public errorMessage = '';
   public successMessage = '';
   public isLoading = false;
   public isSaving = false;
   public isChangingStatus = false;
-  public showAll = false;
   public isFormModalOpen = false;
   public isStatusModalOpen = false;
   public editingSpecialist: Specialist | null = null;
@@ -89,24 +92,18 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
 
     if (clearMessages) this.clearMessages();
 
-    const request = this.showAll
-      ? this.specialistsService.getAllSpecialists(this.activeCenter?.id)
-      : this.specialistsService.getSpecialists(this.activeCenter?.id);
-
-    request.pipe(finalize(() => (this.isLoading = false))).subscribe({
-      next: specialists => {
-        this.specialists = specialists;
-        this.applySearch();
-      },
-      error: () => {
-        this.errorMessage = this.translate('specialists.errors.load');
-      },
-    });
-  }
-
-  public toggleShowAll(): void {
-    this.showAll = !this.showAll;
-    this.loadSpecialists();
+    this.specialistsService
+      .getAllSpecialists(this.activeCenter?.id)
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: specialists => {
+          this.specialists = specialists;
+          this.applySearch();
+        },
+        error: () => {
+          this.errorMessage = this.translate('specialists.errors.load');
+        },
+      });
   }
 
   public openCreateModal(): void {
@@ -229,20 +226,30 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   public applySearch(): void {
     const search = this.searchTerm.trim().toLowerCase();
 
-    this.filteredSpecialists = search
-      ? this.specialists.filter(specialist =>
-          [
-            specialist.id,
-            specialist.name,
-            specialist.specialty ?? '',
-            this.specialistStatusLabel(specialist),
-            specialist.center?.name ?? '',
-          ]
-            .join(' ')
-            .toLowerCase()
-            .includes(search)
-        )
-      : [...this.specialists];
+    this.filteredSpecialists = this.specialists.filter(specialist => {
+      const matchesSearch =
+        !search ||
+        [
+          specialist.id,
+          specialist.name,
+          specialist.specialty ?? '',
+          this.specialistStatusLabel(specialist),
+          specialist.center?.name ?? '',
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(search);
+      const matchesStatus =
+        this.filterStatus === 'all' ||
+        this.resolveStatus(specialist) === this.filterStatus;
+
+      return matchesSearch && matchesStatus;
+    });
+  }
+
+  public clearFilters(): void {
+    this.filterStatus = 'all';
+    this.applySearch();
   }
 
   public statusBadgeClass(specialist: Specialist): string {
@@ -284,7 +291,7 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   }
 
   public get specialistTableColumnCount(): number {
-    return this.isAdmin ? 6 : 5;
+    return 5;
   }
 
   public trackByCenterId(_: number, center: Center): number {
