@@ -1,15 +1,15 @@
 <div class="content">
-  <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
-    <div class="flex-grow-1">
-      <h4 class="fw-bold mb-0">
+  <div class="d-flex align-items-center justify-content-between gap-2 mb-2 mb-md-3 pb-2 pb-md-3 border-bottom">
+    <div class="flex-grow-1 min-w-0">
+      <h4 class="fw-bold mb-0 crud-page-title">
         {{ 'appointments.title' | translate }}
-        <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">
-          {{ 'common.total' | translate }}: {{ appointments.length }}
+        <span class="badge badge-soft-primary border border-primary fs-12 fw-medium ms-2 crud-total-badge">
+          {{ appointments.length }}
         </span>
       </h4>
     </div>
-    <div class="text-end d-flex">
-      <button type="button" class="btn btn-primary ms-2 fs-13 btn-md" (click)="openCreateModal()">
+    <div class="text-end d-flex flex-shrink-0">
+      <button type="button" class="btn btn-primary fs-13 btn-md flex-shrink-0" (click)="openCreateModal()">
         <i class="ti ti-plus me-1"></i>{{ 'appointments.createButton' | translate }}
       </button>
     </div>
@@ -22,7 +22,7 @@
   <div class="alert alert-success py-2" role="alert">{{ successMessage }}</div>
   }
 
-  <div class="appointments-list-toolbar d-flex align-items-center flex-wrap row-gap-3 mb-3">
+  <div class="appointments-list-toolbar d-none d-md-flex align-items-center flex-wrap row-gap-2 mb-3">
     <div class="search-set mb-0">
       <div class="d-flex align-items-center flex-wrap gap-2">
         <div class="table-search d-flex align-items-center mb-0">
@@ -67,8 +67,8 @@
       </select>
     </div>
 
-    <div class="d-flex table-dropdown pb-1 right-content align-items-center flex-wrap row-gap-3">
-      <div class="btn-group me-2" role="group" [attr.aria-label]="'appointments.view.toggle' | translate">
+    <div class="d-flex table-dropdown right-content align-items-center flex-wrap gap-2 pb-md-1">
+      <div class="btn-group" role="group" [attr.aria-label]="'appointments.view.toggle' | translate">
         <button
           type="button"
           class="btn btn-md d-inline-flex align-items-center fw-normal rounded-start border px-2 py-1 fs-14"
@@ -93,7 +93,7 @@
   </div>
 
   @if(viewMode === 'calendar'){
-  <div class="appointments-calendar">
+  <div class="appointments-calendar d-none d-md-block">
     <div
       class="appointments-calendar-toolbar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3"
       [class.appointments-calendar-toolbar-sticky]="calendarView === CalendarView.Day"
@@ -217,9 +217,12 @@
         <tr>
           <th class="appointments-actions-col">{{ 'common.actions' | translate }}</th>
           @if(isAdmin){
-          <th>ID</th>
+          <th class="d-none d-md-table-cell">ID</th>
           }
-          <th>{{ 'common.client' | translate }}</th>
+          <th>
+            <span class="d-md-none">{{ 'common.listing' | translate }}</span>
+            <span class="d-none d-md-inline">{{ 'common.client' | translate }}</span>
+          </th>
           <th>{{ 'common.service' | translate }}</th>
           <th>{{ 'common.specialist' | translate }}</th>
           @if(isAdmin){
@@ -248,7 +251,7 @@
               </div>
             </td>
             @if(isAdmin){
-            <td class="fw-medium">#{{ appointment.id }}</td>
+            <td class="fw-medium d-none d-md-table-cell">#{{ appointment.id }}</td>
             }
             <td>
               <span class="text-dark fw-semibold d-block">

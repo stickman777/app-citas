@@ -1,15 +1,15 @@
 <div class="content">
-  <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
-    <div class="flex-grow-1">
-      <h4 class="fw-bold mb-0">
+  <div class="d-flex align-items-center justify-content-between gap-2 mb-2 mb-md-3 pb-2 pb-md-3 border-bottom">
+    <div class="flex-grow-1 min-w-0">
+      <h4 class="fw-bold mb-0 crud-page-title">
         {{ 'centers.title' | translate }}
-        <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">
-          {{ 'centers.total' | translate }} : {{ centers.length }}
+        <span class="badge badge-soft-primary border border-primary fs-12 fw-medium ms-2 crud-total-badge">
+          {{ centers.length }}
         </span>
       </h4>
     </div>
-    <div class="text-end d-flex">
-      <button type="button" class="btn btn-primary ms-2 fs-13 btn-md" (click)="openCreateModal()">
+    <div class="text-end d-flex flex-shrink-0">
+      <button type="button" class="btn btn-primary fs-13 btn-md flex-shrink-0" (click)="openCreateModal()">
         <i class="ti ti-plus me-1"></i>{{ 'centers.createButton' | translate }}
       </button>
     </div>
@@ -22,7 +22,7 @@
   <div class="alert alert-success py-2" role="alert">{{ successMessage }}</div>
   }
 
-  <div class="d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+  <div class="d-none d-md-flex align-items-center justify-content-between flex-wrap row-gap-2">
     <div class="search-set mb-3">
       <div class="table-search d-flex align-items-center mb-0">
         <div class="search-input">
@@ -44,8 +44,8 @@
       </div>
     </div>
 
-    <div class="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap row-gap-3">
-      <button type="button" class="btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14 me-2" (click)="toggleShowAll()">
+    <div class="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap gap-2">
+      <button type="button" class="btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" (click)="toggleShowAll()">
         <i class="ti ti-eye me-1"></i>{{ (showAll ? 'centers.showActive' : 'centers.showAll') | translate }}
       </button>
       <button type="button" class="btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" (click)="loadCenters()">
@@ -58,7 +58,7 @@
     <table class="table table-nowrap dataTable datatable">
       <thead class="thead-light">
         <tr>
-          <th>ID</th>
+          <th class="d-none d-md-table-cell">ID</th>
           <th>{{ 'centers.fields.name' | translate }}</th>
           <th>{{ 'centers.fields.city' | translate }}</th>
           <th>{{ 'centers.fields.logoUrl' | translate }}</th>
@@ -74,7 +74,7 @@
         } @else {
           @for(center of filteredCenters; track trackByCenterId($index, center)){
           <tr>
-            <td class="fw-medium">#{{ center.id }}</td>
+            <td class="fw-medium d-none d-md-table-cell">#{{ center.id }}</td>
             <td>
               <div class="d-flex align-items-center">
                 <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">

@@ -47,6 +47,28 @@ $preclinic-angular-theme: mat.m2-define-light-theme(
 @import url("https://cdn.jsdelivr.net/npm/lightgallery@2.0.0-beta.4/css/lg-zoom.css");
 @import url("https://cdn.jsdelivr.net/npm/lightgallery@2.0.0-beta.4/css/lg-thumbnail.css");
 
+.min-w-0 {
+  min-width: 0;
+}
+
+.crud-page-title {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.crud-total-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem !important;
+  padding: 0.1rem 0.38rem !important;
+  line-height: 1.1 !important;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 
 
 .full-cal {

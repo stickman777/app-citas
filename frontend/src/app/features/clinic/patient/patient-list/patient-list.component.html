@@ -1,15 +1,15 @@
 <div class="content">
-  <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-1 border-bottom">
-    <div class="flex-grow-1">
-      <h4 class="fw-bold mb-0">
+  <div class="d-flex align-items-center justify-content-between gap-2 pb-2 pb-md-3 mb-2 mb-md-3 border-1 border-bottom">
+    <div class="flex-grow-1 min-w-0">
+      <h4 class="fw-bold mb-0 crud-page-title">
         {{ 'clients.title' | translate }}
-        <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">
-          {{ 'common.total' | translate }}: {{ clients.length }}
+        <span class="badge badge-soft-primary fw-medium border border-primary fs-12 ms-2 crud-total-badge">
+          {{ clients.length }}
         </span>
       </h4>
     </div>
-    <div class="text-end d-flex">
-      <button type="button" class="btn btn-primary ms-2 fs-13 btn-md" (click)="openCreateModal()">
+    <div class="text-end d-flex flex-shrink-0">
+      <button type="button" class="btn btn-primary fs-13 btn-md flex-shrink-0" (click)="openCreateModal()">
         <i class="ti ti-plus me-1"></i>{{ 'clients.createButton' | translate }}
       </button>
     </div>
@@ -22,7 +22,7 @@
   <div class="alert alert-success py-2" role="alert">{{ successMessage }}</div>
   }
 
-  <div class="d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+  <div class="d-none d-md-flex align-items-center justify-content-between flex-wrap row-gap-2">
     <div class="search-set mb-3">
       <div class="d-flex align-items-center flex-wrap gap-2">
         <div class="table-search d-flex align-items-center mb-0">
@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <div class="d-flex table-dropdown mb-3 right-content align-items-center flex-wrap row-gap-3">
+    <div class="d-flex table-dropdown mb-3 right-content align-items-center flex-wrap gap-2">
       <button type="button" class="btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" (click)="loadClients()">
         <i class="ti ti-refresh me-1"></i>{{ 'common.refresh' | translate }}
       </button>
@@ -58,9 +58,12 @@
       <thead>
         <tr>
           @if(isAdmin){
-          <th>ID</th>
+          <th class="d-none d-md-table-cell">ID</th>
           }
-          <th>{{ 'clients.client' | translate }}</th>
+          <th>
+            <span class="d-md-none">{{ 'common.listing' | translate }}</span>
+            <span class="d-none d-md-inline">{{ 'clients.client' | translate }}</span>
+          </th>
           <th>{{ 'clients.fields.phone' | translate }}</th>
           <th>{{ 'common.email' | translate }}</th>
           <th>{{ 'common.center' | translate }}</th>
@@ -79,7 +82,7 @@
           @for(client of filteredClients; track trackByClientId($index, client)){
           <tr>
             @if(isAdmin){
-            <td class="fw-medium">#{{ client.id }}</td>
+            <td class="fw-medium d-none d-md-table-cell">#{{ client.id }}</td>
             }
             <td>
               <div class="d-flex align-items-center">

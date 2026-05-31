@@ -62,9 +62,14 @@ export class SidebarComponent {
       this.activeCenter = center;
     });
     this.centersService.centersChanged$.subscribe(() => this.loadCenters());
+    this.sideBar.toggleMobileSideBar.subscribe(state => {
+      if (state !== 'true') this.sidebartop = false;
+    });
     this.getRoutes(this.router);
   }
 public toggleSidebar(): void {
+  this.sidebartop = false;
+
   const wrapper = document.getElementsByClassName('main-wrapper')[0];
   const overlay = document.getElementsByClassName('sidebar-overlay')[0];
 
@@ -124,6 +129,8 @@ public expandSubMenus(menu: { menuValue: string; showSubRoute: boolean; }): void
     this.isOpen = !activeMenu;
   }
   private getRoutes(route: { url: string }): void {
+    this.sidebartop = false;
+
     const bodyTag = document.body;
 
     bodyTag.classList.remove('slide-nav')

@@ -535,30 +535,7 @@
 
 @media (max-width: 767.98px) {
   .appointments-list-toolbar {
-    grid-template-columns: 1fr;
-
-    .search-set,
-    .appointments-specialist-filter,
-    .right-content {
-      justify-self: stretch;
-    }
-  }
-
-  .appointments-specialist-filter {
-    min-width: 100%;
-  }
-
-  .appointments-calendar {
-    padding: 12px;
-    overflow-x: auto;
-  }
-
-  :host ::ng-deep {
-    mwl-calendar-month-view,
-    mwl-calendar-week-view,
-    mwl-calendar-day-view {
-      min-width: 720px;
-      display: block;
-    }
+    display: none !important;
   }
 }
+

@@ -15,3 +15,15 @@
     padding-top: 16px;
   }
 }
+
+@media (max-width: 767.98px) {
+  .sidebar-center-dropdown.show {
+    left: 12px !important;
+    right: 12px;
+    top: 56px !important;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    transform: none !important;
+  }
+}

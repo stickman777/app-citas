@@ -5,7 +5,7 @@
     <a href="javascript:void(0);" class="sidebar-close" (click)="toggleSidebar()">
         <i class="ti ti-x align-middle"></i>
     </a>
-    <div class="dropdown-menu dropdown-menu-lg" [ngClass]="{'show':sidebartop}">
+    <div class="dropdown-menu dropdown-menu-lg sidebar-center-dropdown" [ngClass]="{'show':sidebartop}">
         <div class="p-2">
             @for(center of centers; track center.id){
             <button type="button" class="dropdown-item d-flex align-items-center justify-content-between p-1" (click)="selectCenter(center)">

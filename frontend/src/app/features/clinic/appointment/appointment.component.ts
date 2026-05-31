@@ -98,6 +98,7 @@ const CALENDAR_SEGMENT_MINUTES = 30;
 const DEFAULT_CALENDAR_START_MINUTES = 6 * 60;
 const DEFAULT_CALENDAR_END_MINUTES = 22 * 60;
 const MINUTES_PER_DAY = 24 * 60;
+const MOBILE_VIEWPORT_MAX_WIDTH = 767.98;
 const AVAILABLE_SLOT_CLASS = 'appointment-slot-available';
 const UNAVAILABLE_SLOT_CLASS = 'appointment-slot-unavailable';
 
@@ -221,6 +222,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.applyStoredViewState();
+    this.enforceMobileListView();
     this.queryParamSubscription = this.route.queryParamMap.subscribe(params => {
       this.applyNavigationQueryParams(params);
     });
@@ -294,7 +296,9 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       specialistId,
     );
 
-    if (hasViewStateQueryParam)
+    this.enforceMobileListView();
+
+    if (hasViewStateQueryParam && !this.isMobileViewport())
       this.persistViewState();
 
     const calendarChanged =
@@ -378,6 +382,20 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       value === CalendarView.Day ||
       value === CalendarView.Week ||
       value === CalendarView.Month
+    );
+  }
+
+  private enforceMobileListView(): void {
+    if (!this.isMobileViewport() || this.viewMode === 'list') return;
+
+    this.viewMode = 'list';
+    this.clearCalendarSlotHint();
+  }
+
+  private isMobileViewport(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      window.innerWidth <= MOBILE_VIEWPORT_MAX_WIDTH
     );
   }
 
@@ -540,6 +558,11 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     if (this.isFormModalOpen) this.closeFormModal();
     if (this.isDeleteModalOpen) this.closeDeleteModal();
     if (this.isExceptionModalOpen) this.closeExceptionModal();
+  }
+
+  @HostListener('window:resize')
+  public keepMobileListView(): void {
+    this.enforceMobileListView();
   }
 
   public deleteAppointment(): void {
