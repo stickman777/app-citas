@@ -86,9 +86,29 @@
           <i class="ti ti-list me-1"></i>{{ 'appointments.view.list' | translate }}
         </button>
       </div>
-      <button type="button" class="btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" (click)="loadAppointments()">
-        <i class="ti ti-refresh me-1"></i>{{ 'common.refresh' | translate }}
-      </button>
+      <app-crud-filter (clearFilters)="clearFilters()" (applyFilters)="applyAppointmentFilters()">
+        <div class="mb-3">
+          <label class="form-label">{{ 'common.date' | translate }}</label>
+          <input type="date" name="appointmentFilterDate" [(ngModel)]="filterDate" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ 'common.status' | translate }}</label>
+          <select name="appointmentFilterStatus" [(ngModel)]="filterStatus" class="form-select">
+            <option value="all">{{ 'common.allStatuses' | translate }}</option>
+            @for(status of statusOptions; track status){
+            <option [ngValue]="status">{{ statusLabel(status) }}</option>
+            }
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ 'appointments.filters.availability' | translate }}</label>
+          <select name="appointmentFilterAvailability" [(ngModel)]="filterAvailability" class="form-select">
+            <option value="all">{{ 'appointments.filters.allAvailability' | translate }}</option>
+            <option value="regular">{{ 'appointments.filters.regularAvailability' | translate }}</option>
+            <option value="outside">{{ 'appointments.outsideAvailability.badge' | translate }}</option>
+          </select>
+        </div>
+      </app-crud-filter>
     </div>
   </div>
 
@@ -216,9 +236,6 @@
       <thead class="thead-light">
         <tr>
           <th class="appointments-actions-col">{{ 'common.actions' | translate }}</th>
-          @if(isAdmin){
-          <th class="d-none d-md-table-cell">ID</th>
-          }
           <th>
             <span class="d-md-none">{{ 'common.listing' | translate }}</span>
             <span class="d-none d-md-inline">{{ 'common.client' | translate }}</span>
@@ -246,13 +263,10 @@
                   <i class="ti ti-edit"></i>
                 </button>
                 <button type="button" class="appointments-action-btn shadow-sm border bg-white text-danger" (click)="openDeleteModal(appointment)" [attr.aria-label]="'appointments.actions.delete' | translate">
-                  <i class="ti ti-trash"></i>
+                  <i class="ti ti-calendar-x"></i>
                 </button>
               </div>
             </td>
-            @if(isAdmin){
-            <td class="fw-medium d-none d-md-table-cell">#{{ appointment.id }}</td>
-            }
             <td>
               <span class="text-dark fw-semibold d-block">
                 {{ appointment.client.name }}
@@ -499,7 +513,7 @@
       <div class="modal-footer d-flex align-items-center gap-1">
         <button type="button" class="btn btn-white border" (click)="closeDeleteModal()">{{ 'common.cancel' | translate }}</button>
         <button type="button" class="btn btn-danger" [disabled]="isDeleting" (click)="deleteAppointment()">
-          {{ (isDeleting ? 'common.deleting' : 'common.delete') | translate }}
+          {{ (isDeleting ? 'appointments.actions.canceling' : 'appointments.actions.delete') | translate }}
         </button>
       </div>
     </div>

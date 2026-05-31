@@ -31,6 +31,7 @@ import {
   subDays,
 } from 'date-fns';
 
+import { CrudFilterComponent } from '../../../common-component/crud-filter/crud-filter.component';
 import { ActiveCenterService } from '../../../core/centers/active-center.service';
 import {
   Center,
@@ -103,6 +104,8 @@ const AVAILABLE_SLOT_CLASS = 'appointment-slot-available';
 const UNAVAILABLE_SLOT_CLASS = 'appointment-slot-unavailable';
 
 type AppointmentViewMode = 'calendar' | 'list';
+type AppointmentStatusFilter = AppointmentStatus | 'all';
+type AppointmentAvailabilityFilter = 'all' | 'regular' | 'outside';
 
 type AppointmentCalendarEventMeta =
   | { type: 'appointment'; appointment: Appointment }
@@ -153,7 +156,13 @@ function capitalizeFirstLetter(value: string): string {
   selector: 'app-appointment',
   templateUrl: './appointment.component.html',
   styleUrls: ['./appointment.component.scss'],
-  imports: [CommonModule, FormsModule, TranslatePipe, CalendarWrapperModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CalendarWrapperModule,
+    CrudFilterComponent,
+  ],
   providers: [
     {
       provide: CalendarDateFormatter,
@@ -182,6 +191,9 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public calendarView: CalendarView = CalendarView.Week;
   public calendarViewDate = new Date();
   public searchTerm = '';
+  public filterDate = '';
+  public filterStatus: AppointmentStatusFilter = 'all';
+  public filterAvailability: AppointmentAvailabilityFilter = 'all';
   public selectedSpecialistId: number | null = null;
   public errorMessage = '';
   public successMessage = '';
@@ -591,15 +603,35 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     const search = this.searchTerm.trim().toLowerCase();
     const appointments = this.getSpecialistFilteredAppointments();
 
-    this.filteredAppointments = search
-      ? appointments.filter(appointment =>
-          this.getSearchText(appointment).includes(search)
-        )
-      : appointments;
+    this.filteredAppointments = appointments.filter(appointment => {
+      const matchesSearch =
+        !search || this.getSearchText(appointment).includes(search);
+      const matchesStatus =
+        this.filterStatus === 'all' ||
+        appointment.status === this.filterStatus;
+      const matchesAvailability =
+        this.filterAvailability === 'all' ||
+        (this.filterAvailability === 'regular' &&
+          !appointment.outsideAvailability) ||
+        (this.filterAvailability === 'outside' &&
+          appointment.outsideAvailability);
+      const matchesDate =
+        !this.filterDate ||
+        this.toDateQuery(new Date(appointment.startDateTime)) ===
+          this.filterDate;
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesAvailability &&
+        matchesDate
+      );
+    });
   }
 
   public handleSearchChange(): void {
     this.applySearch();
+    this.updateCalendarEvents();
     this.syncNavigationStateToUrl(true);
   }
 
@@ -607,6 +639,18 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.applySearch();
     this.updateCalendarEvents();
     this.syncNavigationStateToUrl();
+  }
+
+  public applyAppointmentFilters(): void {
+    this.applySearch();
+    this.updateCalendarEvents();
+  }
+
+  public clearFilters(): void {
+    this.filterDate = '';
+    this.filterStatus = 'all';
+    this.filterAvailability = 'all';
+    this.applyAppointmentFilters();
   }
 
   public statusBadgeClass(status: AppointmentStatus): string {
@@ -622,7 +666,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   }
 
   public get appointmentTableColumnCount(): number {
-    return this.isAdmin ? 8 : 6;
+    return this.isAdmin ? 7 : 6;
   }
 
   public setViewMode(viewMode: AppointmentViewMode): void {
@@ -748,7 +792,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public monthAppointmentCount(date: Date): number {
     const dateKey = this.toDateQuery(date);
 
-    return this.getSpecialistFilteredAppointments().filter(
+    return this.filteredAppointments.filter(
       appointment =>
         this.toDateQuery(new Date(appointment.startDateTime)) === dateKey
     ).length;
@@ -1212,7 +1256,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   }
 
   private buildAppointmentEvents(): CalendarEvent<AppointmentCalendarEventMeta>[] {
-    return this.getSpecialistFilteredAppointments().map(appointment => {
+    return this.filteredAppointments.map(appointment => {
       const start = new Date(appointment.startDateTime);
       const end = new Date(start);
       end.setMinutes(end.getMinutes() + appointment.duration);
