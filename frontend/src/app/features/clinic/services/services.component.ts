@@ -3,6 +3,7 @@ import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize, Subscription } from 'rxjs';
 
+import { CrudFilterComponent } from '../../../common-component/crud-filter/crud-filter.component';
 import {
   Service,
   ServicePayload,
@@ -18,6 +19,8 @@ import {
   SpecialistsService,
 } from '../../../core/specialists/specialists.service';
 
+type ServiceStatusFilter = 'all' | 'active' | 'inactive';
+
 interface ServiceForm {
   name: string;
   description: string;
@@ -31,7 +34,7 @@ interface ServiceForm {
   selector: 'app-services',
   templateUrl: './services.component.html',
   styleUrls: ['./services.component.scss'],
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, CrudFilterComponent],
 })
 export class ServicesComponent implements OnInit, OnDestroy {
   public services: Service[] = [];
@@ -39,12 +42,13 @@ export class ServicesComponent implements OnInit, OnDestroy {
   public centers: Center[] = [];
   public specialists: Specialist[] = [];
   public searchTerm = '';
+  public filterStatus: ServiceStatusFilter = 'active';
+  public filterSpecialistId: number | null = null;
   public errorMessage = '';
   public successMessage = '';
   public isLoading = false;
   public isSaving = false;
   public isChangingStatus = false;
-  public showAll = false;
   public isFormModalOpen = false;
   public isStatusModalOpen = false;
   public editingService: Service | null = null;
@@ -95,24 +99,18 @@ export class ServicesComponent implements OnInit, OnDestroy {
       this.clearMessages();
     }
 
-    const request = this.showAll
-      ? this.servicesService.getAllServices(this.activeCenter?.id)
-      : this.servicesService.getServices(this.activeCenter?.id);
-
-    request.pipe(finalize(() => (this.isLoading = false))).subscribe({
-      next: services => {
-        this.services = services;
-        this.applySearch();
-      },
-      error: () => {
-        this.errorMessage = this.translate('services.errors.load');
-      },
-    });
-  }
-
-  public toggleShowAll(): void {
-    this.showAll = !this.showAll;
-    this.loadServices();
+    this.servicesService
+      .getAllServices(this.activeCenter?.id)
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: services => {
+          this.services = services;
+          this.applySearch();
+        },
+        error: () => {
+          this.errorMessage = this.translate('services.errors.load');
+        },
+      });
   }
 
   public openCreateModal(): void {
@@ -227,22 +225,37 @@ export class ServicesComponent implements OnInit, OnDestroy {
   public applySearch(): void {
     const search = this.searchTerm.trim().toLowerCase();
 
-    this.filteredServices = search
-      ? this.services.filter(service =>
-          [
-            service.id,
-            service.name,
-            service.description ?? '',
-            service.durationMinutes,
-            service.price ?? '',
-            service.center?.name ?? '',
-            service.specialist?.name ?? '',
-          ]
-            .join(' ')
-            .toLowerCase()
-            .includes(search)
-        )
-      : [...this.services];
+    this.filteredServices = this.services.filter(service => {
+      const matchesSearch =
+        !search ||
+        [
+          service.id,
+          service.name,
+          service.description ?? '',
+          service.durationMinutes,
+          service.price ?? '',
+          service.center?.name ?? '',
+          service.specialist?.name ?? '',
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(search);
+      const matchesStatus =
+        this.filterStatus === 'all' ||
+        (this.filterStatus === 'active' && service.active) ||
+        (this.filterStatus === 'inactive' && !service.active);
+      const matchesSpecialist =
+        !this.filterSpecialistId ||
+        service.specialist?.id === this.filterSpecialistId;
+
+      return matchesSearch && matchesStatus && matchesSpecialist;
+    });
+  }
+
+  public clearFilters(): void {
+    this.filterStatus = 'all';
+    this.filterSpecialistId = null;
+    this.applySearch();
   }
 
   public formatPrice(price: Service['price']): string {
@@ -281,12 +294,26 @@ export class ServicesComponent implements OnInit, OnDestroy {
     );
   }
 
+  public get serviceFilterSpecialists(): Specialist[] {
+    const specialistsById = new Map<number, Specialist>();
+
+    this.services.forEach(service => {
+      if (service.specialist) {
+        specialistsById.set(service.specialist.id, service.specialist);
+      }
+    });
+
+    return Array.from(specialistsById.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  }
+
   public get isAdmin(): boolean {
     return this.currentUser?.role === 'ADMIN';
   }
 
   public get serviceTableColumnCount(): number {
-    return this.isAdmin ? 8 : 7;
+    return 7;
   }
 
   public trackByCenterId(_: number, center: Center): number {
