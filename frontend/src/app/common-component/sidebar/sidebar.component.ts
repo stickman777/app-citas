@@ -128,7 +128,7 @@ public expandSubMenus(menu: { menuValue: string; showSubRoute: boolean; }): void
   
     this.isOpen = !activeMenu;
   }
-  private getRoutes(route: { url: string }): void {
+  private getRoutes(route: { url: string; urlAfterRedirects?: string }): void {
     this.sidebartop = false;
 
     const bodyTag = document.body;
@@ -138,9 +138,11 @@ public expandSubMenus(menu: { menuValue: string; showSubRoute: boolean; }): void
           document.body.style.overflow = '';
         }
     bodyTag.classList.remove('opened')
-    this.currentUrl = route.url;
+    const url = this.normalizeRouteUrl(route.urlAfterRedirects ?? route.url);
 
-    const splitVal = route.url.split('/');
+    this.currentUrl = url;
+
+    const splitVal = url.split('/');
 
 
  this.base = splitVal[1] || '';
@@ -159,6 +161,10 @@ if(this.base=='layout-default' || this.base=='layout-mini'|| this.base=='layout-
   this.page=this.base
 
 }
+  }
+
+  private normalizeRouteUrl(url: string): string {
+    return url.split(/[?#]/)[0] || '/';
   }
   public miniSideBarMouseHover(position: string): void {
     if (position == 'over') {
