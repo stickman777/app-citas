@@ -23,7 +23,7 @@
               [ngModelOptions]="{standalone: true}">
               <ng-template #date let-date>
                 <span class="dashboard-calendar-day">
-                  <span>{{ date.day }}</span>
+                  <span class="dashboard-calendar-number">{{ date.day }}</span>
                   @if(hasAppointmentIndicator(date) || hasBlockedIndicator(date)){
                   <span class="dashboard-calendar-markers" aria-hidden="true">
                     @if(hasAppointmentIndicator(date)){
@@ -49,12 +49,16 @@
           <a [routerLink]="routes.specialists" class="btn fw-normal btn-outline-white">{{ 'common.viewAll' | translate }}</a>
         </div>
         <div class="card-body">
-          <div class="dashboard-card-list overflow-auto">
+          <div class="dashboard-card-list">
             @if(isLoadingSpecialists){
             <div class="text-center text-dark py-4">{{ 'specialists.loading' | translate }}</div>
             } @else {
               @for(specialist of sortedSpecialists; track trackBySpecialistId($index, specialist)){
-              <div class="dashboard-card-list-item d-flex justify-content-between align-items-center">
+              <a
+                [routerLink]="routes.specialists"
+                [queryParams]="{ selectedSpecialistId: specialist.id }"
+                class="dashboard-card-list-item dashboard-card-list-link d-flex justify-content-between align-items-center"
+              >
                 <div class="d-flex align-items-center min-w-0">
                   <span class="dashboard-initials-avatar rounded-circle flex-shrink-0 d-inline-flex align-items-center justify-content-center">
                     {{ specialistInitials(specialist) }}
@@ -78,7 +82,7 @@
                     [attr.title]="specialistStatusLabel(specialist)"
                   ></span>
                 </div>
-              </div>
+              </a>
               } @empty {
               <div class="text-center text-dark py-4">{{ 'specialists.empty' | translate }}</div>
               }
@@ -97,12 +101,16 @@
           </a>
         </div>
         <div class="card-body">
-          <div class="dashboard-card-list overflow-auto">
+          <div class="dashboard-card-list">
             @if(isLoadingServices){
             <div class="text-center text-dark py-4">{{ 'services.loading' | translate }}</div>
             } @else {
               @for(service of services; track trackByServiceId($index, service)){
-              <div class="dashboard-card-list-item d-flex justify-content-between align-items-center">
+              <a
+                [routerLink]="routes.services"
+                [queryParams]="{ selectedServiceId: service.id }"
+                class="dashboard-card-list-item dashboard-card-list-link d-flex justify-content-between align-items-center"
+              >
                 <div class="d-flex align-items-center min-w-0">
                   <span class="dashboard-service-icon rounded-circle flex-shrink-0 d-inline-flex align-items-center justify-content-center">
                     <i class="ti ti-stethoscope"></i>
@@ -117,7 +125,7 @@
                 <span class="badge badge-soft-primary border border-primary text-primary px-2 py-1 fs-13 fw-medium ms-2 flex-shrink-0">
                   {{ service.durationMinutes }} min
                 </span>
-              </div>
+              </a>
               } @empty {
               <div class="text-center text-dark py-4">{{ 'services.empty' | translate }}</div>
               }

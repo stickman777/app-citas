@@ -1,25 +1,36 @@
 .datepic {
   .dashboard-calendar-day {
     align-items: center;
-    display: inline-flex;
-    flex-direction: column;
-    gap: 2px;
+    display: inline-grid;
+    grid-template-rows: minmax(0, 1fr) 5px;
+    height: 26px;
     justify-content: center;
-    min-height: 32px;
-    min-width: 32px;
+    min-height: 26px;
+    min-width: 26px;
+    width: 26px;
+  }
+
+  .dashboard-calendar-number {
+    align-self: end;
+    line-height: 1;
   }
 
   .dashboard-calendar-markers {
+    align-items: center;
+    align-self: end;
     display: inline-flex;
     gap: 3px;
-    height: 6px;
+    height: 5px;
     justify-content: center;
+    line-height: 0;
   }
 
   .dashboard-calendar-dot {
     border-radius: 50%;
-    height: 5px;
-    width: 5px;
+    display: block;
+    flex: 0 0 4px;
+    height: 4px;
+    width: 4px;
   }
 
   .dashboard-calendar-dot-appointment {
@@ -48,6 +59,10 @@
 }
 
 :host ::ng-deep .dashboard-calendar-picker {
+  .p-datepicker-inline {
+    overflow-x: hidden;
+  }
+
   .p-datepicker-panel {
     padding: 0 8px 8px;
   }
@@ -67,6 +82,8 @@
 
 .dashboard-card-list {
   max-height: 258px;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .dashboard-card-list-item {
@@ -79,6 +96,19 @@
 
   &:last-child {
     padding-bottom: 0;
+  }
+}
+
+.dashboard-card-list-link {
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  width: 100%;
+
+  &:hover,
+  &:focus {
+    background: rgba(46, 55, 164, 0.04);
+    color: inherit;
   }
 }
 
