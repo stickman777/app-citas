@@ -9,8 +9,8 @@
             {{ 'common.viewAll' | translate }}
           </a>
         </div>
-        <div class="card-body">
-          <div class="datepic mb-3 p-inlines">
+        <div class="card-body dashboard-calendar-card-body">
+          <div class="datepic dashboard-calendar-picker p-inlines">
             <p-datepicker
               class="max-w-full"
               [(ngModel)]="date"
@@ -38,7 +38,6 @@
               </ng-template>
             </p-datepicker>
           </div>
-          <a [routerLink]="routes.appointment" [queryParams]="appointmentCalendarQuery" class="btn btn-light w-100">{{ 'common.viewAllAppointments' | translate }}</a>
         </div>
       </div>
     </div>
@@ -90,7 +89,7 @@
     </div>
 
     <div class="col-xl-4 col-lg-6 d-flex">
-      <div class="card shadow-sm flex-fill w-100">
+      <div class="card shadow-sm flex-fill w-100 dashboard-appointments-card">
         <div class="card-header d-flex align-items-center justify-content-between">
           <h5 class="fw-bold mb-0">{{ 'services.title' | translate }}</h5>
           <a [routerLink]="routes.services" class="btn btn-sm px-2 border shadow-sm btn-outline-white d-inline-flex align-items-center">

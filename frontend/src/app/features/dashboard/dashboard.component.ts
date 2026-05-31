@@ -280,7 +280,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const date = new Date(sunday);
       date.setDate(sunday.getDate() + index);
 
-      return formatter.format(date);
+      return this.capitalize(formatter.format(date));
     });
   }
 
@@ -291,8 +291,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const formatter = new Intl.DateTimeFormat(locale, { month });
 
     return Array.from({ length: 12 }, (_, index) =>
-      formatter.format(new Date(2026, index, 1))
+      this.capitalize(formatter.format(new Date(2026, index, 1)))
     );
+  }
+
+  private capitalize(value: string): string {
+    return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
   }
 
   private resolveSpecialistStatus(specialist: Specialist): SpecialistStatus {
