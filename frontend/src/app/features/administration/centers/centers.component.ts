@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
+import { CrudFilterComponent } from '../../../common-component/crud-filter/crud-filter.component';
 import {
   Center,
   CenterPayload,
@@ -12,6 +13,8 @@ import {
 } from '../../../core/centers/centers.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
+type CenterStatusFilter = 'all' | 'active' | 'inactive';
 
 interface CenterForm {
   name: string;
@@ -24,19 +27,25 @@ interface CenterForm {
   selector: 'app-centers',
   templateUrl: './centers.component.html',
   styleUrls: ['./centers.component.scss'],
-  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    TranslatePipe,
+    CrudFilterComponent,
+  ],
 })
 export class CentersComponent {
   public readonly dayOptions = [1, 2, 3, 4, 5, 6, 0];
   public centers: Center[] = [];
   public filteredCenters: Center[] = [];
   public searchTerm = '';
+  public filterStatus: CenterStatusFilter = 'active';
   public errorMessage = '';
   public successMessage = '';
   public isLoading = false;
   public isSaving = false;
   public isChangingStatus = false;
-  public showAll = false;
   public isFormModalOpen = false;
   public isStatusModalOpen = false;
   public centerToChangeStatus: Center | null = null;
@@ -59,24 +68,18 @@ export class CentersComponent {
       this.clearMessages();
     }
 
-    const request = this.showAll
-      ? this.centersService.getAllCenters()
-      : this.centersService.getCenters();
-
-    request.pipe(finalize(() => (this.isLoading = false))).subscribe({
-      next: centers => {
-        this.centers = centers;
-        this.applySearch();
-      },
-      error: () => {
-        this.errorMessage = this.translate('centers.errors.load');
-      },
-    });
-  }
-
-  public toggleShowAll(): void {
-    this.showAll = !this.showAll;
-    this.loadCenters();
+    this.centersService
+      .getAllCenters()
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: centers => {
+          this.centers = centers;
+          this.applySearch();
+        },
+        error: () => {
+          this.errorMessage = this.translate('centers.errors.load');
+        },
+      });
   }
 
   public openCreateModal(): void {
@@ -169,13 +172,24 @@ export class CentersComponent {
   public applySearch(): void {
     const search = this.searchTerm.trim().toLowerCase();
 
-    this.filteredCenters = search
-      ? this.centers.filter(center =>
-          `${center.id} ${center.name} ${center.city ?? ''} ${center.logoUrl ?? ''}`
-            .toLowerCase()
-            .includes(search)
-        )
-      : [...this.centers];
+    this.filteredCenters = this.centers.filter(center => {
+      const matchesSearch =
+        !search ||
+        `${center.id} ${center.name} ${center.city ?? ''} ${center.logoUrl ?? ''}`
+          .toLowerCase()
+          .includes(search);
+      const matchesStatus =
+        this.filterStatus === 'all' ||
+        (this.filterStatus === 'active' && center.active) ||
+        (this.filterStatus === 'inactive' && !center.active);
+
+      return matchesSearch && matchesStatus;
+    });
+  }
+
+  public clearFilters(): void {
+    this.filterStatus = 'all';
+    this.applySearch();
   }
 
   public statusBadgeClass(center: Center): string {

@@ -45,12 +45,16 @@
     </div>
 
     <div class="d-flex table-dropdown mb-3 pb-1 right-content align-items-center flex-wrap gap-2">
-      <button type="button" class="btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" (click)="toggleShowAll()">
-        <i class="ti ti-eye me-1"></i>{{ (showAll ? 'centers.showActive' : 'centers.showAll') | translate }}
-      </button>
-      <button type="button" class="btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" (click)="loadCenters()">
-        <i class="ti ti-refresh me-1"></i>{{ 'common.refresh' | translate }}
-      </button>
+      <app-crud-filter (clearFilters)="clearFilters()" (applyFilters)="applySearch()">
+        <div class="mb-3">
+          <label class="form-label">{{ 'common.status' | translate }}</label>
+          <select name="centerFilterStatus" [(ngModel)]="filterStatus" class="form-select">
+            <option value="all">{{ 'common.allStatuses' | translate }}</option>
+            <option value="active">{{ 'common.active' | translate }}</option>
+            <option value="inactive">{{ 'common.inactive' | translate }}</option>
+          </select>
+        </div>
+      </app-crud-filter>
     </div>
   </div>
 
