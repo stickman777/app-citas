@@ -191,6 +191,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.getSpecialistAppointmentCount(specialist.id);
   }
 
+  public specialistAppointmentsQuery(
+    specialist: Specialist,
+  ): Record<string, string> {
+    return {
+      view: 'list',
+      specialistId: String(specialist.id),
+    };
+  }
+
   public serviceSpecialistName(service: Service): string {
     return (
       service.specialist?.name ??

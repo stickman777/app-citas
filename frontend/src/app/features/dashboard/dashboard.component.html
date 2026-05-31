@@ -54,12 +54,12 @@
             <div class="text-center text-dark py-4">{{ 'specialists.loading' | translate }}</div>
             } @else {
               @for(specialist of sortedSpecialists; track trackBySpecialistId($index, specialist)){
-              <button
-                type="button"
-                (click)="openSpecialistDetails(specialist)"
-                class="dashboard-card-list-item dashboard-card-list-link d-flex justify-content-between align-items-center"
-              >
-                <div class="d-flex align-items-center min-w-0">
+              <div class="dashboard-card-list-item d-flex justify-content-between align-items-center">
+                <button
+                  type="button"
+                  (click)="openSpecialistDetails(specialist)"
+                  class="dashboard-card-list-link dashboard-specialist-detail-trigger d-flex align-items-center min-w-0"
+                >
                   <span class="dashboard-initials-avatar rounded-circle flex-shrink-0 d-inline-flex align-items-center justify-content-center">
                     {{ specialistInitials(specialist) }}
                   </span>
@@ -69,12 +69,18 @@
                       {{ specialist.specialty || ('specialists.fields.specialty' | translate) }}
                     </p>
                   </div>
-                </div>
+                </button>
                 <div class="dashboard-specialist-meta d-inline-flex align-items-center flex-shrink-0 ms-2">
-                  <span class="dashboard-appointment-count d-inline-flex align-items-center" [attr.title]="'appointments.title' | translate">
+                  <a
+                    [routerLink]="routes.appointment"
+                    [queryParams]="specialistAppointmentsQuery(specialist)"
+                    class="dashboard-appointment-count d-inline-flex align-items-center text-decoration-none"
+                    [attr.aria-label]="('appointments.title' | translate) + ': ' + specialist.name"
+                    [attr.title]="'appointments.title' | translate"
+                  >
                     <i class="ti ti-calendar-event"></i>
                     {{ specialistAppointmentCount(specialist) }}
-                  </span>
+                  </a>
                   <span
                     class="dashboard-status-dot"
                     [ngClass]="specialistStatusDotClass(specialist)"
@@ -82,7 +88,7 @@
                     [attr.title]="specialistStatusLabel(specialist)"
                   ></span>
                 </div>
-              </button>
+              </div>
               } @empty {
               <div class="text-center text-dark py-4">{{ 'specialists.empty' | translate }}</div>
               }

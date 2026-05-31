@@ -117,6 +117,10 @@
   }
 }
 
+.dashboard-specialist-detail-trigger {
+  width: auto;
+}
+
 .dashboard-initials-avatar,
 .dashboard-service-icon {
   background: #eef2ff;
@@ -149,6 +153,12 @@
   line-height: 1;
   min-width: 34px;
   padding: 5px 8px;
+
+  &:hover,
+  &:focus {
+    background: #eef2ff;
+    color: #2e37a4;
+  }
 }
 
 .dashboard-status-dot {
