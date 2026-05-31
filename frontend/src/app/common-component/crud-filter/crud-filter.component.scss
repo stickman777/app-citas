@@ -1,0 +1,19 @@
+:host {
+  display: inline-block;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.filter-dropdown {
+  left: auto;
+  right: 0;
+  width: min(360px, calc(100vw - 2rem));
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+
+  .btn-link {
+    font-size: 13px;
+  }
+}

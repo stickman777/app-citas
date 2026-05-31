@@ -47,30 +47,40 @@
     </div>
 
     <div class="d-flex table-dropdown mb-3 right-content align-items-center flex-wrap gap-2">
-      <button type="button" class="btn bg-white btn-md d-inline-flex align-items-center fw-normal rounded border text-dark px-2 py-1 fs-14" (click)="loadClients()">
-        <i class="ti ti-refresh me-1"></i>{{ 'common.refresh' | translate }}
-      </button>
+      <app-crud-filter (clearFilters)="clearFilters()" (applyFilters)="applySearch()">
+        <div class="mb-3">
+          <label class="form-label">{{ 'common.status' | translate }}</label>
+          <select name="clientFilterStatus" [(ngModel)]="filterStatus" class="form-select">
+            <option value="all">{{ 'common.allStatuses' | translate }}</option>
+            <option value="active">{{ 'common.active' | translate }}</option>
+            <option value="inactive">{{ 'common.inactive' | translate }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ 'clients.fields.mobileAccount' | translate }}</label>
+          <select name="clientFilterAccount" [(ngModel)]="filterAccount" class="form-select">
+            <option value="all">{{ 'clients.filters.account.all' | translate }}</option>
+            <option value="linked">{{ 'clients.filters.account.linked' | translate }}</option>
+            <option value="pending">{{ 'clients.filters.account.pending' | translate }}</option>
+          </select>
+        </div>
+      </app-crud-filter>
     </div>
   </div>
 
-  <div class="table-responsive">
-    <table class="table table-nowrap dataTable datatable">
+  <div class="table-responsive clients-table-responsive">
+    <table class="table dataTable datatable clients-table">
       <thead>
         <tr>
-          @if(isAdmin){
-          <th class="d-none d-md-table-cell">ID</th>
-          }
+          <th class="clients-table-actions"></th>
           <th>
             <span class="d-md-none">{{ 'common.listing' | translate }}</span>
             <span class="d-none d-md-inline">{{ 'clients.client' | translate }}</span>
           </th>
-          <th>{{ 'clients.fields.phone' | translate }}</th>
-          <th>{{ 'common.email' | translate }}</th>
-          <th>{{ 'common.center' | translate }}</th>
-          <th>{{ 'clients.fields.priority' | translate }}</th>
-          <th>{{ 'clients.fields.mobileAccount' | translate }}</th>
-          <th>{{ 'common.status' | translate }}</th>
-          <th class="text-end">{{ 'common.actions' | translate }}</th>
+          <th class="d-none d-md-table-cell">{{ 'clients.fields.phone' | translate }}</th>
+          <th class="d-none d-xl-table-cell">{{ 'common.email' | translate }}</th>
+          <th class="d-none d-lg-table-cell clients-table-center">{{ 'common.center' | translate }}</th>
+          <th class="clients-table-status">{{ 'common.status' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -81,31 +91,32 @@
         } @else {
           @for(client of filteredClients; track trackByClientId($index, client)){
           <tr>
-            @if(isAdmin){
-            <td class="fw-medium d-none d-md-table-cell">#{{ client.id }}</td>
-            }
+            <td class="clients-table-actions">
+              <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 bg-white" (click)="openEditModal(client)" [attr.aria-label]="'clients.actions.edit' | translate">
+                <i class="ti ti-edit"></i>
+              </button>
+            </td>
             <td>
               <div class="d-flex align-items-center">
                 <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">
                   <i class="ti ti-user text-dark"></i>
                 </span>
-                <div>
-                  <span class="text-dark fw-semibold d-block">{{ client.name }}</span>
-                  @if(client.notes){
-                  <span class="text-body fs-13">{{ client.notes }}</span>
-                  }
+                <div class="min-w-0">
+                  <div class="clients-table-cell-text" [title]="client.name">
+                    <span class="text-dark fw-semibold">{{ client.name }}</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1 mt-1 clients-priority-line">
+                    <span class="text-body">{{ 'clients.fields.priority' | translate }}</span>
+                    <span class="badge badge-soft-info border border-info text-info fw-medium">
+                      {{ client.priority }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </td>
-            <td>{{ client.phone }}</td>
-            <td>{{ client.email || '-' }}</td>
-            <td>{{ centerName(client) }}</td>
-            <td>{{ client.priority }}</td>
-            <td>
-              <span class="badge badge-soft-warning border border-warning text-warning fs-13 fw-medium">
-                {{ client.user?.email || ('clients.pending' | translate) }}
-              </span>
-            </td>
+            <td class="d-none d-md-table-cell clients-table-cell-text" [title]="client.phone">{{ client.phone }}</td>
+            <td class="d-none d-xl-table-cell clients-table-cell-text" [title]="client.email || '-'">{{ client.email || '-' }}</td>
+            <td class="d-none d-lg-table-cell clients-table-center clients-table-cell-text" [title]="centerName(client)">{{ centerName(client) }}</td>
             <td>
               <button
                 type="button"
@@ -115,22 +126,6 @@
               >
                 {{ (client.active ? 'common.active' : 'common.inactive') | translate }}
               </button>
-            </td>
-            <td>
-              <div class="d-flex align-items-center justify-content-end gap-1">
-                <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white" (click)="openEditModal(client)" [attr.aria-label]="'clients.actions.edit' | translate">
-                  <i class="ti ti-edit"></i>
-                </button>
-                <button
-                  type="button"
-                  class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white"
-                  [ngClass]="client.active ? 'text-danger' : 'text-success'"
-                  (click)="openStatusModal(client)"
-                  [attr.aria-label]="(client.active ? 'clients.actions.deactivate' : 'clients.actions.activate') | translate"
-                >
-                  <i class="ti" [ngClass]="client.active ? 'ti-user-off' : 'ti-user-check'"></i>
-                </button>
-              </div>
             </td>
           </tr>
           } @empty {

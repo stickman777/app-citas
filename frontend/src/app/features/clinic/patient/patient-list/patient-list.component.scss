@@ -5,3 +5,77 @@
     background-color: var(--white);
   }
 }
+
+.clients-table-responsive {
+  overflow-x: visible;
+}
+
+.clients-table {
+  width: 100%;
+
+  th {
+    line-height: 1.2;
+    overflow: visible;
+    text-overflow: clip;
+    vertical-align: middle;
+    white-space: normal;
+  }
+
+  td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+  }
+
+  .clients-table-cell-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .clients-table-center {
+    width: 18%;
+  }
+
+  .clients-table-status {
+    width: 116px;
+  }
+
+  .clients-table-actions {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  .badge {
+    max-width: 100%;
+    white-space: nowrap;
+  }
+
+  .clients-priority-line {
+    font-size: 11px;
+    line-height: 1;
+
+    .badge {
+      font-size: 10px;
+      line-height: 1;
+      padding: 2px 5px;
+    }
+  }
+}
+
+@media (max-width: 575.98px) {
+  .clients-table {
+    .avatar {
+      display: none !important;
+    }
+
+    .clients-table-status {
+      width: 94px;
+    }
+
+    .clients-table-actions {
+      width: 1%;
+    }
+  }
+}

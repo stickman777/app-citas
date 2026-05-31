@@ -13,6 +13,10 @@ import {
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { AuthService, CurrentUser } from '../../../../core/auth/auth.service';
+import { CrudFilterComponent } from '../../../../common-component/crud-filter/crud-filter.component';
+
+type ClientStatusFilter = 'all' | 'active' | 'inactive';
+type ClientAccountFilter = 'all' | 'linked' | 'pending';
 
 interface ClientForm {
   name: string;
@@ -27,7 +31,7 @@ interface ClientForm {
   selector: 'app-patient-list',
   templateUrl: './patient-list.component.html',
   styleUrls: ['./patient-list.component.scss'],
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, CrudFilterComponent],
 })
 export class PatientListComponent implements OnInit, OnDestroy {
   public clients: Client[] = [];
@@ -36,6 +40,8 @@ export class PatientListComponent implements OnInit, OnDestroy {
   public activeCenter: Center | null = null;
   public currentUser: CurrentUser | null = null;
   public searchTerm = '';
+  public filterStatus: ClientStatusFilter = 'all';
+  public filterAccount: ClientAccountFilter = 'all';
   public errorMessage = '';
   public successMessage = '';
   public isLoading = false;
@@ -209,13 +215,29 @@ export class PatientListComponent implements OnInit, OnDestroy {
   public applySearch(): void {
     const search = this.searchTerm.trim().toLowerCase();
 
-    this.filteredClients = search
-      ? this.clients.filter(client =>
-          `${client.id} ${client.name} ${client.phone} ${client.email ?? ''} ${client.notes ?? ''} ${client.center?.name ?? ''}`
-            .toLowerCase()
-            .includes(search)
-        )
-      : [...this.clients];
+    this.filteredClients = this.clients.filter(client => {
+      const matchesSearch =
+        !search ||
+        `${client.id} ${client.name} ${client.phone} ${client.email ?? ''} ${client.notes ?? ''} ${client.center?.name ?? ''}`
+          .toLowerCase()
+          .includes(search);
+      const matchesStatus =
+        this.filterStatus === 'all' ||
+        (this.filterStatus === 'active' && client.active) ||
+        (this.filterStatus === 'inactive' && !client.active);
+      const matchesAccount =
+        this.filterAccount === 'all' ||
+        (this.filterAccount === 'linked' && !!client.user) ||
+        (this.filterAccount === 'pending' && !client.user);
+
+      return matchesSearch && matchesStatus && matchesAccount;
+    });
+  }
+
+  public clearFilters(): void {
+    this.filterStatus = 'all';
+    this.filterAccount = 'all';
+    this.applySearch();
   }
 
   public statusBadgeClass(client: Client): string {
@@ -237,7 +259,7 @@ export class PatientListComponent implements OnInit, OnDestroy {
   }
 
   public get clientTableColumnCount(): number {
-    return this.isAdmin ? 9 : 8;
+    return 6;
   }
 
   public trackByCenterId(_: number, center: Center): number {

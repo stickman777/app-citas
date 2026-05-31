@@ -1,0 +1,41 @@
+<div class="dropdown" [class.show]="isOpen">
+  <button
+    type="button"
+    class="btn btn-soft-info btn-md d-inline-flex align-items-center fw-medium rounded px-2 py-1 fs-14"
+    [attr.aria-expanded]="isOpen"
+    (click)="toggle($event)"
+  >
+    <i class="ti ti-filter me-1"></i>{{ 'common.filters' | translate }}
+  </button>
+
+  <div
+    class="dropdown-menu dropdown-lg dropdown-menu-end filter-dropdown p-0"
+    [class.show]="isOpen"
+    (click)="keepOpen($event)"
+  >
+    <div class="d-flex align-items-center justify-content-between border-bottom filter-header">
+      <h4 class="mb-0 fw-bold">{{ 'common.filter' | translate }}</h4>
+      <button
+        type="button"
+        class="btn btn-link link-danger text-decoration-underline p-0"
+        (click)="clear($event)"
+      >
+        {{ 'common.clearAll' | translate }}
+      </button>
+    </div>
+
+    <div>
+      <div class="filter-body pb-0">
+        <ng-content></ng-content>
+      </div>
+      <div class="filter-footer d-flex align-items-center justify-content-end border-top">
+        <button type="button" class="btn btn-light btn-md me-2 fw-medium" (click)="close()">
+          {{ 'common.close' | translate }}
+        </button>
+        <button type="button" class="btn btn-primary btn-md fw-medium" (click)="apply($event)">
+          {{ 'common.applyFilters' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
