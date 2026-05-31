@@ -54,9 +54,9 @@
             <div class="text-center text-dark py-4">{{ 'specialists.loading' | translate }}</div>
             } @else {
               @for(specialist of sortedSpecialists; track trackBySpecialistId($index, specialist)){
-              <a
-                [routerLink]="routes.specialists"
-                [queryParams]="{ selectedSpecialistId: specialist.id }"
+              <button
+                type="button"
+                (click)="openSpecialistDetails(specialist)"
                 class="dashboard-card-list-item dashboard-card-list-link d-flex justify-content-between align-items-center"
               >
                 <div class="d-flex align-items-center min-w-0">
@@ -82,7 +82,7 @@
                     [attr.title]="specialistStatusLabel(specialist)"
                   ></span>
                 </div>
-              </a>
+              </button>
               } @empty {
               <div class="text-center text-dark py-4">{{ 'specialists.empty' | translate }}</div>
               }
@@ -106,9 +106,9 @@
             <div class="text-center text-dark py-4">{{ 'services.loading' | translate }}</div>
             } @else {
               @for(service of services; track trackByServiceId($index, service)){
-              <a
-                [routerLink]="routes.services"
-                [queryParams]="{ selectedServiceId: service.id }"
+              <button
+                type="button"
+                (click)="openServiceDetails(service)"
                 class="dashboard-card-list-item dashboard-card-list-link d-flex justify-content-between align-items-center"
               >
                 <div class="d-flex align-items-center min-w-0">
@@ -125,7 +125,7 @@
                 <span class="badge badge-soft-primary border border-primary text-primary px-2 py-1 fs-13 fw-medium ms-2 flex-shrink-0">
                   {{ service.durationMinutes }} min
                 </span>
-              </a>
+              </button>
               } @empty {
               <div class="text-center text-dark py-4">{{ 'services.empty' | translate }}</div>
               }
@@ -137,3 +137,106 @@
   </div>
 </div>
 <!-- End Content -->
+
+@if(detailModal){
+<div class="modal fade show d-block dashboard-detail-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="text-dark modal-title fw-bold">
+          {{ detailSpecialist?.name || detailService?.name }}
+        </h4>
+        <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.close' | translate" (click)="closeDetailModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if(detailSpecialist; as specialist){
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <span class="avatar avatar-lg rounded-circle bg-light border d-inline-flex align-items-center justify-content-center flex-shrink-0">
+            <i class="ti ti-user-star text-dark fs-22"></i>
+          </span>
+          <div class="min-w-0">
+            <h5 class="text-dark fw-semibold text-truncate mb-1">{{ specialist.name }}</h5>
+            <span class="badge rounded border fs-13 fw-medium" [ngClass]="specialistStatusBadgeClass(specialist)">
+              {{ specialistStatusLabel(specialist) }}
+            </span>
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="dashboard-detail-info border rounded-2 p-2">
+              <span class="text-body fs-13 d-block">{{ 'appointments.title' | translate }}</span>
+              <span class="text-dark fw-medium">{{ specialistAppointmentCount(specialist) }}</span>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="dashboard-detail-info border rounded-2 p-2">
+              <span class="text-body fs-13 d-block">{{ 'specialists.fields.specialty' | translate }}</span>
+              <span class="text-dark fw-medium">{{ specialist.specialty || '-' }}</span>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="dashboard-detail-info border rounded-2 p-2">
+              <span class="text-body fs-13 d-block">{{ 'common.center' | translate }}</span>
+              <span class="text-dark fw-medium">{{ centerName(specialist) }}</span>
+            </div>
+          </div>
+        </div>
+        }
+        @if(detailService; as service){
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <span class="avatar avatar-lg rounded-circle bg-light border d-inline-flex align-items-center justify-content-center flex-shrink-0">
+            <i class="ti ti-stethoscope text-dark fs-22"></i>
+          </span>
+          <div class="min-w-0">
+            <h5 class="text-dark fw-semibold text-truncate mb-1">{{ service.name }}</h5>
+            <span class="badge rounded border fs-13 fw-medium" [ngClass]="serviceStatusBadgeClass(service)">
+              {{ serviceStatusLabel(service) }}
+            </span>
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="dashboard-detail-info border rounded-2 p-2">
+              <span class="text-body fs-13 d-block">{{ 'services.fields.duration' | translate }}</span>
+              <span class="text-dark fw-medium">{{ service.durationMinutes }} min</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="dashboard-detail-info border rounded-2 p-2">
+              <span class="text-body fs-13 d-block">{{ 'services.fields.price' | translate }}</span>
+              <span class="text-dark fw-medium">{{ formatPrice(service.price) }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="dashboard-detail-info border rounded-2 p-2">
+              <span class="text-body fs-13 d-block">{{ 'common.specialist' | translate }}</span>
+              <span class="text-dark fw-medium">{{ serviceSpecialistName(service) }}</span>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="dashboard-detail-info border rounded-2 p-2">
+              <span class="text-body fs-13 d-block">{{ 'common.center' | translate }}</span>
+              <span class="text-dark fw-medium">{{ centerName(service) }}</span>
+            </div>
+          </div>
+          @if(service.description){
+          <div class="col-12">
+            <div class="dashboard-detail-info border rounded-2 p-2">
+              <span class="text-body fs-13 d-block">{{ 'services.fields.description' | translate }}</span>
+              <span class="text-dark fw-medium">{{ service.description }}</span>
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+      <div class="modal-footer d-flex align-items-center gap-1">
+        <button type="button" class="btn btn-white border" (click)="closeDetailModal()">{{ 'common.close' | translate }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+}

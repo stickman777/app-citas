@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -35,6 +35,10 @@ interface DashboardCalendarDate {
   year: number;
 }
 
+type DashboardDetailModal =
+  | { type: 'specialist'; specialist: Specialist }
+  | { type: 'service'; service: Service };
+
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
@@ -54,6 +58,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   public specialists: Specialist[] = [];
   public sortedSpecialists: Specialist[] = [];
   public services: Service[] = [];
+  public detailModal: DashboardDetailModal | null = null;
   public isLoadingSpecialists = false;
   public isLoadingServices = false;
   private visibleMonthDate = new Date(this.date);
@@ -94,6 +99,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
     void this.router.navigate([routes.appointment], {
       queryParams: this.appointmentCalendarQuery,
     });
+  }
+
+  public openSpecialistDetails(specialist: Specialist): void {
+    this.detailModal = { type: 'specialist', specialist };
+  }
+
+  public openServiceDetails(service: Service): void {
+    this.detailModal = { type: 'service', service };
+  }
+
+  public closeDetailModal(): void {
+    this.detailModal = null;
+  }
+
+  @HostListener('document:keydown.escape')
+  public closeOpenModal(): void {
+    this.closeDetailModal();
+  }
+
+  public get detailSpecialist(): Specialist | null {
+    return this.detailModal?.type === 'specialist'
+      ? this.detailModal.specialist
+      : null;
+  }
+
+  public get detailService(): Service | null {
+    return this.detailModal?.type === 'service' ? this.detailModal.service : null;
   }
 
   public handleCalendarMonthChange(
@@ -139,6 +171,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return 'dashboard-status-dot-inactive';
   }
 
+  public specialistStatusBadgeClass(specialist: Specialist): string {
+    const status = this.resolveSpecialistStatus(specialist);
+
+    if (status === 'ACTIVE')
+      return 'badge-soft-success border-success text-success';
+
+    if (status === 'VACATION')
+      return 'badge-soft-warning border-warning text-warning';
+
+    return 'badge-soft-danger border-danger text-danger';
+  }
+
   public specialistInitials(specialist: Specialist): string {
     return this.getInitials(specialist.name);
   }
@@ -152,6 +196,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
       service.specialist?.name ??
       this.i18nService.translate('services.fields.noSpecialist')
     );
+  }
+
+  public serviceStatusLabel(service: Service): string {
+    return this.i18nService.translate(
+      service.active ? 'common.active' : 'common.inactive',
+    );
+  }
+
+  public serviceStatusBadgeClass(service: Service): string {
+    return service.active
+      ? 'badge-soft-success border-success text-success'
+      : 'badge-soft-danger border-danger text-danger';
+  }
+
+  public formatPrice(price: Service['price']): string {
+    if (price == null || price === '') return '-';
+
+    return `${Number(price).toFixed(2)} EUR`;
+  }
+
+  public centerName(item: Specialist | Service): string {
+    return item.center?.name ?? this.i18nService.translate('centers.none');
   }
 
   private loadCenterDashboardData(): void {

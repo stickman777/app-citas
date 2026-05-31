@@ -100,8 +100,13 @@
 }
 
 .dashboard-card-list-link {
+  background: transparent;
+  border: 0;
   border-radius: 6px;
   color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
   text-decoration: none;
   width: 100%;
 
@@ -162,4 +167,16 @@
 
 .dashboard-status-dot-vacation {
   background: #f59e0b;
+}
+
+.dashboard-detail-modal {
+  background: rgba(0, 0, 0, 0.05);
+
+  .modal-content {
+    background-color: var(--white);
+  }
+}
+
+.dashboard-detail-info {
+  min-height: 58px;
 }
