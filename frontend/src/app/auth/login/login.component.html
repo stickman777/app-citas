@@ -10,8 +10,11 @@
 				<div class="col-lg-4 mx-auto">
 					<form (ngSubmit)="login()" class="d-flex justify-content-center align-items-center">
 						<div class="d-flex flex-column justify-content-lg-center p-4 p-lg-0 pb-0 flex-fill">
-							<div class=" mx-auto mb-4 text-center">
-								<img src="assets/img/logo.svg" class="img-fluid" alt="Logo">
+							<div class="auth-brand d-inline-flex align-items-center justify-content-center gap-2 mx-auto mb-4">
+								<span class="auth-brand-mark d-inline-flex align-items-center justify-content-center">
+									<i class="ti ti-calendar-check"></i>
+								</span>
+								<span class="auth-brand-name fw-bold text-dark">{{ 'auth.brandName' | translate }}</span>
 							</div>
 							<div class="card border-1 p-lg-3 shadow-md rounded-3 mb-4">
 								<div class="card-body">

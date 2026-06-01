@@ -1,0 +1,18 @@
+.auth-brand {
+  width: fit-content;
+}
+
+.auth-brand-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: #2e37a4;
+  color: var(--white);
+  font-size: 24px;
+  box-shadow: 0 10px 24px rgba(46, 55, 164, 0.18);
+}
+
+.auth-brand-name {
+  font-size: 22px;
+  line-height: 1.2;
+}
