@@ -1,0 +1,143 @@
+<div class="content">
+  <div class="d-flex align-items-center justify-content-between gap-2 mb-2 mb-md-3 pb-2 pb-md-3 border-bottom">
+    <div class="flex-grow-1 min-w-0">
+      <h4 class="fw-bold mb-0 crud-page-title">{{ 'account.title' | translate }}</h4>
+    </div>
+  </div>
+
+  @if(errorMessage){
+  <div class="alert alert-danger py-2" role="alert">{{ errorMessage }}</div>
+  }
+  @if(successMessage){
+  <div class="alert alert-success py-2" role="alert">{{ successMessage }}</div>
+  }
+
+  @if(isLoading){
+  <div class="card">
+    <div class="card-body text-center text-dark py-4">{{ 'account.loading' | translate }}</div>
+  </div>
+  } @else {
+  <div class="row">
+    <div class="col-xl-8">
+      <div class="card account-card">
+        <div class="card-header">
+          <h5 class="fw-bold mb-0">{{ 'account.accessData' | translate }}</h5>
+        </div>
+        <form #accountForm="ngForm" (ngSubmit)="saveProfile()">
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">{{ 'common.email' | translate }}<span class="text-danger ms-1">*</span></label>
+              <input
+                type="email"
+                name="email"
+                [(ngModel)]="form.email"
+                class="form-control"
+                autocomplete="email"
+                required
+                email
+              >
+            </div>
+
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="mb-3">
+                  <label class="form-label">{{ 'account.currentPassword' | translate }}</label>
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    [(ngModel)]="form.currentPassword"
+                    class="form-control"
+                    autocomplete="current-password"
+                    minlength="4"
+                    [required]="!!form.password"
+                    [placeholder]="'account.currentPasswordPlaceholder' | translate"
+                  >
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label">{{ 'account.newPassword' | translate }}</label>
+                  <input
+                    type="password"
+                    name="password"
+                    [(ngModel)]="form.password"
+                    class="form-control"
+                    autocomplete="new-password"
+                    minlength="4"
+                    [placeholder]="'account.passwordPlaceholder' | translate"
+                  >
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label">{{ 'account.confirmPassword' | translate }}</label>
+                  <input
+                    type="password"
+                  name="confirmPassword"
+                  [(ngModel)]="form.confirmPassword"
+                  class="form-control"
+                  autocomplete="new-password"
+                  minlength="4"
+                  [required]="!!form.password"
+                  [class.is-invalid]="passwordMismatch"
+                >
+                  @if(passwordMismatch){
+                  <div class="invalid-feedback d-block">{{ 'account.errors.passwordMismatch' | translate }}</div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer d-flex align-items-center justify-content-end gap-2">
+            <button type="button" class="btn btn-white border" [disabled]="isSaving" (click)="resetForm()">
+              {{ 'common.cancel' | translate }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="accountForm.invalid || passwordMismatch || isSaving">
+              {{ (isSaving ? 'common.saving' : 'common.save') | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="card account-card">
+        <div class="card-header">
+          <h5 class="fw-bold mb-0">{{ 'account.permissions' | translate }}</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">
+              <i class="ti ti-user text-dark"></i>
+            </span>
+            <div class="min-w-0">
+              <p class="text-dark fw-semibold mb-0 text-truncate">{{ currentUser?.email }}</p>
+              <span class="text-body fs-13">{{ 'account.currentSession' | translate }}</span>
+            </div>
+          </div>
+
+          <div class="account-info-row">
+            <span class="text-body fs-13">{{ 'common.role' | translate }}</span>
+            @if(currentUser?.role){
+            <span class="badge border px-2 py-1 fs-13 fw-medium" [ngClass]="roleBadgeClass(currentUser!.role)">
+              {{ currentUser?.role }}
+            </span>
+            }
+          </div>
+
+          <div class="account-info-row align-items-start">
+            <span class="text-body fs-13">{{ 'users.fields.centers' | translate }}</span>
+            <div class="d-flex flex-wrap justify-content-end gap-1 text-end">
+              @for(center of currentUser?.centers ?? []; track trackByCenterId($index, center)){
+              <span class="badge badge-soft-primary border border-primary text-primary fw-medium">{{ center.name }}</span>
+              } @empty {
+              <span class="text-body fs-13">{{ assignedCentersText }}</span>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+</div>

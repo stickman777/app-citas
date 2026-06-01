@@ -24,11 +24,23 @@ export interface LoginResponse {
   access_token: string;
 }
 
+export interface CurrentUserCenter {
+  id: number;
+  name: string;
+}
+
 export interface CurrentUser {
   id: number;
   email: string;
   role: 'ADMIN' | 'GESTOR' | 'CLIENT';
   centerIds: number[];
+  centers?: CurrentUserCenter[];
+}
+
+export interface UpdateCurrentUserPayload {
+  email?: string;
+  currentPassword?: string;
+  password?: string;
 }
 
 @Injectable({
@@ -65,6 +77,12 @@ export class AuthService {
 
   getCurrentUser(): Observable<CurrentUser> {
     return this.loadCurrentUser();
+  }
+
+  updateCurrentUser(payload: UpdateCurrentUserPayload): Observable<CurrentUser> {
+    return this.http
+      .patch<CurrentUser>(`${environment.apiUrl}/auth/me`, payload)
+      .pipe(tap(user => this.currentUserSubject.next(user)));
   }
 
   loadCurrentUser(forceRefresh = false): Observable<CurrentUser> {

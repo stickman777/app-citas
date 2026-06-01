@@ -82,6 +82,11 @@ export class UsersService implements OnModuleInit {
       id: user.id,
       email: user.email,
       role: user.role,
+      centers:
+        user.centers?.map((center) => ({
+          id: center.id,
+          name: center.name,
+        })) ?? [],
       centerIds: user.centers?.map((center) => center.id) ?? [],
     };
   }
@@ -157,6 +162,56 @@ export class UsersService implements OnModuleInit {
     const savedUser = await this.usersRepository.save(user);
 
     return this.removePassword(savedUser);
+  }
+
+  async updateProfile(
+    id: number,
+    userData: {
+      email?: string;
+      currentPassword?: string;
+      password?: string;
+    },
+  ) {
+    const user = await this.usersRepository.findOne({
+      relations: {
+        centers: true,
+      },
+      where: { id },
+    });
+
+    if (!user) throw new NotFoundException('No se ha encontrado el usuario');
+
+    if (userData.email && userData.email !== user.email) {
+      const existingUser = await this.usersRepository.findOne({
+        where: {
+          email: userData.email,
+        },
+      });
+
+      if (existingUser)
+        throw new BadRequestException('Ya existe un usuario con ese email');
+
+      user.email = userData.email;
+    }
+
+    if (userData.password) {
+      if (!userData.currentPassword)
+        throw new BadRequestException('Password actual requerido');
+
+      const passwordMatches = await bcrypt.compare(
+        userData.currentPassword,
+        user.password,
+      );
+
+      if (!passwordMatches)
+        throw new BadRequestException('Password actual incorrecto');
+
+      user.password = await bcrypt.hash(userData.password, 10);
+    }
+
+    await this.usersRepository.save(user);
+
+    return this.findProfile(id);
   }
 
   async remove(id: number, authUser?: AuthUser) {

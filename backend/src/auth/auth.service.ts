@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -35,5 +36,9 @@ export class AuthService {
 
   getCurrentUser(id: number) {
     return this.usersService.findProfile(id);
+  }
+
+  updateCurrentUser(id: number, profileData: UpdateProfileDto) {
+    return this.usersService.updateProfile(id, profileData);
   }
 }

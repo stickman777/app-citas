@@ -1,7 +1,16 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -16,5 +25,14 @@ export class AuthController {
   @Get('me')
   me(@Req() request: { user: { id: number } }) {
     return this.authService.getCurrentUser(request.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  updateMe(
+    @Req() request: { user: { id: number } },
+    @Body() profileData: UpdateProfileDto,
+  ) {
+    return this.authService.updateCurrentUser(request.user.id, profileData);
   }
 }
