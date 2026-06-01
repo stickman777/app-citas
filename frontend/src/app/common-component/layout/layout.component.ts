@@ -129,7 +129,7 @@ export class LayoutComponent {
     const layout = localStorage.getItem('layoutMode') || 'default';
     const layoutWidth = localStorage.getItem('layoutWidth') || 'fluid';
     const sidebarColor = localStorage.getItem('sidebarColor') || '1';
-    const themeColor = localStorage.getItem('themeColor') || '1';
+    const themeColor = localStorage.getItem('themeColor') || 'light';
     const primaryColor = localStorage.getItem('primaryColor') || 'primary';
     const topbarColor = localStorage.getItem('topbarColor') || 'white';
     const topbarColor2 = localStorage.getItem('topbarColor2') || '1';

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { NavigationStart, Router, Event as RouterEvent, RouterOutlet } from '@angular/router';
+import { SettingsService } from './shared/settings/settings.service';
 
 @Component({
   selector: 'app-root',
@@ -12,7 +13,9 @@ export class AppComponent {
   title = 'template';
   public base = '';
   public page = '';
-  constructor(private router: Router) {
+  constructor(private router: Router, private settings: SettingsService) {
+    this.settings.applyStoredThemeColor();
+
     this.router.events.subscribe((event: RouterEvent) => {
       if (event instanceof NavigationStart) {
         const URL = event.url.split('/');

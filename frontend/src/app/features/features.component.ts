@@ -152,8 +152,4 @@ ngOnInit():void{
     this.common.pageRoute.next(splitVal[2]);
     this.common.lastRoute.next(splitVal[3]);
   } 
-  ngOnDestroy(): void {
-    this.sideBar.changeThemeColor('light');
-  }
-
 }

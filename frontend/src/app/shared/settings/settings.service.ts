@@ -75,7 +75,19 @@ export class SettingsService {
     });
   }
 
+  public applyStoredThemeColor(): void {
+    const themeColor = this.getThemeColor(localStorage.getItem('themeColor'));
+    this.themeColor.next(themeColor);
+    this.renderer.setAttribute(
+      document.documentElement,
+      'data-bs-theme',
+      themeColor
+    );
+  }
 
+  private getThemeColor(themeColor: string | null): string {
+    return themeColor === 'dark' ? 'dark' : 'light';
+  }
 
 
 
@@ -117,12 +129,13 @@ export class SettingsService {
     );
   }
   public changeThemeColor(themeColor: string): void {
-    this.themeColor.next(themeColor);
-    localStorage.setItem('themeColor', themeColor);
+    const nextThemeColor = this.getThemeColor(themeColor);
+    this.themeColor.next(nextThemeColor);
+    localStorage.setItem('themeColor', nextThemeColor);
     this.renderer.setAttribute(
       document.documentElement,
       'data-bs-theme',
-      themeColor
+      nextThemeColor
     );
   }
 
