@@ -1,5 +1,12 @@
 import { Routes } from '@angular/router';
-import { authChildGuard, authGuard } from './core/auth/auth.guard';
+import {
+  adminAreaChildGuard,
+  adminAreaGuard,
+  authChildGuard,
+  authGuard,
+  clientAreaChildGuard,
+  clientAreaGuard,
+} from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -18,10 +25,34 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'client',
+    loadComponent: () => import('./features/client-portal/client-layout/client-layout.component').then(m => m.ClientLayoutComponent),
+    canActivate: [authGuard, clientAreaGuard],
+    canActivateChild: [authChildGuard, clientAreaChildGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/client-portal/client-home/client-home.component').then(m => m.ClientHomeComponent),
+      },
+      {
+        path: 'appointments',
+        loadComponent: () => import('./features/client-portal/client-appointments/client-appointments.component').then(m => m.ClientAppointmentsComponent),
+      },
+      {
+        path: 'book',
+        loadComponent: () => import('./features/client-portal/client-book/client-book.component').then(m => m.ClientBookComponent),
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/client-portal/client-profile/client-profile.component').then(m => m.ClientProfileComponent),
+      },
+    ],
+  },
+  {
     path: '',
     loadComponent: () => import('./features/features.component').then(m => m.FeaturesComponent),
-    canActivate: [authGuard],
-    canActivateChild: [authChildGuard],
+    canActivate: [authGuard, adminAreaGuard],
+    canActivateChild: [authChildGuard, adminAreaChildGuard],
     children: [
       {
         path: 'index',
