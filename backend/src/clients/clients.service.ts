@@ -49,6 +49,23 @@ export class ClientsService {
     });
   }
 
+  async findForUser(userId: number): Promise<Client> {
+    const client = await this.clientsRepository.findOne({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+
+    if (!client)
+      throw new NotFoundException(
+        'No se ha encontrado un cliente vinculado al usuario',
+      );
+
+    return client;
+  }
+
   // Crea un nuevo cliente
   async create(clientData: CreateClientDto, authUser?: AuthUser) {
     const { centerId, ...clientPayload } = clientData;

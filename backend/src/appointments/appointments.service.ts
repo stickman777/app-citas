@@ -65,6 +65,21 @@ export class AppointmentsService {
     });
   }
 
+  async findAllForClient(clientId: number) {
+    await this.completePastScheduledAppointments();
+
+    return this.appointmentsRepository.find({
+      where: {
+        client: {
+          id: clientId,
+        },
+      },
+      order: {
+        startDateTime: 'ASC',
+      },
+    });
+  }
+
   async findAvailableSlots(
     date: string,
     serviceId: number,

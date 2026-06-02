@@ -12,6 +12,7 @@ import { AvailabilityModule } from './availability/availability.module';
 import { CentersModule } from './centers/centers.module';
 import { SpecialistsModule } from './specialists/specialists.module';
 import { DemoSeedService } from './demo-seed.service';
+import { ClientPortalModule } from './client-portal/client-portal.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { DemoSeedService } from './demo-seed.service';
     AvailabilityModule,
     CentersModule,
     SpecialistsModule,
+    ClientPortalModule,
   ],
   controllers: [AppController],
   providers: [AppService, DemoSeedService],

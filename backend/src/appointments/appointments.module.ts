@@ -25,5 +25,6 @@ import { Specialist } from '../specialists/specialist.entity';
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
+  exports: [AppointmentsService],
 })
 export class AppointmentsModule {}
