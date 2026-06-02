@@ -30,7 +30,14 @@ export class LoginComponent {
     private i18nService: I18nService
   ) {
     if (this.authService.isAuthenticated()) {
-      void this.router.navigate([routes.index]);
+      void this.authService.loadCurrentUser().subscribe({
+        next: user => {
+          void this.router.navigate([this.getHomeRoute(user.role)]);
+        },
+        error: () => {
+          void this.router.navigate([routes.login]);
+        },
+      });
     }
   }
 
@@ -46,9 +53,9 @@ export class LoginComponent {
       .login({ email: this.email, password: this.password })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: () => {
+        next: user => {
           this.toastr.success(this.i18nService.translate('auth.success.login'));
-          void this.router.navigate([routes.index]);
+          void this.router.navigate([this.getHomeRoute(user.role)]);
         },
         error: () => {
           this.errorMessage = this.i18nService.translate(
@@ -56,5 +63,9 @@ export class LoginComponent {
           );
         },
       });
+  }
+
+  private getHomeRoute(role: 'ADMIN' | 'GESTOR' | 'CLIENT'): string {
+    return role === 'CLIENT' ? routes.clientHome : routes.index;
   }
 }
