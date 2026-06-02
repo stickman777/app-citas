@@ -12,6 +12,7 @@ import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { UpdateActiveCenterDto } from './dto/update-active-center.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { RegisterClientDto } from './dto/register-client.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -20,6 +21,11 @@ export class AuthController {
   @Post('login')
   login(@Body() loginData: LoginDto) {
     return this.authService.login(loginData.email, loginData.password);
+  }
+
+  @Post('register-client')
+  registerClient(@Body() registerData: RegisterClientDto) {
+    return this.authService.registerClient(registerData);
   }
 
   @UseGuards(JwtAuthGuard)
