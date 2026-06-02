@@ -34,8 +34,8 @@
     white-space: nowrap;
   }
 
-  .clients-table-center {
-    width: 18%;
+  .clients-table-account {
+    width: 190px;
   }
 
   .clients-table-status {
@@ -49,6 +49,13 @@
 
   .badge {
     max-width: 100%;
+    white-space: nowrap;
+  }
+
+  .clients-account-button {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 

@@ -79,8 +79,8 @@
           </th>
           <th class="d-none d-md-table-cell">{{ 'clients.fields.phone' | translate }}</th>
           <th class="d-none d-xl-table-cell">{{ 'common.email' | translate }}</th>
-          <th class="d-none d-lg-table-cell clients-table-center">{{ 'common.center' | translate }}</th>
           <th class="clients-table-status">{{ 'common.status' | translate }}</th>
+          <th class="d-none d-lg-table-cell clients-table-account">{{ 'clients.fields.mobileAccount' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -116,7 +116,6 @@
             </td>
             <td class="d-none d-md-table-cell clients-table-cell-text" [title]="client.phone">{{ client.phone }}</td>
             <td class="d-none d-xl-table-cell clients-table-cell-text" [title]="client.email || '-'">{{ client.email || '-' }}</td>
-            <td class="d-none d-lg-table-cell clients-table-center clients-table-cell-text" [title]="centerName(client)">{{ centerName(client) }}</td>
             <td>
               <button
                 type="button"
@@ -126,6 +125,22 @@
               >
                 {{ (client.active ? 'common.active' : 'common.inactive') | translate }}
               </button>
+            </td>
+            <td class="d-none d-lg-table-cell clients-table-account">
+              @if(client.user){
+              <span class="badge badge-soft-success border border-success text-success fw-medium" [title]="accountLabel(client)">
+                {{ accountLabel(client) }}
+              </span>
+              } @else {
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary clients-account-button"
+                (click)="openAccountModal(client)"
+                [disabled]="!client.center"
+              >
+                <i class="ti ti-user-plus me-1"></i>{{ 'clients.actions.createAccount' | translate }}
+              </button>
+              }
             </td>
           </tr>
           } @empty {
@@ -185,6 +200,70 @@
           <button type="button" class="btn btn-white border" (click)="closeFormModal()">{{ 'common.cancel' | translate }}</button>
           <button type="submit" class="btn btn-primary" [disabled]="clientForm.invalid || isSaving">
             {{ (isSaving ? 'common.saving' : 'common.save') | translate }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+}
+
+@if(isAccountModalOpen){
+<div class="modal fade show d-block client-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="text-dark modal-title fw-bold">{{ 'clients.account.create' | translate }}</h4>
+        <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.cancel' | translate" (click)="closeAccountModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <form #clientAccountForm="ngForm" (ngSubmit)="createClientAccount()">
+        <div class="modal-body">
+          <div class="alert alert-light border py-2 fs-13">
+            {{ 'clients.account.hint' | translate }}
+            <span class="fw-semibold text-dark">{{ clientToCreateAccount?.name }}</span>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ 'clients.fields.name' | translate }}<span class="text-danger ms-1">*</span></label>
+            <input type="text" name="accountName" [(ngModel)]="accountForm.name" class="form-control" autocomplete="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ 'common.email' | translate }}<span class="text-danger ms-1">*</span></label>
+            <input type="email" name="accountEmail" [(ngModel)]="accountForm.email" class="form-control" autocomplete="email" required email>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <div class="mb-3">
+                <label class="form-label">{{ 'common.password' | translate }}<span class="text-danger ms-1">*</span></label>
+                <input type="password" name="accountPassword" [(ngModel)]="accountForm.password" class="form-control" autocomplete="new-password" minlength="4" required>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="mb-3">
+                <label class="form-label">{{ 'users.fields.confirmPassword' | translate }}<span class="text-danger ms-1">*</span></label>
+                <input
+                  type="password"
+                  name="accountConfirmPassword"
+                  [(ngModel)]="accountForm.confirmPassword"
+                  class="form-control"
+                  autocomplete="new-password"
+                  minlength="4"
+                  required
+                  [class.is-invalid]="accountPasswordMismatch"
+                >
+                @if(accountPasswordMismatch){
+                <div class="invalid-feedback d-block">{{ 'clients.errors.passwordMismatch' | translate }}</div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer d-flex align-items-center gap-1">
+          <button type="button" class="btn btn-white border" (click)="closeAccountModal()">{{ 'common.cancel' | translate }}</button>
+          <button type="submit" class="btn btn-primary" [disabled]="clientAccountForm.invalid || accountPasswordMismatch || isCreatingAccount">
+            {{ (isCreatingAccount ? 'common.saving' : 'clients.actions.createAccount') | translate }}
           </button>
         </div>
       </form>

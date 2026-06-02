@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -9,9 +10,11 @@ import {
   AuthUser,
   CenterAccessService,
 } from '../centers/center-access.service';
-import { UserRole } from '../users/user.entity';
+import { User, UserRole } from '../users/user.entity';
+import { UsersService } from '../users/users.service';
 import { Client } from './client.entity';
 import { CreateClientDto } from './dto/create-client.dto';
+import { CreateClientUserAccountDto } from './dto/create-client-user-account.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
 @Injectable()
@@ -22,6 +25,7 @@ export class ClientsService {
     private clientsRepository: Repository<Client>,
 
     private readonly centerAccessService: CenterAccessService,
+    private readonly usersService: UsersService,
   ) {}
 
   // Obtiene todos los clientes, incluyendo los inactivos
@@ -30,9 +34,14 @@ export class ClientsService {
 
     if (centerIds.length === 0) return [];
 
-    return this.clientsRepository.find({
+    const clients = await this.clientsRepository.find({
+      relations: {
+        user: true,
+      },
       where: this.getCenterWhere(centerIds),
     });
+
+    return clients.map((client) => this.toClientResponse(client));
   }
 
   // Obtiene todos los clientes activos
@@ -41,12 +50,17 @@ export class ClientsService {
 
     if (centerIds.length === 0) return [];
 
-    return this.clientsRepository.find({
+    const clients = await this.clientsRepository.find({
+      relations: {
+        user: true,
+      },
       where: {
         active: true,
         ...this.getCenterWhere(centerIds),
       },
     });
+
+    return clients.map((client) => this.toClientResponse(client));
   }
 
   async findForUser(userId: number): Promise<Client> {
@@ -79,7 +93,9 @@ export class ClientsService {
       center,
     });
 
-    return this.clientsRepository.save(client);
+    const savedClient = await this.clientsRepository.save(client);
+
+    return this.toClientResponse(savedClient);
   }
 
   // Actualiza un cliente existente por su ID
@@ -95,7 +111,44 @@ export class ClientsService {
       client.center = center;
     }
 
-    return this.clientsRepository.save(client);
+    const savedClient = await this.clientsRepository.save(client);
+
+    return this.toClientResponse(savedClient);
+  }
+
+  async createUserAccount(
+    id: number,
+    accountData: CreateClientUserAccountDto,
+    authUser?: AuthUser,
+  ) {
+    const client = await this.findOne(id, authUser);
+
+    if (client.user)
+      throw new BadRequestException('El cliente ya tiene una cuenta vinculada');
+
+    if (!client.center?.id)
+      throw new BadRequestException(
+        'El cliente debe tener un centro asignado',
+      );
+
+    const user = await this.usersService.create(
+      {
+        email: accountData.email,
+        name: accountData.name,
+        password: accountData.password,
+        role: UserRole.CLIENT,
+        centerIds: [client.center.id],
+      },
+      authUser,
+    );
+
+    client.user = {
+      id: user.id,
+    } as User;
+
+    await this.clientsRepository.save(client);
+
+    return this.toClientResponse(await this.findOne(id, authUser));
   }
 
   private getCenterWhere(centerIds: number[]) {
@@ -112,7 +165,9 @@ export class ClientsService {
 
     client.active = true;
 
-    return this.clientsRepository.save(client);
+    const savedClient = await this.clientsRepository.save(client);
+
+    return this.toClientResponse(savedClient);
   }
 
   // Desactiva un cliente por su ID (lo marca como inactivo)
@@ -121,11 +176,16 @@ export class ClientsService {
 
     client.active = false;
 
-    return this.clientsRepository.save(client);
+    const savedClient = await this.clientsRepository.save(client);
+
+    return this.toClientResponse(savedClient);
   }
 
   private async findOne(id: number, authUser?: AuthUser): Promise<Client> {
     const client = await this.clientsRepository.findOne({
+      relations: {
+        user: true,
+      },
       where: { id },
     });
 
@@ -160,5 +220,18 @@ export class ClientsService {
       client.center.id,
       authUser,
     );
+  }
+
+  private toClientResponse(client: Client) {
+    return {
+      ...client,
+      user: client.user
+        ? {
+            id: client.user.id,
+            email: client.user.email,
+            name: client.user.name,
+          }
+        : null,
+    };
   }
 }

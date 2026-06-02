@@ -8,6 +8,7 @@ import { Center } from '../centers/centers.service';
 export interface LinkedClientUser {
   id: number;
   email: string;
+  name?: string;
 }
 
 export interface Client {
@@ -31,6 +32,12 @@ export interface ClientPayload {
   centerId?: number | null;
 }
 
+export interface ClientUserAccountPayload {
+  email: string;
+  name: string;
+  password: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -51,6 +58,13 @@ export class ClientsService {
 
   updateClient(id: number, payload: ClientPayload): Observable<Client> {
     return this.http.patch<Client>(`${this.apiUrl}/${id}`, payload);
+  }
+
+  createClientUserAccount(
+    id: number,
+    payload: ClientUserAccountPayload,
+  ): Observable<Client> {
+    return this.http.post<Client>(`${this.apiUrl}/${id}/user-account`, payload);
   }
 
   activateClient(id: number): Observable<Client> {

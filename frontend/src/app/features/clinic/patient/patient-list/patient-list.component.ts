@@ -27,6 +27,13 @@ interface ClientForm {
   centerId: number | null;
 }
 
+interface ClientAccountForm {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
 @Component({
   selector: 'app-patient-list',
   templateUrl: './patient-list.component.html',
@@ -46,13 +53,17 @@ export class PatientListComponent implements OnInit, OnDestroy {
   public successMessage = '';
   public isLoading = false;
   public isSaving = false;
+  public isCreatingAccount = false;
   public isChangingStatus = false;
   public isFormModalOpen = false;
+  public isAccountModalOpen = false;
   public isStatusModalOpen = false;
   public editingClient: Client | null = null;
+  public clientToCreateAccount: Client | null = null;
   public clientToChangeStatus: Client | null = null;
   public selectedStatus = true;
   public form: ClientForm = this.getEmptyForm();
+  public accountForm: ClientAccountForm = this.getEmptyAccountForm();
   private activeCenterSubscription?: Subscription;
   private currentUserSubscription?: Subscription;
   private loadedCenterId?: number | null;
@@ -165,6 +176,26 @@ export class PatientListComponent implements OnInit, OnDestroy {
     this.isStatusModalOpen = true;
   }
 
+  public openAccountModal(client: Client): void {
+    if (client.user) return;
+
+    this.clearMessages();
+    this.clientToCreateAccount = client;
+    this.accountForm = {
+      name: client.name,
+      email: client.email ?? '',
+      password: '',
+      confirmPassword: '',
+    };
+    this.isAccountModalOpen = true;
+  }
+
+  public closeAccountModal(): void {
+    if (this.isCreatingAccount) return;
+
+    this.isAccountModalOpen = false;
+  }
+
   public closeStatusModal(): void {
     if (this.isChangingStatus) return;
 
@@ -174,7 +205,40 @@ export class PatientListComponent implements OnInit, OnDestroy {
   @HostListener('document:keydown.escape')
   public closeOpenModal(): void {
     if (this.isFormModalOpen) this.closeFormModal();
+    if (this.isAccountModalOpen) this.closeAccountModal();
     if (this.isStatusModalOpen) this.closeStatusModal();
+  }
+
+  public createClientAccount(): void {
+    if (!this.clientToCreateAccount) return;
+
+    if (this.accountPasswordMismatch) {
+      this.errorMessage = this.translate('clients.errors.passwordMismatch');
+      return;
+    }
+
+    this.isCreatingAccount = true;
+    this.clearMessages();
+
+    this.clientsService
+      .createClientUserAccount(this.clientToCreateAccount.id, {
+        name: this.accountForm.name.trim(),
+        email: this.accountForm.email.trim(),
+        password: this.accountForm.password,
+      })
+      .subscribe({
+        next: () => {
+          this.successMessage = this.translate('clients.success.accountCreated');
+          this.isCreatingAccount = false;
+          this.isAccountModalOpen = false;
+          this.clientToCreateAccount = null;
+          this.loadClients(false);
+        },
+        error: () => {
+          this.errorMessage = this.translate('clients.errors.account');
+          this.isCreatingAccount = false;
+        },
+      });
   }
 
   public changeClientStatus(): void {
@@ -266,8 +330,15 @@ export class PatientListComponent implements OnInit, OnDestroy {
     return center.id;
   }
 
-  public centerName(client: Client): string {
-    return client.center?.name ?? this.translate('centers.none');
+  public accountLabel(client: Client): string {
+    return client.user?.email ?? this.translate('clients.pending');
+  }
+
+  public get accountPasswordMismatch(): boolean {
+    return (
+      !!this.accountForm.password &&
+      this.accountForm.password !== this.accountForm.confirmPassword
+    );
   }
 
   private getPayload(): ClientPayload {
@@ -292,6 +363,15 @@ export class PatientListComponent implements OnInit, OnDestroy {
       notes: '',
       priority: 0,
       centerId: this.activeCenter?.id ?? null,
+    };
+  }
+
+  private getEmptyAccountForm(): ClientAccountForm {
+    return {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
     };
   }
 

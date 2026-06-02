@@ -17,6 +17,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/user.entity';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
+import { CreateClientUserAccountDto } from './dto/create-client-user-account.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -66,6 +67,19 @@ export class ClientsController {
     @Body() clientData: UpdateClientDto,
   ) {
     return this.clientsService.update(id, clientData, request.user);
+  }
+
+  @Post(':id/user-account')
+  createUserAccount(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+    @Body() accountData: CreateClientUserAccountDto,
+  ) {
+    return this.clientsService.createUserAccount(
+      id,
+      accountData,
+      request.user,
+    );
   }
 
   // Endpoint para activar un cliente por su ID
