@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsArray,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   Min,
@@ -14,6 +15,11 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  name?: string;
 
   @IsOptional()
   @IsString()

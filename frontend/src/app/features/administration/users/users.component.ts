@@ -17,6 +17,7 @@ import { AuthService, CurrentUser } from '../../../core/auth/auth.service';
 
 interface UserForm {
   email: string;
+  name: string;
   password: string;
   role: UserRole;
   centerIds: number[];
@@ -96,6 +97,7 @@ export class UsersComponent implements OnDestroy {
     this.editingUser = user;
     this.form = {
       email: user.email,
+      name: user.name,
       password: '',
       role: user.role,
       centerIds: user.centers?.map(center => center.id) ?? [],
@@ -177,7 +179,7 @@ export class UsersComponent implements OnDestroy {
 
     this.filteredUsers = search
       ? this.users.filter(user =>
-          `${user.id} ${user.email} ${user.role} ${this.centerNames(user)}`
+          `${user.id} ${user.name} ${user.email} ${user.role} ${this.centerNames(user)}`
             .toLowerCase()
             .includes(search)
         )
@@ -211,6 +213,8 @@ export class UsersComponent implements OnDestroy {
   }
 
   public centerNames(user: User): string {
+    if (user.role === 'ADMIN') return this.translate('users.centers.all');
+
     return user.centers?.length
       ? user.centers.map(center => center.name).join(', ')
       : this.translate('centers.none');
@@ -254,6 +258,7 @@ export class UsersComponent implements OnDestroy {
   private getCreatePayload(): CreateUserPayload {
     return {
       email: this.form.email.trim(),
+      name: this.form.name.trim(),
       password: this.form.password,
       role: this.form.role,
       centerIds: this.form.centerIds,
@@ -263,6 +268,7 @@ export class UsersComponent implements OnDestroy {
   private getUpdatePayload(): UpdateUserPayload {
     const payload: UpdateUserPayload = {
       email: this.form.email.trim(),
+      name: this.form.name.trim(),
       role: this.form.role,
       centerIds: this.form.centerIds,
     };
@@ -277,6 +283,7 @@ export class UsersComponent implements OnDestroy {
   private getEmptyForm(): UserForm {
     return {
       email: '',
+      name: '',
       password: '',
       role: 'CLIENT',
       centerIds: [],

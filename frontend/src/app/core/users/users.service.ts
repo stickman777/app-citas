@@ -10,12 +10,14 @@ export type UserRole = 'ADMIN' | 'GESTOR' | 'CLIENT';
 export interface User {
   id: number;
   email: string;
+  name: string;
   role: UserRole;
   centers?: Center[];
 }
 
 export interface CreateUserPayload {
   email: string;
+  name: string;
   password: string;
   role: UserRole;
   centerIds?: number[];

@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { Appointment, AppointmentStatus } from './appointments/appointment.entity';
 import { Availability } from './availability/availability.entity';
 import { Center } from './centers/center.entity';
@@ -10,6 +10,11 @@ import { Specialist } from './specialists/specialist.entity';
 @Injectable()
 export class DemoSeedService implements OnApplicationBootstrap {
   private readonly logger = new Logger(DemoSeedService.name);
+  private readonly seedCenters = [
+    { name: 'Centro Demo Madrid', city: 'Madrid' },
+    { name: 'Centro Demo Barcelona', city: 'Barcelona' },
+    { name: 'Centro Demo Valencia', city: 'Valencia' },
+  ];
 
   constructor(private readonly dataSource: DataSource) {}
 
@@ -23,34 +28,22 @@ export class DemoSeedService implements OnApplicationBootstrap {
     const centerRepository = this.dataSource.getRepository(Center);
     const existingCenters = await centerRepository.count();
 
-    if (existingCenters > 0) return;
+    if (existingCenters > 0) {
+      await this.ensureSeedCenters();
+      return;
+    }
 
     await this.dataSource.transaction(async (manager) => {
-      const center = await manager.save(
+      const centers = await manager.save(
         Center,
-        manager.create(Center, {
-          name: 'Centro Demo Madrid',
-          city: 'Madrid',
-        }),
+        this.seedCenters.map((center) => manager.create(Center, center)),
       );
 
-      await manager.save(
-        Availability,
-        [1, 2, 3, 4, 5].flatMap((dayOfWeek) => [
-          manager.create(Availability, {
-            dayOfWeek,
-            startTime: '09:00',
-            endTime: '14:00',
-            center,
-          }),
-          manager.create(Availability, {
-            dayOfWeek,
-            startTime: '16:00',
-            endTime: '20:00',
-            center,
-          }),
-        ]),
-      );
+      for (const center of centers) {
+        await this.createDefaultAvailability(manager, center);
+      }
+
+      const [center] = centers;
 
       const [generalSpecialist, physiotherapist] = await manager.save(
         Specialist,
@@ -149,6 +142,51 @@ export class DemoSeedService implements OnApplicationBootstrap {
     });
 
     this.logger.log('Seed demo creado correctamente');
+  }
+
+  private async ensureSeedCenters() {
+    const centerRepository = this.dataSource.getRepository(Center);
+
+    for (const seedCenter of this.seedCenters) {
+      const existingCenter = await centerRepository.findOne({
+        where: {
+          name: seedCenter.name,
+        },
+      });
+
+      if (existingCenter) continue;
+
+      const center = await centerRepository.save(
+        centerRepository.create(seedCenter),
+      );
+
+      await this.dataSource.transaction((manager) =>
+        this.createDefaultAvailability(manager, center),
+      );
+    }
+  }
+
+  private async createDefaultAvailability(
+    manager: EntityManager,
+    center: Center,
+  ) {
+    await manager.save(
+      Availability,
+      [1, 2, 3, 4, 5].flatMap((dayOfWeek) => [
+        manager.create(Availability, {
+          dayOfWeek,
+          startTime: '09:00',
+          endTime: '14:00',
+          center,
+        }),
+        manager.create(Availability, {
+          dayOfWeek,
+          startTime: '16:00',
+          endTime: '20:00',
+          center,
+        }),
+      ]),
+    );
   }
 
   private nextBusinessDayAt(hours: number, minutes: number): Date {

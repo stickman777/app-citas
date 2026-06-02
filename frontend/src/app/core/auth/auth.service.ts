@@ -32,6 +32,7 @@ export interface CurrentUserCenter {
 export interface CurrentUser {
   id: number;
   email: string;
+  name: string;
   role: 'ADMIN' | 'GESTOR' | 'CLIENT';
   centerIds: number[];
   centers?: CurrentUserCenter[];

@@ -7,12 +7,13 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { ILike, In, Not, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import {
   AuthUser,
   CenterAccessService,
 } from '../centers/center-access.service';
+import { Center } from '../centers/center.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserRole } from './user.entity';
@@ -25,11 +26,15 @@ export class UsersService implements OnModuleInit {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
 
+    @InjectRepository(Center)
+    private centersRepository: Repository<Center>,
+
     private readonly centerAccessService: CenterAccessService,
   ) {}
 
   async onModuleInit() {
     await this.ensureDefaultAdmin();
+    await this.ensureExistingUserNames();
   }
 
   async findAll(authUser?: AuthUser) {
@@ -68,6 +73,23 @@ export class UsersService implements OnModuleInit {
     });
   }
 
+  async findForLogin(identifier: string) {
+    const normalizedIdentifier = identifier.trim();
+
+    if (!normalizedIdentifier) return null;
+
+    const user = await this.findByEmail(normalizedIdentifier);
+
+    if (user) return user;
+
+    return this.usersRepository.findOne({
+      where: {
+        role: UserRole.ADMIN,
+        name: ILike(normalizedIdentifier),
+      },
+    });
+  }
+
   async findProfile(id: number) {
     const user = await this.usersRepository.findOne({
       relations: {
@@ -81,6 +103,7 @@ export class UsersService implements OnModuleInit {
     return {
       id: user.id,
       email: user.email,
+      name: user.name,
       role: user.role,
       centers:
         user.centers?.map((center) => ({
@@ -93,6 +116,7 @@ export class UsersService implements OnModuleInit {
 
   async create(userData: CreateUserDto, authUser?: AuthUser) {
     this.validateRoleChange(authUser, userData.role);
+    await this.validateAdminAlias(userData.role, userData.name);
 
     if (!userData.password) throw new BadRequestException('Password requerido');
 
@@ -105,13 +129,18 @@ export class UsersService implements OnModuleInit {
     if (existingUser)
       throw new BadRequestException('Ya existe un usuario con ese email');
 
-    const { centerIds, ...userPayload } = userData;
+    const { centerIds: requestedCenterIds, ...userPayload } = userData;
+    const centerIds = await this.resolveCenterIdsForRole(
+      userData.role,
+      requestedCenterIds,
+      authUser,
+    );
     this.validateManagedCenterSelection(authUser, centerIds ?? []);
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     const centers = await this.resolveCentersForUser(authUser, centerIds);
 
     const user = this.usersRepository.create({
-      ...userPayload,
+      ...this.normalizeUserPayload(userPayload),
       password: hashedPassword,
       centers,
     });
@@ -128,6 +157,10 @@ export class UsersService implements OnModuleInit {
 
     if (userData.password)
       userData.password = await bcrypt.hash(userData.password, 10);
+
+    const nextRole = userData.role ?? user.role;
+    const nextName = userData.name ?? user.name;
+    await this.validateAdminAlias(nextRole, nextName, user.id);
 
     if (
       user.role === UserRole.ADMIN &&
@@ -149,11 +182,17 @@ export class UsersService implements OnModuleInit {
 
     this.validateRoleChange(authUser, userData.role);
 
-    const { centerIds, ...userPayload } = userData;
+    const { centerIds: requestedCenterIds, ...userPayload } = userData;
+    const centerIds = await this.resolveCenterIdsForRole(
+      nextRole,
+      requestedCenterIds,
+      authUser,
+      user,
+    );
     this.validateManagedCenterSelection(authUser, centerIds);
     const centers = await this.resolveCentersForUser(authUser, centerIds);
 
-    Object.assign(user, userPayload);
+    Object.assign(user, this.normalizeUserPayload(userPayload));
 
     if (centerIds !== undefined) {
       user.centers = centers;
@@ -279,9 +318,95 @@ export class UsersService implements OnModuleInit {
     return this.centerAccessService.findCentersByIds(uniqueCenterIds);
   }
 
+  private async resolveCenterIdsForRole(
+    role: UserRole,
+    centerIds: number[] | undefined,
+    authUser?: AuthUser,
+    currentUser?: User,
+  ): Promise<number[] | undefined> {
+    if (role === UserRole.ADMIN) return [];
+
+    const hasAssignedCenters = (currentUser?.centers?.length ?? 0) > 0;
+
+    if (
+      role === UserRole.GESTOR &&
+      ((centerIds !== undefined && centerIds.length === 0) ||
+        (centerIds === undefined && !hasAssignedCenters))
+    ) {
+      return [await this.getDefaultAssignableCenterId(authUser)];
+    }
+
+    return centerIds;
+  }
+
+  private async getDefaultAssignableCenterId(authUser?: AuthUser) {
+    if (authUser?.role === UserRole.GESTOR) {
+      const managedCenterIds =
+        await this.centerAccessService.getManagedCenterIds(authUser);
+
+      if (managedCenterIds.length === 0)
+        throw new BadRequestException(
+          'No hay centros disponibles para asignar al gestor',
+        );
+
+      return managedCenterIds[0];
+    }
+
+    const center = await this.centersRepository.findOne({
+      select: {
+        id: true,
+      },
+      where: {
+        active: true,
+      },
+      order: {
+        name: 'ASC',
+      },
+    });
+
+    if (!center)
+      throw new BadRequestException(
+        'No hay centros disponibles para asignar al gestor',
+      );
+
+    return center.id;
+  }
+
+  private normalizeUserPayload<T extends Partial<CreateUserDto | UpdateUserDto>>(
+    userData: T,
+  ): T {
+    if (userData.name !== undefined && !userData.name.trim())
+      throw new BadRequestException('Nombre requerido');
+
+    return {
+      ...userData,
+      ...(userData.name !== undefined ? { name: userData.name.trim() } : {}),
+      ...(userData.email !== undefined ? { email: userData.email.trim() } : {}),
+    };
+  }
+
   private validateRoleChange(authUser: AuthUser | undefined, role?: UserRole) {
     if (authUser?.role !== UserRole.ADMIN && role === UserRole.ADMIN)
       throw new ForbiddenException('Solo un administrador puede asignar ADMIN');
+  }
+
+  private async validateAdminAlias(
+    role: UserRole,
+    name: string,
+    excludeUserId?: number,
+  ) {
+    if (role !== UserRole.ADMIN) return;
+
+    const admin = await this.usersRepository.findOne({
+      where: {
+        role: UserRole.ADMIN,
+        name: ILike(name.trim()),
+        ...(excludeUserId ? { id: Not(excludeUserId) } : {}),
+      },
+    });
+
+    if (admin)
+      throw new BadRequestException('Ya existe un administrador con ese alias');
   }
 
   private validateManagedCenterSelection(
@@ -311,7 +436,18 @@ export class UsersService implements OnModuleInit {
       },
     });
 
-    if (existingAdmin) return;
+    if (existingAdmin) {
+      if (!existingAdmin.name.trim()) {
+        existingAdmin.name =
+          process.env.ADMIN_ALIAS?.trim() ||
+          existingAdmin.email.split('@')[0] ||
+          'admin';
+        existingAdmin.centers = [];
+        await this.usersRepository.save(existingAdmin);
+      }
+
+      return;
+    }
 
     const email = process.env.ADMIN_EMAIL?.trim();
     const password = process.env.ADMIN_PASSWORD?.trim();
@@ -338,6 +474,7 @@ export class UsersService implements OnModuleInit {
 
     const admin = this.usersRepository.create({
       email,
+      name: process.env.ADMIN_ALIAS?.trim() || 'admin',
       password: await bcrypt.hash(password, 10),
       role: UserRole.ADMIN,
       centers: [],
@@ -345,5 +482,18 @@ export class UsersService implements OnModuleInit {
 
     await this.usersRepository.save(admin);
     this.logger.log(`Admin inicial creado: ${email}`);
+  }
+
+  private async ensureExistingUserNames() {
+    const users = await this.usersRepository.find();
+    const usersWithoutName = users.filter((user) => !user.name.trim());
+
+    if (usersWithoutName.length === 0) return;
+
+    for (const user of usersWithoutName) {
+      user.name = user.email.split('@')[0] || `usuario-${user.id}`;
+    }
+
+    await this.usersRepository.save(usersWithoutName);
   }
 }

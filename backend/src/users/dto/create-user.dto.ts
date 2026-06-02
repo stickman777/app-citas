@@ -3,6 +3,7 @@ import {
   IsEmail,
   IsEnum,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   Min,
@@ -13,6 +14,10 @@ import { UserRole } from '../user.entity';
 export class CreateUserDto {
   @IsEmail()
   email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
   @IsString()
   @MinLength(4)

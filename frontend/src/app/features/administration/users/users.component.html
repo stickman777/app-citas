@@ -62,7 +62,7 @@
           }
           <th>
             <span class="d-md-none">{{ 'common.listing' | translate }}</span>
-            <span class="d-none d-md-inline">{{ 'common.email' | translate }}</span>
+            <span class="d-none d-md-inline">{{ 'users.fields.name' | translate }}</span>
           </th>
           <th>{{ 'common.role' | translate }}</th>
           <th>{{ 'common.center' | translate }}</th>
@@ -85,7 +85,10 @@
                 <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">
                   <i class="ti ti-user text-dark"></i>
                 </span>
-                <span class="text-dark fw-semibold">{{ user.email }}</span>
+                <span class="min-w-0">
+                  <span class="text-dark fw-semibold d-block">{{ user.name }}</span>
+                  <span class="text-body fs-13 d-block text-truncate">{{ user.email }}</span>
+                </span>
               </div>
             </td>
             <td>
@@ -128,6 +131,17 @@
       </div>
       <form #userForm="ngForm" (ngSubmit)="saveUser()">
         <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">{{ 'users.fields.name' | translate }}<span class="text-danger ms-1">*</span></label>
+            <input
+              type="text"
+              name="name"
+              [(ngModel)]="form.name"
+              class="form-control"
+              autocomplete="name"
+              required
+            >
+          </div>
           <div class="mb-3">
             <label class="form-label">{{ 'common.email' | translate }}<span class="text-danger ms-1">*</span></label>
             <input
