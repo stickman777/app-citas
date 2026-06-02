@@ -18,6 +18,20 @@ interface SeedCenter {
   name: string;
   city: string;
   logoUrl: string;
+  availabilitySlots: SeedAvailabilitySlot[];
+}
+
+interface SeedAvailabilitySlot {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+}
+
+interface SeedManager {
+  centerKey: string;
+  name: string;
+  email: string;
+  password: string;
 }
 
 interface SeedSpecialist {
@@ -71,20 +85,38 @@ export class DemoSeedService implements OnApplicationBootstrap {
       name: 'Clínica Norte Salud',
       city: 'Madrid',
       logoUrl: 'assets/img/icons/clinic-01.svg',
+      availabilitySlots: [
+        ...this.buildWeekdayAvailabilitySlots('08:30', '14:00'),
+        ...this.buildWeekdayAvailabilitySlots('16:00', '20:00'),
+        { dayOfWeek: 6, startTime: '09:00', endTime: '13:00' },
+      ],
     },
     {
       key: 'mediterraneo',
       name: 'Centro Médico Mediterráneo',
       city: 'Valencia',
       logoUrl: 'assets/img/icons/clinic-04.svg',
+      availabilitySlots: [
+        ...[1, 2, 3, 4].flatMap((dayOfWeek) => [
+          { dayOfWeek, startTime: '09:00', endTime: '14:00' },
+          { dayOfWeek, startTime: '15:30', endTime: '20:30' },
+        ]),
+        { dayOfWeek: 5, startTime: '09:00', endTime: '15:00' },
+      ],
     },
     {
       key: 'sierra',
       name: 'Instituto Salud Sierra',
       city: 'Granada',
       logoUrl: 'assets/img/icons/clinic-07.svg',
+      availabilitySlots: [
+        ...this.buildWeekdayAvailabilitySlots('08:00', '15:00'),
+        { dayOfWeek: 2, startTime: '16:30', endTime: '19:30' },
+        { dayOfWeek: 4, startTime: '16:30', endTime: '19:30' },
+      ],
     },
   ];
+  private readonly seedManagers = this.buildSeedManagers();
   private readonly seedSpecialists = this.buildSeedSpecialists();
   private readonly seedServices = this.buildSeedServices();
   private readonly seedClients = this.buildSeedClients();
@@ -176,6 +208,9 @@ export class DemoSeedService implements OnApplicationBootstrap {
 
   private async createDemoData(manager: EntityManager) {
     const centers = await this.createCenters(manager);
+
+    await this.createManagers(manager, centers);
+
     const specialists = await this.createSpecialists(manager, centers);
     const services = await this.createServices(manager, centers, specialists);
     const clients = await this.createClients(manager, centers);
@@ -203,11 +238,32 @@ export class DemoSeedService implements OnApplicationBootstrap {
         }),
       );
 
-      await this.createDefaultAvailability(manager, center);
+      await this.createDefaultAvailability(manager, center, seedCenter);
       centers.set(seedCenter.key, center);
     }
 
     return centers;
+  }
+
+  private async createManagers(
+    manager: EntityManager,
+    centers: Map<string, Center>,
+  ) {
+    for (const seedManager of this.seedManagers) {
+      const center = this.getSeedValue(centers, seedManager.centerKey);
+
+      await manager.save(
+        User,
+        manager.create(User, {
+          email: seedManager.email,
+          name: seedManager.name,
+          password: await bcrypt.hash(seedManager.password, 10),
+          role: UserRole.GESTOR,
+          centers: [center],
+          activeCenter: center,
+        }),
+      );
+    }
   }
 
   private async createSpecialists(
@@ -349,23 +405,66 @@ export class DemoSeedService implements OnApplicationBootstrap {
   private async createDefaultAvailability(
     manager: EntityManager,
     center: Center,
+    seedCenter: SeedCenter,
   ) {
     await manager.save(
       Availability,
-      [1, 2, 3, 4, 5].flatMap((dayOfWeek) => [
+      seedCenter.availabilitySlots.map((slot) =>
         manager.create(Availability, {
-          dayOfWeek,
-          startTime: '09:00',
-          endTime: '14:00',
+          dayOfWeek: slot.dayOfWeek,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
           center,
         }),
-        manager.create(Availability, {
-          dayOfWeek,
-          startTime: '16:00',
-          endTime: '20:00',
-          center,
-        }),
-      ]),
+      ),
+    );
+  }
+
+  private buildSeedManagers(): SeedManager[] {
+    const managersByCenter: Record<string, Omit<SeedManager, 'centerKey'>[]> = {
+      norte: [
+        {
+          name: 'Marta Delgado',
+          email: 'marta.delgado@nortesalud.local',
+          password: 'gestor1234',
+        },
+        {
+          name: 'Sergio Molina',
+          email: 'sergio.molina@nortesalud.local',
+          password: 'gestor1234',
+        },
+      ],
+      mediterraneo: [
+        {
+          name: 'Lucia Benitez',
+          email: 'lucia.benitez@mediterraneo.local',
+          password: 'gestor1234',
+        },
+        {
+          name: 'Andres Vidal',
+          email: 'andres.vidal@mediterraneo.local',
+          password: 'gestor1234',
+        },
+      ],
+      sierra: [
+        {
+          name: 'Elena Castro',
+          email: 'elena.castro@saludsierra.local',
+          password: 'gestor1234',
+        },
+        {
+          name: 'Ramon Ortega',
+          email: 'ramon.ortega@saludsierra.local',
+          password: 'gestor1234',
+        },
+      ],
+    };
+
+    return this.seedCenters.flatMap((center) =>
+      managersByCenter[center.key].map((manager) => ({
+        ...manager,
+        centerKey: center.key,
+      })),
     );
   }
 
@@ -698,21 +797,94 @@ export class DemoSeedService implements OnApplicationBootstrap {
       for (let index = 0; index < appointmentCount; index += 1) {
         const service =
           centerServices[(clientIndex + index) % centerServices.length];
+        const outsideAvailability = appointments.length % 4 === 3;
+        const appointmentTime = outsideAvailability
+          ? this.pickOutsideAvailabilityTime(client.centerKey, appointments.length)
+          : this.pickInsideAvailabilityTime(
+              client.centerKey,
+              index % 2 === 0 ? index + 1 : -(index + 1),
+              service.durationMinutes,
+              clientIndex + index,
+            );
+
         appointments.push({
           clientKey: client.key,
           serviceKey: service.key,
           specialistKey: service.specialistKey,
           status: statuses[(clientIndex + index) % statuses.length],
           dayOffset: index % 2 === 0 ? index + 1 : -(index + 1),
-          hour: 9 + ((clientIndex + index) % 8),
-          minutes: index % 2 === 0 ? 0 : 30,
-          outsideAvailability:
-            index === appointmentCount - 1 && appointmentCount === 5,
+          hour: appointmentTime.hour,
+          minutes: appointmentTime.minutes,
+          outsideAvailability,
         });
       }
     });
 
     return appointments;
+  }
+
+  private buildWeekdayAvailabilitySlots(
+    startTime: string,
+    endTime: string,
+  ): SeedAvailabilitySlot[] {
+    return [1, 2, 3, 4, 5].map((dayOfWeek) => ({
+      dayOfWeek,
+      startTime,
+      endTime,
+    }));
+  }
+
+  private pickInsideAvailabilityTime(
+    centerKey: string,
+    dayOffset: number,
+    durationMinutes: number,
+    seedIndex: number,
+  ) {
+    const dayOfWeek = this.businessDayAt(dayOffset, 12, 0).getDay();
+    const slots = this.getSeedCenter(centerKey).availabilitySlots.filter(
+      (slot) => slot.dayOfWeek === dayOfWeek,
+    );
+    const slot = slots[seedIndex % slots.length];
+    const slotStartMinutes = this.parseTimeToMinutes(slot.startTime);
+    const latestStartMinutes =
+      this.parseTimeToMinutes(slot.endTime) - durationMinutes;
+    const availableRange = Math.max(latestStartMinutes - slotStartMinutes, 0);
+    const offset = Math.min(60 + (seedIndex % 5) * 30, availableRange);
+
+    return this.toTimeParts(slotStartMinutes + offset);
+  }
+
+  private pickOutsideAvailabilityTime(centerKey: string, seedIndex: number) {
+    const timesByCenter: Record<string, { hour: number; minutes: number }[]> = {
+      norte: [
+        { hour: 7, minutes: 45 },
+        { hour: 20, minutes: 30 },
+      ],
+      mediterraneo: [
+        { hour: 8, minutes: 15 },
+        { hour: 21, minutes: 0 },
+      ],
+      sierra: [
+        { hour: 7, minutes: 30 },
+        { hour: 19, minutes: 45 },
+      ],
+    };
+    const times = timesByCenter[centerKey] ?? [{ hour: 21, minutes: 0 }];
+
+    return times[seedIndex % times.length];
+  }
+
+  private parseTimeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+
+    return hours * 60 + minutes;
+  }
+
+  private toTimeParts(totalMinutes: number) {
+    return {
+      hour: Math.floor(totalMinutes / 60),
+      minutes: totalMinutes % 60,
+    };
   }
 
   private businessDayAt(dayOffset: number, hours: number, minutes: number) {
@@ -737,6 +909,16 @@ export class DemoSeedService implements OnApplicationBootstrap {
     if (!service) throw new Error(`Servicio seed no encontrado: ${serviceKey}`);
 
     return service.centerKey;
+  }
+
+  private getSeedCenter(centerKey: string): SeedCenter {
+    const center = this.seedCenters.find(
+      (seedCenter) => seedCenter.key === centerKey,
+    );
+
+    if (!center) throw new Error(`Centro seed no encontrado: ${centerKey}`);
+
+    return center;
   }
 
   private getSeedValue<T>(values: Map<string, T>, key: string): T {
