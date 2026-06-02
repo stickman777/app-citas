@@ -331,7 +331,9 @@ export class PatientListComponent implements OnInit, OnDestroy {
   }
 
   public accountLabel(client: Client): string {
-    return client.user?.email ?? this.translate('clients.pending');
+    return client.user
+      ? this.translate('clients.account.linked')
+      : this.translate('clients.pending');
   }
 
   public get accountPasswordMismatch(): boolean {

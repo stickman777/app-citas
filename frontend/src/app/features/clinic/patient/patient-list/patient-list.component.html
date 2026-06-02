@@ -128,13 +128,13 @@
             </td>
             <td class="d-none d-lg-table-cell clients-table-account">
               @if(client.user){
-              <span class="badge badge-soft-success border border-success text-success fw-medium" [title]="accountLabel(client)">
+              <span class="badge badge-soft-primary border border-primary text-primary fw-medium" [title]="client.user.email">
                 {{ accountLabel(client) }}
               </span>
               } @else {
               <button
                 type="button"
-                class="btn btn-sm btn-outline-primary clients-account-button"
+                class="btn btn-sm btn-primary clients-account-button"
                 (click)="openAccountModal(client)"
                 [disabled]="!client.center"
               >
