@@ -10,7 +10,13 @@
             @for(center of centers; track center.id){
             <button type="button" class="dropdown-item d-flex align-items-center justify-content-between p-1" (click)="selectCenter(center)">
                 <span class="d-flex align-items-center">
-                    <span class="me-2"><img [src]="centerLogo(center)" alt="" class="sidebar-center-logo"></span>
+                    <span class="sidebar-center-logo me-2 d-inline-flex align-items-center justify-content-center rounded-circle bg-light border flex-shrink-0">
+                        @if(centerLogo(center)){
+                        <img [src]="centerLogo(center)" alt="">
+                        } @else {
+                        <i class="ti ti-building-hospital fs-16 text-dark"></i>
+                        }
+                    </span>
                     <span class="fw-semibold text-dark">{{ center.name }}<small
                             class="d-block text-muted fw-normal fs-13">{{ centerCity(center) }}</small></span>
                 </span>
@@ -30,7 +36,7 @@
                             <div class="d-flex align-items-center">
                                 <span class="avatar rounded-circle flex-shrink-0 p-2">
                                     @if(centerLogo(activeCenter)){
-                                    <img [src]="centerLogo(activeCenter)" alt="img">
+                                    <img [src]="centerLogo(activeCenter)" alt="">
                                     } @else {
                                     <i class="ti ti-building-hospital fs-18"></i>
                                     }

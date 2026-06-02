@@ -9,3 +9,10 @@
 .user-password-toggle {
   cursor: pointer;
 }
+
+.users-table {
+  .users-table-actions {
+    width: 1%;
+    white-space: nowrap;
+  }
+}

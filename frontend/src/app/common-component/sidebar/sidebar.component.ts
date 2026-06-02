@@ -205,7 +205,7 @@ public selectCenter(center: Center): void {
 }
 
 public centerLogo(center: Center | null): string | null {
-  return center?.logoUrl ?? null;
+  return center?.logoUrl?.trim() || null;
 }
 
 public centerCity(center: Center | null): string {

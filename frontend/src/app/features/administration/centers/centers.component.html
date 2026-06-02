@@ -59,15 +59,15 @@
   </div>
 
   <div class="table-responsive">
-    <table class="table table-nowrap dataTable datatable">
+    <table class="table table-nowrap dataTable datatable centers-table">
       <thead class="thead-light">
         <tr>
+          <th class="centers-table-actions"></th>
           <th class="d-none d-md-table-cell">ID</th>
           <th>{{ 'centers.fields.name' | translate }}</th>
           <th>{{ 'centers.fields.city' | translate }}</th>
           <th>{{ 'centers.fields.logoUrl' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
-          <th class="text-end">{{ 'common.actions' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -78,6 +78,11 @@
         } @else {
           @for(center of filteredCenters; track trackByCenterId($index, center)){
           <tr>
+            <td class="centers-table-actions">
+              <a class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 bg-white" [routerLink]="['/centers', center.id, 'edit']" [attr.aria-label]="'centers.actions.edit' | translate">
+                <i class="ti ti-edit"></i>
+              </a>
+            </td>
             <td class="fw-medium d-none d-md-table-cell">#{{ center.id }}</td>
             <td>
               <div class="d-flex align-items-center">
@@ -94,19 +99,14 @@
             <td>{{ center.city || '-' }}</td>
             <td>{{ center.logoUrl || '-' }}</td>
             <td>
-              <span class="badge rounded border fs-13 fw-medium" [ngClass]="statusBadgeClass(center)">
+              <button
+                type="button"
+                class="badge rounded border fs-13 fw-medium bg-transparent"
+                [ngClass]="statusBadgeClass(center)"
+                (click)="openStatusModal(center)"
+              >
                 {{ (center.active ? 'common.active' : 'common.inactive') | translate }}
-              </span>
-            </td>
-            <td>
-              <div class="d-flex align-items-center justify-content-end gap-1">
-                <a class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white" [routerLink]="['/centers', center.id, 'edit']" [attr.aria-label]="'centers.actions.edit' | translate">
-                  <i class="ti ti-edit"></i>
-                </a>
-                <button type="button" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1 bg-white" (click)="openStatusModal(center)" [attr.aria-label]="'centers.status.edit' | translate">
-                  <i class="ti" [ngClass]="center.active ? 'ti-toggle-right text-success' : 'ti-toggle-left text-danger'"></i>
-                </button>
-              </div>
+              </button>
             </td>
           </tr>
           } @empty {
