@@ -71,6 +71,8 @@ export class AuthService {
   ) {}
 
   login(credentials: LoginCredentials): Observable<CurrentUser> {
+    this.clearSession();
+
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, credentials)
       .pipe(
@@ -123,9 +125,7 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(this.tokenKey);
-    this.activeCenterService.clearUserContext();
-    this.currentUserSubject.next(null);
+    this.clearSession();
     void this.router.navigate([routes.login]);
   }
 
@@ -139,8 +139,7 @@ export class AuthService {
     if (!token) return false;
 
     if (this.isTokenExpired(token)) {
-      localStorage.removeItem(this.tokenKey);
-      this.activeCenterService.clearUserContext();
+      this.clearSession();
       return false;
     }
 
@@ -160,5 +159,11 @@ export class AuthService {
   private setCurrentUser(user: CurrentUser): void {
     this.currentUserSubject.next(user);
     this.activeCenterService.setUserContext(user.id, user.activeCenterId);
+  }
+
+  private clearSession(): void {
+    localStorage.removeItem(this.tokenKey);
+    this.activeCenterService.clearUserContext();
+    this.currentUserSubject.next(null);
   }
 }
