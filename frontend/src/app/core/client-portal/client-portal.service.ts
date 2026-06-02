@@ -60,6 +60,12 @@ export interface ClientPortalAppointmentPayload {
   specialistId: number;
 }
 
+export interface UpdateClientPortalProfilePayload {
+  name: string;
+  phone: string;
+  email?: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -70,6 +76,12 @@ export class ClientPortalService {
 
   getProfile(): Observable<ClientPortalProfile> {
     return this.http.get<ClientPortalProfile>(`${this.apiUrl}/me`);
+  }
+
+  updateProfile(
+    payload: UpdateClientPortalProfilePayload,
+  ): Observable<ClientPortalProfile> {
+    return this.http.patch<ClientPortalProfile>(`${this.apiUrl}/me`, payload);
   }
 
   getAppointments(): Observable<ClientPortalAppointment[]> {

@@ -1,106 +1,58 @@
-.client-section {
+.client-profile-summary,
+.client-profile-details {
+  border-color: var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.client-detail-list {
   display: grid;
-  gap: 16px;
-}
-
-.client-section-header h1 {
-  margin: 0;
-  color: #111827;
-  font-size: 26px;
-  font-weight: 700;
-}
-
-.client-panel {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 120px;
-  padding: 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  color: #4b5563;
-  font-weight: 600;
-}
-
-.client-panel i {
-  color: #2e37a4;
-  font-size: 24px;
-}
-
-.client-alert {
-  padding: 12px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
-  font-weight: 600;
-}
-
-.client-profile-card {
-  display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  gap: 18px;
-  padding: 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-}
-
-.client-profile-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 8px;
-  background: #eef2ff;
-  color: #2e37a4;
-  font-size: 30px;
-}
-
-.client-profile-data {
-  min-width: 0;
-}
-
-.client-profile-data h2 {
-  margin: 0 0 14px;
-  color: #111827;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.client-profile-data dl {
-  display: grid;
-  gap: 12px;
+  gap: 0;
   margin: 0;
 }
 
-.client-profile-data dl div {
+.client-detail-list div {
   display: grid;
-  grid-template-columns: 140px minmax(0, 1fr);
+  grid-template-columns: 150px minmax(0, 1fr);
   gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.client-profile-data dt {
-  color: #6b7280;
+.client-detail-list div:last-child {
+  border-bottom: 0;
+}
+
+.client-detail-list dt {
+  color: var(--body-color);
   font-weight: 700;
 }
 
-.client-profile-data dd {
+.client-detail-list dd {
   min-width: 0;
   margin: 0;
-  color: #111827;
+  color: var(--dark);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 640px) {
-  .client-profile-card {
-    grid-template-columns: 1fr;
-  }
+.client-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  min-height: 180px;
+  color: var(--body-color);
+  font-weight: 600;
+  text-align: center;
+}
 
-  .client-profile-data dl div {
+:host-context([data-bs-theme='dark']) .client-profile-summary,
+:host-context([data-bs-theme='dark']) .client-profile-details {
+  background: #19191b;
+}
+
+@media (max-width: 640px) {
+  .client-detail-list div {
     grid-template-columns: 1fr;
     gap: 2px;
   }

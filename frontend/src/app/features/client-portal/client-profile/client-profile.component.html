@@ -1,44 +1,207 @@
 <section class="client-section">
-  <div class="client-section-header">
-    <h1>{{ 'client.profile.title' | translate }}</h1>
+  <div class="d-flex align-items-center justify-content-between gap-2 pb-2 pb-md-3 mb-2 mb-md-3 border-bottom">
+    <h4 class="fw-bold mb-0 text-dark">{{ 'client.profile.title' | translate }}</h4>
   </div>
 
   @if(errorMessage){
-  <div class="client-alert" role="alert">{{ errorMessage | translate }}</div>
+  <div class="alert alert-danger py-2" role="alert">{{ errorMessage | translate }}</div>
+  }
+  @if(successMessage){
+  <div class="alert alert-success py-2" role="alert">{{ successMessage | translate }}</div>
   }
 
   @if(isLoading){
-  <div class="client-panel">
-    <i class="ti ti-loader-2"></i>
-    <span>{{ 'client.profile.loading' | translate }}</span>
-  </div>
-  } @else if(profile){
-  <div class="client-profile-card">
-    <div class="client-profile-avatar">
-      <i class="ti ti-user"></i>
+  <div class="card border-0">
+    <div class="card-body d-flex align-items-center gap-2 text-body">
+      <i class="ti ti-loader-2"></i>
+      <span>{{ 'client.profile.loading' | translate }}</span>
     </div>
-    <div class="client-profile-data">
-      <h2>{{ profile.name }}</h2>
-      <dl>
-        <div>
-          <dt>{{ 'common.email' | translate }}</dt>
-          <dd>{{ profile.email || '-' }}</dd>
+  </div>
+  } @else if(profile && currentUser){
+  <div class="row g-3">
+    <div class="col-12 col-lg-4">
+      <div class="card client-profile-summary h-100">
+        <div class="card-body text-center">
+          <span class="avatar avatar-xl rounded-circle bg-primary-transparent text-primary mb-3">
+            <i class="ti ti-user fs-28"></i>
+          </span>
+          <h5 class="text-dark mb-1">{{ profile.name }}</h5>
+          <p class="text-body mb-0">{{ profile.center?.name || ('centers.none' | translate) }}</p>
         </div>
-        <div>
-          <dt>{{ 'clients.fields.phone' | translate }}</dt>
-          <dd>{{ profile.phone }}</dd>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-8">
+      <div class="card client-profile-details">
+        <div class="card-header">
+          <h5 class="fw-bold mb-0 text-dark">{{ 'client.profile.data' | translate }}</h5>
         </div>
-        <div>
-          <dt>{{ 'common.center' | translate }}</dt>
-          <dd>{{ profile.center?.name || ('centers.none' | translate) }}</dd>
+        <form #clientDataForm="ngForm" (ngSubmit)="saveClientProfile()">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">{{ 'clients.fields.name' | translate }}<span class="text-danger ms-1">*</span></label>
+                  <input
+                    type="text"
+                    name="clientName"
+                    [(ngModel)]="clientForm.name"
+                    class="form-control"
+                    autocomplete="name"
+                    required
+                  >
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">{{ 'clients.fields.phone' | translate }}<span class="text-danger ms-1">*</span></label>
+                  <input
+                    type="tel"
+                    name="clientPhone"
+                    [(ngModel)]="clientForm.phone"
+                    class="form-control"
+                    autocomplete="tel"
+                    required
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">{{ 'common.email' | translate }}</label>
+              <input
+                type="email"
+                name="clientEmail"
+                [(ngModel)]="clientForm.email"
+                class="form-control"
+                autocomplete="email"
+                email
+              >
+            </div>
+
+            <dl class="client-detail-list">
+              <div>
+                <dt>{{ 'common.center' | translate }}</dt>
+                <dd>{{ profile.center?.name || ('centers.none' | translate) }}</dd>
+              </div>
+              <div>
+                <dt>{{ 'centers.fields.city' | translate }}</dt>
+                <dd>{{ profile.center?.city || '-' }}</dd>
+              </div>
+            </dl>
+          </div>
+          <div class="card-footer d-flex align-items-center justify-content-end gap-2">
+            <button type="button" class="btn btn-white border" [disabled]="isSavingClient" (click)="resetClientForm()">
+              {{ 'common.cancel' | translate }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="clientDataForm.invalid || isSavingClient">
+              {{ (isSavingClient ? 'common.saving' : 'common.save') | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card client-profile-details mt-3">
+        <div class="card-header">
+          <h5 class="fw-bold mb-0 text-dark">{{ 'account.accessData' | translate }}</h5>
         </div>
-      </dl>
+        <form #accountDataForm="ngForm" (ngSubmit)="saveAccount()">
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">{{ 'users.fields.name' | translate }}<span class="text-danger ms-1">*</span></label>
+              <input
+                type="text"
+                name="accountName"
+                [(ngModel)]="accountForm.name"
+                class="form-control"
+                autocomplete="name"
+                required
+              >
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">{{ 'common.email' | translate }}<span class="text-danger ms-1">*</span></label>
+              <input
+                type="email"
+                name="accountEmail"
+                [(ngModel)]="accountForm.email"
+                class="form-control"
+                autocomplete="email"
+                required
+                email
+              >
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">{{ 'account.currentPassword' | translate }}</label>
+              <input
+                type="password"
+                name="currentPassword"
+                [(ngModel)]="accountForm.currentPassword"
+                class="form-control"
+                autocomplete="current-password"
+                minlength="4"
+                [required]="!!accountForm.password"
+                [placeholder]="'account.currentPasswordPlaceholder' | translate"
+              >
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">{{ 'account.newPassword' | translate }}</label>
+                  <input
+                    type="password"
+                    name="password"
+                    [(ngModel)]="accountForm.password"
+                    class="form-control"
+                    autocomplete="new-password"
+                    minlength="4"
+                    [placeholder]="'account.passwordPlaceholder' | translate"
+                  >
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">{{ 'account.confirmPassword' | translate }}</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    [(ngModel)]="accountForm.confirmPassword"
+                    class="form-control"
+                    autocomplete="new-password"
+                    minlength="4"
+                    [required]="!!accountForm.password"
+                    [placeholder]="'account.passwordPlaceholder' | translate"
+                    [class.is-invalid]="passwordMismatch"
+                  >
+                  @if(passwordMismatch){
+                  <div class="invalid-feedback d-block">{{ 'account.errors.passwordMismatch' | translate }}</div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer d-flex align-items-center justify-content-end gap-2">
+            <button type="button" class="btn btn-white border" [disabled]="isSavingAccount" (click)="resetAccountForm()">
+              {{ 'common.cancel' | translate }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="accountDataForm.invalid || passwordMismatch || isSavingAccount">
+              {{ (isSavingAccount ? 'common.saving' : 'common.save') | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
   } @else {
-  <div class="client-panel">
-    <i class="ti ti-user-circle"></i>
-    <span>{{ 'client.profile.pending' | translate }}</span>
+  <div class="card border-0">
+    <div class="card-body client-empty">
+      <span class="avatar avatar-lg rounded bg-primary-transparent text-primary">
+        <i class="ti ti-user-circle"></i>
+      </span>
+      <span>{{ 'client.profile.pending' | translate }}</span>
+    </div>
   </div>
   }
 </section>
