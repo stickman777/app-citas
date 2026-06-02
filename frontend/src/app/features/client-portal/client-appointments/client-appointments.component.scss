@@ -1,181 +1,126 @@
-.client-section {
-  display: grid;
-  gap: 16px;
-}
-
-.client-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.client-section-header h1 {
-  margin: 0;
-  color: #111827;
-  font-size: 26px;
-  font-weight: 700;
-}
-
-.client-refresh {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
+.client-appointment-card {
+  border-color: var(--border-color);
   border-radius: 8px;
-  background: #fff;
-  color: #374151;
-  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
 }
 
-.client-alert {
-  padding: 12px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
-  font-weight: 600;
-}
-
-.client-panel {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 120px;
-  padding: 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  color: #4b5563;
-  font-weight: 600;
-}
-
-.client-panel i {
-  color: #2e37a4;
-  font-size: 24px;
-}
-
-.client-appointment-list {
-  display: grid;
-  gap: 12px;
-}
-
-.client-appointment {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-}
-
-.client-appointment-date {
+.client-date-box {
   display: grid;
   align-content: center;
   justify-items: center;
-  min-height: 72px;
+  flex: 0 0 82px;
+  min-height: 82px;
   border-radius: 8px;
-  background: #eef2ff;
-  color: #2e37a4;
+  background: var(--primary-transparent);
+  color: var(--primary);
   text-align: center;
 }
 
-.client-appointment-date span {
-  font-size: 13px;
+.client-date-box span {
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
 }
 
-.client-appointment-date strong {
-  font-size: 22px;
+.client-date-box strong {
+  font-size: 20px;
 }
 
-.client-appointment-body {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-}
-
-.client-appointment-title {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.client-appointment-title h2 {
-  margin: 0;
-  color: #111827;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.client-status {
-  flex: 0 0 auto;
-  padding: 4px 8px;
-  border: 1px solid;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.client-status-scheduled {
-  border-color: #2e37a4;
-  background: #eef2ff;
-  color: #2e37a4;
-}
-
-.client-status-completed {
-  border-color: #16a34a;
-  background: #f0fdf4;
-  color: #15803d;
-}
-
-.client-status-cancelled {
-  border-color: #dc2626;
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.client-appointment-meta {
+.client-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 14px;
-  color: #4b5563;
+  color: var(--body-color);
+  font-size: 13px;
   font-weight: 600;
 }
 
-.client-appointment-meta span {
+.client-meta span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
+.client-status-scheduled {
+  border-color: var(--primary) !important;
+  background: var(--primary-transparent);
+  color: var(--primary);
+}
+
+.client-status-completed {
+  border-color: var(--success) !important;
+  background: var(--success-transparent);
+  color: var(--success);
+}
+
+.client-status-cancelled {
+  border-color: var(--danger) !important;
+  background: var(--danger-transparent);
+  color: var(--danger);
+}
+
+.client-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  min-height: 180px;
+  color: var(--body-color);
+  font-weight: 600;
+  text-align: center;
+}
+
+.client-modal {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.client-detail-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.client-detail-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.client-detail-list div {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.client-detail-list div:last-child {
+  border-bottom: 0;
+}
+
+.client-detail-list dt {
+  color: var(--body-color);
+  font-weight: 700;
+}
+
+.client-detail-list dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--dark);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+:host-context([data-bs-theme='dark']) .client-appointment-card {
+  background: #19191b;
+}
+
 @media (max-width: 640px) {
-  .client-section-header {
-    align-items: stretch;
-    flex-direction: column;
+  .client-date-box {
+    flex-basis: 72px;
   }
 
-  .client-refresh {
-    justify-content: center;
-  }
-
-  .client-appointment {
+  .client-detail-list div {
     grid-template-columns: 1fr;
-  }
-
-  .client-appointment-date {
-    align-content: start;
-    justify-items: start;
-    min-height: auto;
-    padding: 12px;
-  }
-
-  .client-appointment-title {
-    flex-direction: column;
+    gap: 2px;
   }
 }

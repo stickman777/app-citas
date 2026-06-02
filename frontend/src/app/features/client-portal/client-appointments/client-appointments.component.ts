@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { finalize } from 'rxjs';
 
 import {
   ClientPortalAppointment,
@@ -16,6 +17,7 @@ import { AppointmentStatus } from '../../../core/appointments/appointments.servi
 })
 export class ClientAppointmentsComponent implements OnInit {
   public appointments: ClientPortalAppointment[] = [];
+  public selectedAppointment: ClientPortalAppointment | null = null;
   public isLoading = false;
   public errorMessage = '';
 
@@ -29,16 +31,21 @@ export class ClientAppointmentsComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.clientPortalService.getAppointments().subscribe({
-      next: appointments => {
-        this.appointments = appointments;
-        this.isLoading = false;
-      },
-      error: () => {
-        this.errorMessage = 'client.appointments.errors.load';
-        this.isLoading = false;
-      },
-    });
+    this.clientPortalService
+      .getAppointments()
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: appointments => {
+          this.appointments = [...appointments].sort(
+            (first, second) =>
+              new Date(second.startDateTime).getTime() -
+              new Date(first.startDateTime).getTime(),
+          );
+        },
+        error: () => {
+          this.errorMessage = 'client.appointments.errors.load';
+        },
+      });
   }
 
   public statusLabel(status: AppointmentStatus): string {
@@ -59,6 +66,14 @@ export class ClientAppointmentsComponent implements OnInit {
     };
 
     return classes[status];
+  }
+
+  public openAppointment(appointment: ClientPortalAppointment): void {
+    this.selectedAppointment = appointment;
+  }
+
+  public closeAppointment(): void {
+    this.selectedAppointment = null;
   }
 
   public trackByAppointmentId(

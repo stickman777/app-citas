@@ -1,131 +1,151 @@
 <section class="client-section">
-  <div class="client-section-header">
-    <h1>{{ 'client.book.title' | translate }}</h1>
+  <div class="d-flex align-items-center justify-content-between gap-2 pb-2 pb-md-3 mb-2 mb-md-3 border-bottom">
+    <h4 class="fw-bold mb-0 text-dark">{{ 'client.book.title' | translate }}</h4>
   </div>
 
   @if(errorMessage){
-  <div class="client-alert client-alert-error">{{ errorMessage | translate }}</div>
+  <div class="alert alert-danger py-2" role="alert">{{ errorMessage | translate }}</div>
   }
 
   @if(successMessage){
-  <div class="client-alert client-alert-success">{{ successMessage | translate }}</div>
+  <div class="alert alert-success py-2" role="alert">{{ successMessage | translate }}</div>
   }
 
   <form class="client-book-form" (ngSubmit)="submit()">
-    <div class="client-book-grid">
-      <label class="client-field">
-        <span>{{ 'common.service' | translate }}</span>
-        <select
-          name="serviceId"
-          class="form-select"
-          [(ngModel)]="selectedServiceId"
-          (ngModelChange)="onServiceChange()"
-          [disabled]="isLoading || isSaving"
-          required
-        >
-          <option [ngValue]="null">{{ 'appointments.fields.selectService' | translate }}</option>
-          @for(service of services; track trackByServiceId($index, service)){
-          <option [ngValue]="service.id">
-            {{ service.name }} - {{ service.durationMinutes }} min
-          </option>
-          }
-        </select>
-      </label>
+    <div class="card client-card">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-lg-4">
+            <label class="form-label">{{ 'common.service' | translate }}</label>
+            <select
+              name="serviceId"
+              class="form-select"
+              [(ngModel)]="selectedServiceId"
+              (ngModelChange)="onServiceChange()"
+              [disabled]="isLoading || isSaving"
+              required
+            >
+              <option [ngValue]="null">{{ 'appointments.fields.selectService' | translate }}</option>
+              @for(service of services; track trackByServiceId($index, service)){
+              <option [ngValue]="service.id">
+                {{ service.name }} - {{ service.durationMinutes }} min
+              </option>
+              }
+            </select>
+          </div>
 
-      <label class="client-field">
-        <span>{{ 'common.specialist' | translate }}</span>
-        <select
-          name="specialistId"
-          class="form-select"
-          [(ngModel)]="selectedSpecialistId"
-          (ngModelChange)="onBookingDataChange()"
-          [disabled]="!selectedServiceId || isSaving"
-          required
-        >
-          <option [ngValue]="null">{{ 'appointments.fields.selectSpecialist' | translate }}</option>
-          @for(specialist of specialists; track trackBySpecialistId($index, specialist)){
-          <option [ngValue]="specialist.id">
-            {{ specialist.name }}
-            @if(specialist.specialty){
-            - {{ specialist.specialty }}
+          <div class="col-12 col-lg-4">
+            <label class="form-label">{{ 'common.specialist' | translate }}</label>
+            <select
+              name="specialistId"
+              class="form-select"
+              [(ngModel)]="selectedSpecialistId"
+              (ngModelChange)="onBookingDataChange()"
+              [disabled]="!selectedServiceId || isSaving"
+              required
+            >
+              <option [ngValue]="null">{{ 'appointments.fields.selectSpecialist' | translate }}</option>
+              @for(specialist of specialists; track trackBySpecialistId($index, specialist)){
+              <option [ngValue]="specialist.id">
+                {{ specialist.name }}
+                @if(specialist.specialty){
+                - {{ specialist.specialty }}
+                }
+              </option>
+              }
+            </select>
+          </div>
+
+          <div class="col-12 col-lg-4">
+            <label class="form-label">{{ 'common.date' | translate }}</label>
+            <input
+              type="date"
+              name="selectedDate"
+              class="form-control"
+              [(ngModel)]="selectedDate"
+              (ngModelChange)="onBookingDataChange()"
+              [min]="minDate"
+              [disabled]="isSaving"
+              required
+            >
+          </div>
+        </div>
+
+        @if(isLoading){
+        <div class="text-body fs-13 mt-3">
+          <i class="ti ti-loader-2 me-1"></i>{{ 'client.book.loading' | translate }}
+        </div>
+        }
+
+        @if(selectedService){
+        <div class="client-service-summary mt-3">
+          <div class="min-w-0">
+            <strong>{{ selectedService.name }}</strong>
+            @if(selectedService.description){
+            <p>{{ selectedService.description }}</p>
             }
-          </option>
+          </div>
+          <span class="badge badge-soft-primary border border-primary text-primary">{{ selectedService.durationMinutes }} min</span>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="card client-card">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+          <h5 class="text-dark mb-0">{{ 'client.book.slots.title' | translate }}</h5>
+          @if(isLoadingSlots){
+          <span class="text-body fs-13">{{ 'client.book.slots.loading' | translate }}</span>
           }
-        </select>
-      </label>
+        </div>
 
-      <label class="client-field">
-        <span>{{ 'common.date' | translate }}</span>
-        <input
-          type="date"
-          name="selectedDate"
-          class="form-control"
-          [(ngModel)]="selectedDate"
-          (ngModelChange)="onBookingDataChange()"
-          [min]="minDate"
-          [disabled]="isSaving"
-          required
-        >
-      </label>
-    </div>
-
-    @if(selectedService){
-    <div class="client-service-summary">
-      <div>
-        <strong>{{ selectedService.name }}</strong>
-        @if(selectedService.description){
-        <p>{{ selectedService.description }}</p>
+        @if(!selectedDate || !selectedServiceId || !selectedSpecialistId){
+        <div class="client-empty">
+          <span class="avatar avatar-lg rounded bg-primary-transparent text-primary">
+            <i class="ti ti-calendar-plus"></i>
+          </span>
+          <span>{{ 'client.book.pending' | translate }}</span>
+        </div>
+        } @else if(!isLoadingSlots && availableSlots.length === 0){
+        <div class="client-empty">
+          <span class="avatar avatar-lg rounded bg-warning-transparent text-warning">
+            <i class="ti ti-clock-off"></i>
+          </span>
+          <span>{{ 'client.book.slots.empty' | translate }}</span>
+        </div>
+        } @else {
+        <div class="client-slots">
+          @for(slot of availableSlots; track trackBySlot($index, slot)){
+          <button
+            type="button"
+            class="btn client-slot"
+            [class.btn-primary]="selectedSlot === slot"
+            [class.btn-white]="selectedSlot !== slot"
+            [class.border]="selectedSlot !== slot"
+            (click)="selectSlot(slot)"
+            [disabled]="isSaving"
+          >
+            {{ slot }}
+          </button>
+          }
+        </div>
         }
       </div>
-      <span>{{ selectedService.durationMinutes }} min</span>
-    </div>
-    }
-
-    <div class="client-slot-panel">
-      <div class="client-slot-header">
-        <h2>{{ 'client.book.slots.title' | translate }}</h2>
-        @if(isLoadingSlots){
-        <span>{{ 'client.book.slots.loading' | translate }}</span>
-        }
-      </div>
-
-      @if(!selectedDate || !selectedServiceId || !selectedSpecialistId){
-      <div class="client-panel">
-        <i class="ti ti-calendar-plus"></i>
-        <span>{{ 'client.book.pending' | translate }}</span>
-      </div>
-      } @else if(!isLoadingSlots && availableSlots.length === 0){
-      <div class="client-panel">
-        <i class="ti ti-clock-off"></i>
-        <span>{{ 'client.book.slots.empty' | translate }}</span>
-      </div>
-      } @else {
-      <div class="client-slots">
-        @for(slot of availableSlots; track trackBySlot($index, slot)){
-        <button
-          type="button"
-          class="client-slot"
-          [class.client-slot-selected]="selectedSlot === slot"
-          (click)="selectSlot(slot)"
-          [disabled]="isSaving"
-        >
-          {{ slot }}
-        </button>
-        }
-      </div>
-      }
     </div>
 
-    <button
-      type="submit"
-      class="client-submit"
-      [disabled]="isSaving || isLoading || !selectedSlot"
-    >
-      @if(isSaving){
-      {{ 'common.saving' | translate }}
-      } @else {
-      {{ 'client.book.confirm' | translate }}
-      }
-    </button>
+    <div class="d-flex justify-content-end">
+      <button
+        type="submit"
+        class="btn btn-primary btn-md d-inline-flex align-items-center"
+        [disabled]="isSaving || isLoading || !selectedSlot"
+      >
+        @if(isSaving){
+        <i class="ti ti-loader-2 me-1"></i>{{ 'common.saving' | translate }}
+        } @else {
+        <i class="ti ti-calendar-check me-1"></i>{{ 'client.book.confirm' | translate }}
+        }
+      </button>
+    </div>
   </form>
 </section>

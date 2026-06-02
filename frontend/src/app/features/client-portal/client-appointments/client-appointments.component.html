@@ -1,58 +1,121 @@
 <section class="client-section">
-  <div class="client-section-header">
-    <h1>{{ 'client.appointments.title' | translate }}</h1>
-    <button type="button" class="client-refresh" (click)="loadAppointments()" [disabled]="isLoading">
-      <i class="ti ti-refresh"></i>
-      <span>{{ 'common.refresh' | translate }}</span>
-    </button>
+  <div class="d-flex align-items-center justify-content-between gap-2 pb-2 pb-md-3 mb-2 mb-md-3 border-bottom">
+    <div class="min-w-0">
+      <h4 class="fw-bold mb-0 text-dark">
+        {{ 'client.appointments.title' | translate }}
+        <span class="badge badge-soft-primary fw-medium border border-primary fs-12 ms-2">
+          {{ appointments.length }}
+        </span>
+      </h4>
+    </div>
   </div>
 
   @if(errorMessage){
-  <div class="client-alert" role="alert">{{ errorMessage | translate }}</div>
+  <div class="alert alert-danger py-2" role="alert">{{ errorMessage | translate }}</div>
   }
 
   @if(isLoading){
-  <div class="client-panel">
-    <i class="ti ti-loader-2"></i>
-    <span>{{ 'client.appointments.loading' | translate }}</span>
+  <div class="card border-0">
+    <div class="card-body d-flex align-items-center gap-2 text-body">
+      <i class="ti ti-loader-2"></i>
+      <span>{{ 'client.appointments.loading' | translate }}</span>
+    </div>
   </div>
   } @else if(appointments.length === 0){
-  <div class="client-panel">
-    <i class="ti ti-calendar-check"></i>
-    <span>{{ 'client.appointments.empty' | translate }}</span>
+  <div class="card border-0">
+    <div class="card-body client-empty">
+      <span class="avatar avatar-lg rounded bg-primary-transparent text-primary">
+        <i class="ti ti-calendar-check"></i>
+      </span>
+      <span>{{ 'client.appointments.empty' | translate }}</span>
+    </div>
   </div>
   } @else {
-  <div class="client-appointment-list">
+  <div class="row g-3">
     @for(appointment of appointments; track trackByAppointmentId($index, appointment)){
-    <article class="client-appointment">
-      <div class="client-appointment-date">
-        <span>{{ appointment.startDateTime | date:'dd MMM' }}</span>
-        <strong>{{ appointment.startDateTime | date:'HH:mm' }}</strong>
-      </div>
-      <div class="client-appointment-body">
-        <div class="client-appointment-title">
-          <h2>{{ appointment.service.name }}</h2>
-          <span class="client-status" [ngClass]="statusClass(appointment.status)">
-            {{ statusLabel(appointment.status) | translate }}
-          </span>
+    <div class="col-12 col-lg-6">
+      <article class="card client-appointment-card h-100">
+        <div class="card-body">
+          <div class="d-flex gap-3">
+            <div class="client-date-box">
+              <span>{{ appointment.startDateTime | date:'dd MMM' }}</span>
+              <strong>{{ appointment.startDateTime | date:'HH:mm' }}</strong>
+            </div>
+            <div class="min-w-0 flex-grow-1">
+              <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                <div class="min-w-0">
+                  <h5 class="mb-1 text-dark text-truncate">{{ appointment.service.name }}</h5>
+                  <p class="mb-0 text-body fs-13 text-truncate">{{ appointment.specialist.name }}</p>
+                </div>
+                <span class="badge border fw-medium" [ngClass]="statusClass(appointment.status)">
+                  {{ statusLabel(appointment.status) | translate }}
+                </span>
+              </div>
+              <div class="client-meta">
+                <span><i class="ti ti-map-pin"></i>{{ appointment.center.name }}</span>
+                <span><i class="ti ti-clock"></i>{{ appointment.duration }} min</span>
+              </div>
+              <div class="mt-3">
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="openAppointment(appointment)">
+                  <i class="ti ti-eye me-1"></i>{{ 'common.viewDetails' | translate }}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="client-appointment-meta">
-          <span>
-            <i class="ti ti-user-star"></i>
-            {{ appointment.specialist.name }}
-          </span>
-          <span>
-            <i class="ti ti-map-pin"></i>
-            {{ appointment.center.name }}
-          </span>
-          <span>
-            <i class="ti ti-clock"></i>
-            {{ appointment.duration }} min
-          </span>
-        </div>
-      </div>
-    </article>
+      </article>
+    </div>
     }
   </div>
   }
 </section>
+
+@if(selectedAppointment){
+<div class="modal fade show d-block client-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title fw-bold text-dark">{{ 'client.appointments.detail.title' | translate }}</h4>
+        <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.close' | translate" (click)="closeAppointment()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="client-detail-summary mb-3">
+          <span class="avatar avatar-lg rounded bg-primary-transparent text-primary">
+            <i class="ti ti-calendar-check"></i>
+          </span>
+          <div class="min-w-0">
+            <h5 class="mb-1 text-dark">{{ selectedAppointment.service.name }}</h5>
+            <span class="badge border fw-medium" [ngClass]="statusClass(selectedAppointment.status)">
+              {{ statusLabel(selectedAppointment.status) | translate }}
+            </span>
+          </div>
+        </div>
+        <dl class="client-detail-list">
+          <div>
+            <dt>{{ 'common.dateTime' | translate }}</dt>
+            <dd>{{ selectedAppointment.startDateTime | date:'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'common.specialist' | translate }}</dt>
+            <dd>{{ selectedAppointment.specialist.name }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'common.center' | translate }}</dt>
+            <dd>{{ selectedAppointment.center.name }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'common.duration' | translate }}</dt>
+            <dd>{{ selectedAppointment.duration }} min</dd>
+          </div>
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-white border" (click)="closeAppointment()">{{ 'common.close' | translate }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+}
