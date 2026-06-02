@@ -1,12 +1,175 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { finalize, forkJoin } from 'rxjs';
 
+import {
+  ClientPortalService,
+  ClientPortalServiceOption,
+  ClientPortalSpecialist,
+} from '../../../core/client-portal/client-portal.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { routes } from '../../../shared/routes/routes';
 
 @Component({
   selector: 'app-client-book',
   templateUrl: './client-book.component.html',
   styleUrls: ['./client-book.component.scss'],
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe],
 })
-export class ClientBookComponent {}
+export class ClientBookComponent implements OnInit {
+  services: ClientPortalServiceOption[] = [];
+  specialists: ClientPortalSpecialist[] = [];
+  availableSlots: string[] = [];
+  selectedServiceId: number | null = null;
+  selectedSpecialistId: number | null = null;
+  selectedDate = '';
+  selectedSlot = '';
+  minDate = this.toDateInputValue(new Date());
+  isLoading = false;
+  isLoadingSlots = false;
+  isSaving = false;
+  errorMessage = '';
+  successMessage = '';
+
+  constructor(
+    private readonly clientPortalService: ClientPortalService,
+    private readonly router: Router,
+  ) {}
+
+  ngOnInit(): void {
+    this.loadReferences();
+  }
+
+  get selectedService(): ClientPortalServiceOption | undefined {
+    return this.services.find((service) => service.id === this.selectedServiceId);
+  }
+
+  loadReferences(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    forkJoin({
+      services: this.clientPortalService.getServices(),
+      specialists: this.clientPortalService.getSpecialists(),
+    })
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: ({ services, specialists }) => {
+          this.services = services;
+          this.specialists = specialists;
+        },
+        error: () => {
+          this.errorMessage = 'client.book.errors.references';
+        },
+      });
+  }
+
+  onServiceChange(): void {
+    this.selectedSpecialistId = null;
+    this.selectedSlot = '';
+    this.availableSlots = [];
+
+    if (!this.selectedServiceId) {
+      this.specialists = [];
+      return;
+    }
+
+    this.clientPortalService.getSpecialists(this.selectedServiceId).subscribe({
+      next: (specialists) => {
+        this.specialists = specialists;
+
+        if (specialists.length === 1) {
+          this.selectedSpecialistId = specialists[0].id;
+          this.loadAvailableSlots();
+        }
+      },
+      error: () => {
+        this.errorMessage = 'client.book.errors.references';
+      },
+    });
+  }
+
+  onBookingDataChange(): void {
+    this.selectedSlot = '';
+    this.availableSlots = [];
+    this.loadAvailableSlots();
+  }
+
+  loadAvailableSlots(): void {
+    if (!this.selectedDate || !this.selectedServiceId || !this.selectedSpecialistId)
+      return;
+
+    this.isLoadingSlots = true;
+    this.errorMessage = '';
+
+    this.clientPortalService
+      .getAvailableSlots(
+        this.selectedDate,
+        this.selectedServiceId,
+        this.selectedSpecialistId,
+      )
+      .pipe(finalize(() => (this.isLoadingSlots = false)))
+      .subscribe({
+        next: (slots) => {
+          this.availableSlots = slots;
+        },
+        error: () => {
+          this.errorMessage = 'client.book.errors.slots';
+        },
+      });
+  }
+
+  selectSlot(slot: string): void {
+    this.selectedSlot = slot;
+  }
+
+  submit(): void {
+    if (!this.selectedServiceId || !this.selectedSpecialistId || !this.selectedDate || !this.selectedSlot) {
+      this.errorMessage = 'client.book.errors.form';
+      return;
+    }
+
+    this.isSaving = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.clientPortalService
+      .createAppointment({
+        serviceId: this.selectedServiceId,
+        specialistId: this.selectedSpecialistId,
+        startDateTime: `${this.selectedDate}T${this.selectedSlot}:00`,
+      })
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: () => {
+          this.successMessage = 'client.book.success.created';
+          void this.router.navigate([routes.clientAppointments]);
+        },
+        error: () => {
+          this.errorMessage = 'client.book.errors.save';
+        },
+      });
+  }
+
+  trackByServiceId(_: number, service: ClientPortalServiceOption): number {
+    return service.id;
+  }
+
+  trackBySpecialistId(_: number, specialist: ClientPortalSpecialist): number {
+    return specialist.id;
+  }
+
+  trackBySlot(_: number, slot: string): string {
+    return slot;
+  }
+
+  private toDateInputValue(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+}
