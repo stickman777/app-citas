@@ -70,6 +70,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'auth.email': 'Email / Alias admin',
     'auth.emailPlaceholder': 'Email o alias de admin',
     'auth.brandName': 'App Citas',
+    'auth.error.apiUnavailable':
+      'No se puede conectar con el servidor. Revisa que el backend este arrancado.',
     'auth.error.invalidCredentials': 'Email o password incorrectos.',
     'auth.login': 'Entrar',
     'auth.loggingIn': 'Entrando...',
@@ -410,6 +412,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'auth.email': 'Email / Admin alias',
     'auth.emailPlaceholder': 'Email or admin alias',
     'auth.brandName': 'Appointments',
+    'auth.error.apiUnavailable':
+      'The server is not available. Check that the backend is running.',
     'auth.error.invalidCredentials': 'Email or password is incorrect.',
     'auth.login': 'Login',
     'auth.loggingIn': 'Logging in...',

@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -50,19 +51,27 @@ export class LoginComponent {
     this.isLoading = true;
 
     this.authService
-      .login({ email: this.email, password: this.password })
+      .login({ email: this.email.trim(), password: this.password })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: user => {
           this.toastr.success(this.i18nService.translate('auth.success.login'));
           void this.router.navigate([this.getHomeRoute(user.role)]);
         },
-        error: () => {
+        error: error => {
           this.errorMessage = this.i18nService.translate(
-            'auth.error.invalidCredentials'
+            this.getLoginErrorKey(error)
           );
         },
       });
+  }
+
+  private getLoginErrorKey(error: unknown): string {
+    if (error instanceof HttpErrorResponse && error.status === 0) {
+      return 'auth.error.apiUnavailable';
+    }
+
+    return 'auth.error.invalidCredentials';
   }
 
   private getHomeRoute(role: 'ADMIN' | 'GESTOR' | 'CLIENT'): string {
