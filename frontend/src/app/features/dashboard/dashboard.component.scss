@@ -84,6 +84,12 @@
   max-height: 258px;
   overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dashboard-card-list::-webkit-scrollbar {
+  display: none;
 }
 
 .dashboard-card-list-item {
