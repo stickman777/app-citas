@@ -21,7 +21,7 @@ export class Client {
   phone: string;
 
   @Column({ nullable: true })
-  email?: string;
+  email?: string | null;
 
   @Column({ default: true })
   active: boolean;

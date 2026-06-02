@@ -17,6 +17,12 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { CreateClientUserAccountDto } from './dto/create-client-user-account.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
+interface OwnClientProfileData {
+  name?: string;
+  phone?: string;
+  email?: string | null;
+}
+
 @Injectable()
 export class ClientsService {
   constructor(
@@ -65,6 +71,10 @@ export class ClientsService {
 
   async findForUser(userId: number): Promise<Client> {
     const client = await this.clientsRepository.findOne({
+      relations: {
+        user: true,
+        center: true,
+      },
       where: {
         user: {
           id: userId,
@@ -78,6 +88,36 @@ export class ClientsService {
       );
 
     return client;
+  }
+
+  async updateForUser(
+    userId: number,
+    clientData: OwnClientProfileData,
+  ): Promise<Client> {
+    const client = await this.findForUser(userId);
+
+    if (!client.active)
+      throw new ForbiddenException('El cliente no esta activo');
+
+    if (clientData.name !== undefined) {
+      client.name = this.normalizeRequiredText(
+        clientData.name,
+        'Nombre requerido',
+      );
+    }
+
+    if (clientData.phone !== undefined) {
+      client.phone = this.normalizeRequiredText(
+        clientData.phone,
+        'Telefono requerido',
+      );
+    }
+
+    if (clientData.email !== undefined) {
+      client.email = clientData.email?.trim().toLowerCase() || null;
+    }
+
+    return this.clientsRepository.save(client);
   }
 
   // Crea un nuevo cliente
@@ -233,5 +273,13 @@ export class ClientsService {
           }
         : null,
     };
+  }
+
+  private normalizeRequiredText(value: string, message: string): string {
+    const normalizedValue = value.trim();
+
+    if (!normalizedValue) throw new BadRequestException(message);
+
+    return normalizedValue;
   }
 }

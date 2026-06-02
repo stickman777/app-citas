@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   ParseIntPipe,
   Post,
   Query,
@@ -15,6 +16,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/user.entity';
 import { ClientPortalService } from './client-portal.service';
 import { CreateClientPortalAppointmentDto } from './dto/create-client-portal-appointment.dto';
+import { UpdateClientPortalProfileDto } from './dto/update-client-portal-profile.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.CLIENT)
@@ -25,6 +27,14 @@ export class ClientPortalController {
   @Get('me')
   me(@Req() request: { user: { id: number } }) {
     return this.clientPortalService.getProfile(request.user.id);
+  }
+
+  @Patch('me')
+  updateMe(
+    @Req() request: { user: { id: number } },
+    @Body() profileData: UpdateClientPortalProfileDto,
+  ) {
+    return this.clientPortalService.updateProfile(request.user.id, profileData);
   }
 
   @Get('appointments')

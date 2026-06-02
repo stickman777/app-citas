@@ -15,6 +15,7 @@ import {
   SpecialistStatus,
 } from '../specialists/specialist.entity';
 import { CreateClientPortalAppointmentDto } from './dto/create-client-portal-appointment.dto';
+import { UpdateClientPortalProfileDto } from './dto/update-client-portal-profile.dto';
 
 @Injectable()
 export class ClientPortalService {
@@ -33,6 +34,18 @@ export class ClientPortalService {
     const client = await this.getActiveClientForUser(userId);
 
     return this.toProfileResponse(client);
+  }
+
+  async updateProfile(
+    userId: number,
+    profileData: UpdateClientPortalProfileDto,
+  ) {
+    const updatedClient = await this.clientsService.updateForUser(
+      userId,
+      profileData,
+    );
+
+    return this.toProfileResponse(updatedClient);
   }
 
   async getAppointments(userId: number) {
