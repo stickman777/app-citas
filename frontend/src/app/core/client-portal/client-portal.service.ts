@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -39,6 +39,27 @@ export interface ClientPortalAppointment {
   };
 }
 
+export interface ClientPortalSpecialist {
+  id: number;
+  name: string;
+  specialty?: string | null;
+}
+
+export interface ClientPortalServiceOption {
+  id: number;
+  name: string;
+  description?: string | null;
+  durationMinutes: number;
+  price?: number | string | null;
+  specialist?: ClientPortalSpecialist | null;
+}
+
+export interface ClientPortalAppointmentPayload {
+  startDateTime: string;
+  serviceId: number;
+  specialistId: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -54,6 +75,45 @@ export class ClientPortalService {
   getAppointments(): Observable<ClientPortalAppointment[]> {
     return this.http.get<ClientPortalAppointment[]>(
       `${this.apiUrl}/appointments`,
+    );
+  }
+
+  getServices(): Observable<ClientPortalServiceOption[]> {
+    return this.http.get<ClientPortalServiceOption[]>(`${this.apiUrl}/services`);
+  }
+
+  getSpecialists(serviceId?: number | null): Observable<ClientPortalSpecialist[]> {
+    const params = serviceId
+      ? new HttpParams().set('serviceId', serviceId)
+      : new HttpParams();
+
+    return this.http.get<ClientPortalSpecialist[]>(
+      `${this.apiUrl}/specialists`,
+      { params },
+    );
+  }
+
+  getAvailableSlots(
+    date: string,
+    serviceId: number,
+    specialistId: number,
+  ): Observable<string[]> {
+    const params = new HttpParams()
+      .set('date', date)
+      .set('serviceId', serviceId)
+      .set('specialistId', specialistId);
+
+    return this.http.get<string[]>(`${this.apiUrl}/available-slots`, {
+      params,
+    });
+  }
+
+  createAppointment(
+    payload: ClientPortalAppointmentPayload,
+  ): Observable<ClientPortalAppointment> {
+    return this.http.post<ClientPortalAppointment>(
+      `${this.apiUrl}/appointments`,
+      payload,
     );
   }
 }
