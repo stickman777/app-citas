@@ -18,7 +18,9 @@ import { AuthService, CurrentUser } from '../../../core/auth/auth.service';
 interface UserForm {
   email: string;
   name: string;
+  changePassword: boolean;
   password: string;
+  confirmPassword: string;
   role: UserRole;
   centerIds: number[];
 }
@@ -89,6 +91,7 @@ export class UsersComponent implements OnDestroy {
     this.clearMessages();
     this.editingUser = null;
     this.form = this.getEmptyForm();
+    this.form.changePassword = true;
     this.isFormModalOpen = true;
   }
 
@@ -98,7 +101,9 @@ export class UsersComponent implements OnDestroy {
     this.form = {
       email: user.email,
       name: user.name,
+      changePassword: false,
       password: '',
+      confirmPassword: '',
       role: user.role,
       centerIds: user.centers?.map(center => center.id) ?? [],
     };
@@ -112,6 +117,11 @@ export class UsersComponent implements OnDestroy {
   }
 
   public saveUser(): void {
+    if (this.passwordMismatch) {
+      this.errorMessage = this.translate('users.errors.passwordMismatch');
+      return;
+    }
+
     this.isSaving = true;
     this.clearMessages();
 
@@ -226,14 +236,55 @@ export class UsersComponent implements OnDestroy {
       : this.form.centerIds.filter(id => id !== centerId);
   }
 
+  public onRoleChange(role: UserRole): void {
+    this.form.role = role;
+
+    if (role !== 'GESTOR') {
+      this.form.centerIds = [];
+      return;
+    }
+
+    this.selectDefaultCenter();
+  }
+
+  public togglePasswordChange(checked: boolean): void {
+    this.form.changePassword = checked;
+
+    if (!checked) {
+      this.form.password = '';
+      this.form.confirmPassword = '';
+    }
+  }
+
   public isCenterSelected(centerId: number): boolean {
     return this.form.centerIds.includes(centerId);
+  }
+
+  public get showPasswordFields(): boolean {
+    return !this.editingUser || this.form.changePassword;
+  }
+
+  public get passwordMismatch(): boolean {
+    return (
+      this.showPasswordFields &&
+      !!this.form.password &&
+      this.form.password !== this.form.confirmPassword
+    );
+  }
+
+  public get requiresCenters(): boolean {
+    return this.form.role === 'GESTOR';
+  }
+
+  public get centerSelectionInvalid(): boolean {
+    return this.requiresCenters && this.form.centerIds.length === 0;
   }
 
   private loadCenters(): void {
     this.centersService.getCenters().subscribe({
       next: centers => {
         this.centers = centers;
+        if (this.form.role === 'GESTOR') this.selectDefaultCenter();
       },
       error: () => {
         this.errorMessage = this.translate('centers.errors.load');
@@ -261,7 +312,7 @@ export class UsersComponent implements OnDestroy {
       name: this.form.name.trim(),
       password: this.form.password,
       role: this.form.role,
-      centerIds: this.form.centerIds,
+      centerIds: this.getRoleCenterIds(),
     };
   }
 
@@ -270,21 +321,33 @@ export class UsersComponent implements OnDestroy {
       email: this.form.email.trim(),
       name: this.form.name.trim(),
       role: this.form.role,
-      centerIds: this.form.centerIds,
+      centerIds: this.getRoleCenterIds(),
     };
 
-    if (this.form.password.trim()) {
+    if (this.form.changePassword && this.form.password.trim()) {
       payload.password = this.form.password;
     }
 
     return payload;
   }
 
+  private getRoleCenterIds(): number[] {
+    return this.form.role === 'GESTOR' ? this.form.centerIds : [];
+  }
+
+  private selectDefaultCenter(): void {
+    if (this.form.centerIds.length > 0 || this.centers.length === 0) return;
+
+    this.form.centerIds = [this.centers[0].id];
+  }
+
   private getEmptyForm(): UserForm {
     return {
       email: '',
       name: '',
+      changePassword: false,
       password: '',
+      confirmPassword: '',
       role: 'CLIENT',
       centerIds: [],
     };

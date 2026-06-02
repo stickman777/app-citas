@@ -154,32 +154,77 @@
               email
             >
           </div>
-          <div class="mb-3">
-            <label class="form-label">
-              {{ 'common.password' | translate }}
-              @if(!editingUser){<span class="text-danger ms-1">*</span>}
-            </label>
-            <input
-              type="password"
-              name="password"
-              [(ngModel)]="form.password"
-              class="form-control"
-              autocomplete="new-password"
-              minlength="4"
-              [required]="!editingUser"
-              [placeholder]="editingUser ? ('users.fields.passwordPlaceholder' | translate) : ''"
-            >
-          </div>
           <div class="mb-0">
             <label class="form-label">{{ 'common.role' | translate }}<span class="text-danger ms-1">*</span></label>
-            <select name="role" [(ngModel)]="form.role" class="form-select" required>
+            <select name="role" [(ngModel)]="form.role" (ngModelChange)="onRoleChange($event)" class="form-select" required>
               @for(role of roleOptions; track role){
               <option [ngValue]="role">{{ role }}</option>
               }
             </select>
           </div>
+
+          <div class="border-top mt-3 pt-3">
+            @if(editingUser){
+            <label class="form-check form-switch d-flex align-items-center gap-2 mb-3 ps-0 user-password-toggle">
+              <input
+                type="checkbox"
+                class="form-check-input ms-0"
+                [checked]="form.changePassword"
+                (change)="togglePasswordChange($any($event.target).checked)"
+              >
+              <span class="form-check-label">{{ 'users.password.change' | translate }}</span>
+            </label>
+            }
+
+            @if(showPasswordFields){
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label">
+                    {{ 'common.password' | translate }}<span class="text-danger ms-1">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    [(ngModel)]="form.password"
+                    class="form-control"
+                    autocomplete="new-password"
+                    minlength="4"
+                    required
+                  >
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label">
+                    {{ 'users.fields.confirmPassword' | translate }}<span class="text-danger ms-1">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    [(ngModel)]="form.confirmPassword"
+                    class="form-control"
+                    autocomplete="new-password"
+                    minlength="4"
+                    required
+                    [class.is-invalid]="passwordMismatch"
+                  >
+                  @if(passwordMismatch){
+                  <div class="invalid-feedback d-block">{{ 'users.errors.passwordMismatch' | translate }}</div>
+                  }
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+
           <div class="mb-0 mt-3">
             <label class="form-label">{{ 'users.fields.centers' | translate }}</label>
+            @if(form.role === 'ADMIN'){
+            <div class="border rounded p-2 bg-light text-body fs-13">
+              {{ 'users.centers.adminAccess' | translate }}
+            </div>
+            } @else if(requiresCenters){
             <div class="border rounded p-2">
               @for(center of centers; track trackByCenterId($index, center)){
               <label class="form-check d-flex align-items-center mb-2">
@@ -195,11 +240,19 @@
               <span class="text-body fs-13">{{ 'centers.none' | translate }}</span>
               }
             </div>
+            @if(centerSelectionInvalid){
+            <div class="text-danger fs-13 mt-1">{{ 'users.errors.centersRequired' | translate }}</div>
+            }
+            } @else {
+            <div class="border rounded p-2 bg-light text-body fs-13">
+              {{ 'users.centers.notRequired' | translate }}
+            </div>
+            }
           </div>
         </div>
         <div class="modal-footer d-flex align-items-center gap-1">
           <button type="button" class="btn btn-white border" (click)="closeFormModal()">{{ 'common.cancel' | translate }}</button>
-          <button type="submit" class="btn btn-primary" [disabled]="userForm.invalid || isSaving">
+          <button type="submit" class="btn btn-primary" [disabled]="userForm.invalid || passwordMismatch || centerSelectionInvalid || isSaving">
             {{ (isSaving ? 'common.saving' : 'common.save') | translate }}
           </button>
         </div>
