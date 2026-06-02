@@ -231,21 +231,21 @@
     </mwl-calendar-day-view>
   </div>
   } @else {
-  <div class="table-responsive">
+  <div class="table-responsive appointments-table-scroll">
     <table class="table table-nowrap dataTable datatable appointments-table">
       <thead class="thead-light">
         <tr>
-          <th class="appointments-actions-col">{{ 'common.actions' | translate }}</th>
+          <th class="appointments-actions-col"></th>
           <th>
             <span class="d-md-none">{{ 'common.listing' | translate }}</span>
             <span class="d-none d-md-inline">{{ 'common.client' | translate }}</span>
           </th>
           <th>{{ 'common.service' | translate }}</th>
           <th>{{ 'common.specialist' | translate }}</th>
+          <th>{{ 'common.dateTime' | translate }}</th>
           @if(isAdmin){
           <th>{{ 'common.center' | translate }}</th>
           }
-          <th>{{ 'common.dateTime' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
         </tr>
       </thead>
@@ -291,22 +291,32 @@
               <span class="badge badge-soft-danger border border-danger text-danger ms-1">{{ 'common.inactive' | translate }}</span>
               }
             </td>
-            @if(isAdmin){
-            <td>{{ appointmentCenterName(appointment) }}</td>
-            }
             <td>
               <span class="text-dark fw-medium d-block">{{ appointment.startDateTime | date:'d/M/yyyy HH:mm' }}</span>
               <span class="text-body fs-13">{{ appointment.duration }} min</span>
             </td>
+            @if(isAdmin){
             <td>
-              <span class="badge border px-2 py-1 fs-13 fw-medium" [ngClass]="statusBadgeClass(appointment.status)">
-                {{ statusLabel(appointment.status) }}
+              <span class="appointments-center-name text-body d-block text-truncate">
+                {{ appointmentCenterName(appointment) }}
               </span>
-              @if(appointment.outsideAvailability){
-              <span class="badge badge-soft-warning border border-warning text-warning ms-1">
-                {{ 'appointments.outsideAvailability.badge' | translate }}
+            </td>
+            }
+            <td>
+              <span class="appointments-status-cell d-inline-flex align-items-center gap-1">
+                <span class="badge border px-2 py-1 fs-13 fw-medium" [ngClass]="statusBadgeClass(appointment.status)">
+                  {{ statusLabel(appointment.status) }}
+                </span>
+                @if(appointment.outsideAvailability){
+                <span
+                  class="appointments-outside-badge badge badge-soft-warning border border-warning text-warning"
+                  [attr.aria-label]="'appointments.outsideAvailability.badge' | translate"
+                  [attr.title]="'appointments.outsideAvailability.badge' | translate"
+                >
+                  <i class="ti ti-clock-exclamation"></i>
+                </span>
+                }
               </span>
-              }
             </td>
           </tr>
           } @empty {
