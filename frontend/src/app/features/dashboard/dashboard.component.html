@@ -51,7 +51,7 @@
           </a>
         </div>
         <div class="card-body">
-          <div class="dashboard-card-list">
+          <div class="dashboard-card-list" [class.dashboard-fade-list]="services.length > 5">
             @if(isLoadingServices){
             <div class="text-center text-dark py-4">{{ 'services.loading' | translate }}</div>
             } @else {
@@ -92,7 +92,7 @@
           <a [routerLink]="routes.specialists" class="btn fw-normal btn-outline-white">{{ 'common.viewAll' | translate }}</a>
         </div>
         <div class="card-body">
-          <div class="dashboard-card-list">
+          <div class="dashboard-card-list" [class.dashboard-fade-list]="sortedSpecialists.length > 5">
             @if(isLoadingSpecialists){
             <div class="text-center text-dark py-4">{{ 'specialists.loading' | translate }}</div>
             } @else {

@@ -58,15 +58,12 @@
       <thead class="thead-light">
         <tr>
           <th class="users-table-actions"></th>
-          @if(isAdmin){
-          <th class="d-none d-md-table-cell">ID</th>
-          }
           <th>
             <span class="d-md-none">{{ 'common.listing' | translate }}</span>
             <span class="d-none d-md-inline">{{ 'users.fields.name' | translate }}</span>
           </th>
+          <th>{{ 'users.fields.assignedCenters' | translate }}</th>
           <th>{{ 'common.role' | translate }}</th>
-          <th>{{ 'common.center' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -82,9 +79,6 @@
                 <i class="ti ti-edit"></i>
               </button>
             </td>
-            @if(isAdmin){
-            <td class="fw-medium d-none d-md-table-cell">#{{ user.id }}</td>
-            }
             <td>
               <div class="d-flex align-items-center">
                 <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">
@@ -96,12 +90,12 @@
                 </span>
               </div>
             </td>
+            <td>{{ centerNames(user) }}</td>
             <td>
               <span class="badge border px-2 py-1 fs-13 fw-medium" [ngClass]="roleBadgeClass(user.role)">
                 {{ user.role }}
               </span>
             </td>
-            <td>{{ centerNames(user) }}</td>
           </tr>
           } @empty {
           <tr>

@@ -1,7 +1,6 @@
-import { Component, HostListener, OnDestroy } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
 
 import {
   CreateUserPayload,
@@ -13,7 +12,6 @@ import {
 import { Center, CentersService } from '../../../core/centers/centers.service';
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { AuthService, CurrentUser } from '../../../core/auth/auth.service';
 
 interface UserForm {
   email: string;
@@ -31,12 +29,11 @@ interface UserForm {
   styleUrls: ['./users.component.scss'],
   imports: [CommonModule, FormsModule, TranslatePipe],
 })
-export class UsersComponent implements OnDestroy {
+export class UsersComponent {
   public readonly roleOptions: UserRole[] = ['ADMIN', 'GESTOR', 'CLIENT'];
   public users: User[] = [];
   public filteredUsers: User[] = [];
   public centers: Center[] = [];
-  public currentUser: CurrentUser | null = null;
   public searchTerm = '';
   public errorMessage = '';
   public successMessage = '';
@@ -48,23 +45,16 @@ export class UsersComponent implements OnDestroy {
   public editingUser: User | null = null;
   public userToDelete: User | null = null;
   public form: UserForm = this.getEmptyForm();
-  private currentUserSubscription?: Subscription;
 
   constructor(
     private readonly usersService: UsersService,
     private readonly centersService: CentersService,
-    private readonly authService: AuthService,
     private readonly i18nService: I18nService
   ) {}
 
   ngOnInit(): void {
-    this.watchCurrentUser();
     this.loadCenters();
     this.loadUsers();
-  }
-
-  ngOnDestroy(): void {
-    this.currentUserSubscription?.unsubscribe();
   }
 
   public loadUsers(clearMessages = true): void {
@@ -189,7 +179,7 @@ export class UsersComponent implements OnDestroy {
 
     this.filteredUsers = search
       ? this.users.filter(user =>
-          `${user.id} ${user.name} ${user.email} ${user.role} ${this.centerNames(user)}`
+          `${user.name} ${user.email} ${user.role} ${this.centerNames(user)}`
             .toLowerCase()
             .includes(search)
         )
@@ -206,12 +196,8 @@ export class UsersComponent implements OnDestroy {
     return classes[role];
   }
 
-  public get isAdmin(): boolean {
-    return this.currentUser?.role === 'ADMIN';
-  }
-
   public get userTableColumnCount(): number {
-    return this.isAdmin ? 5 : 4;
+    return 4;
   }
 
   public trackByUserId(_: number, user: User): number {
@@ -224,6 +210,7 @@ export class UsersComponent implements OnDestroy {
 
   public centerNames(user: User): string {
     if (user.role === 'ADMIN') return this.translate('users.centers.all');
+    if (user.role === 'CLIENT') return '';
 
     return user.centers?.length
       ? user.centers.map(center => center.name).join(', ')
@@ -288,20 +275,6 @@ export class UsersComponent implements OnDestroy {
       },
       error: () => {
         this.errorMessage = this.translate('centers.errors.load');
-      },
-    });
-  }
-
-  private watchCurrentUser(): void {
-    this.currentUser = this.authService.currentUser;
-    this.currentUserSubscription = this.authService.currentUser$.subscribe(
-      user => {
-        this.currentUser = user;
-      }
-    );
-    this.authService.loadCurrentUser().subscribe({
-      error: () => {
-        this.currentUser = null;
       },
     });
   }

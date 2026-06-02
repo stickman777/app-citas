@@ -117,6 +117,8 @@ interface AppointmentViewState {
 }
 
 const APPOINTMENT_VIEW_STATE_STORAGE_KEY = 'appointments.viewState';
+const APPOINTMENT_VIEW_STATE_PREFERENCE_KEY =
+  'appointments.viewStatePreferenceSet';
 
 @Injectable()
 class AppointmentCalendarDateFormatter extends CalendarDateFormatter {
@@ -187,7 +189,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public centers: Center[] = [];
   public activeCenter: Center | null = null;
   public currentUser: CurrentUser | null = null;
-  public viewMode: AppointmentViewMode = 'calendar';
+  public viewMode: AppointmentViewMode = 'list';
   public calendarView: CalendarView = CalendarView.Week;
   public calendarViewDate = new Date();
   public searchTerm = '';
@@ -310,7 +312,11 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
     this.enforceMobileListView();
 
-    if (hasViewStateQueryParam && !this.isMobileViewport())
+    if (
+      hasViewStateQueryParam &&
+      !this.isMobileViewport() &&
+      this.hasStoredViewStatePreference()
+    )
       this.persistViewState();
 
     const calendarChanged =
@@ -335,6 +341,8 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   }
 
   private applyStoredViewState(): void {
+    if (!this.hasStoredViewStatePreference()) return;
+
     const storedState = this.getStoredViewState();
 
     if (!storedState) return;
@@ -380,6 +388,20 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     window.localStorage.setItem(
       APPOINTMENT_VIEW_STATE_STORAGE_KEY,
       JSON.stringify(state),
+    );
+  }
+
+  private rememberViewStatePreference(): void {
+    if (typeof window === 'undefined') return;
+
+    window.localStorage.setItem(APPOINTMENT_VIEW_STATE_PREFERENCE_KEY, 'true');
+  }
+
+  private hasStoredViewStatePreference(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      window.localStorage.getItem(APPOINTMENT_VIEW_STATE_PREFERENCE_KEY) ===
+        'true'
     );
   }
 
@@ -671,6 +693,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   public setViewMode(viewMode: AppointmentViewMode): void {
     this.viewMode = viewMode;
+    this.rememberViewStatePreference();
     this.persistViewState();
     this.syncNavigationStateToUrl();
 
@@ -680,6 +703,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   public setCalendarView(view: CalendarView): void {
     this.calendarView = view;
+    this.rememberViewStatePreference();
     this.persistViewState();
     this.clearCalendarSlotHint();
     this.loadAvailabilityExceptions(false);

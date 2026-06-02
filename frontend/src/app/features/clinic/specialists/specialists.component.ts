@@ -234,7 +234,6 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
           specialist.name,
           specialist.specialty ?? '',
           this.specialistStatusLabel(specialist),
-          specialist.center?.name ?? '',
         ]
           .join(' ')
           .toLowerCase()
@@ -291,15 +290,11 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   }
 
   public get specialistTableColumnCount(): number {
-    return 5;
+    return 4;
   }
 
   public trackByCenterId(_: number, center: Center): number {
     return center.id;
-  }
-
-  public centerName(specialist: Specialist): string {
-    return specialist.center?.name ?? this.translate('centers.none');
   }
 
   public isFormValid(): boolean {

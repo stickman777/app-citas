@@ -234,7 +234,6 @@ export class ServicesComponent implements OnInit, OnDestroy {
           service.description ?? '',
           service.durationMinutes,
           service.price ?? '',
-          service.center?.name ?? '',
           service.specialist?.name ?? '',
         ]
           .join(' ')
@@ -313,15 +312,11 @@ export class ServicesComponent implements OnInit, OnDestroy {
   }
 
   public get serviceTableColumnCount(): number {
-    return 7;
+    return 6;
   }
 
   public trackByCenterId(_: number, center: Center): number {
     return center.id;
-  }
-
-  public centerName(service: Service): string {
-    return service.center?.name ?? this.translate('centers.none');
   }
 
   public specialistName(service: Service): string {

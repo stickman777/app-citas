@@ -92,6 +92,11 @@
   display: none;
 }
 
+.dashboard-fade-list {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
+}
+
 .dashboard-card-list-item {
   gap: 8px;
   padding: 10px 0;
