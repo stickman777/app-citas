@@ -1,10 +1,58 @@
 <section class="client-section">
   <div class="client-section-header">
     <h1>{{ 'client.appointments.title' | translate }}</h1>
+    <button type="button" class="client-refresh" (click)="loadAppointments()" [disabled]="isLoading">
+      <i class="ti ti-refresh"></i>
+      <span>{{ 'common.refresh' | translate }}</span>
+    </button>
   </div>
 
+  @if(errorMessage){
+  <div class="client-alert" role="alert">{{ errorMessage | translate }}</div>
+  }
+
+  @if(isLoading){
+  <div class="client-panel">
+    <i class="ti ti-loader-2"></i>
+    <span>{{ 'client.appointments.loading' | translate }}</span>
+  </div>
+  } @else if(appointments.length === 0){
   <div class="client-panel">
     <i class="ti ti-calendar-check"></i>
     <span>{{ 'client.appointments.empty' | translate }}</span>
   </div>
+  } @else {
+  <div class="client-appointment-list">
+    @for(appointment of appointments; track trackByAppointmentId($index, appointment)){
+    <article class="client-appointment">
+      <div class="client-appointment-date">
+        <span>{{ appointment.startDateTime | date:'dd MMM' }}</span>
+        <strong>{{ appointment.startDateTime | date:'HH:mm' }}</strong>
+      </div>
+      <div class="client-appointment-body">
+        <div class="client-appointment-title">
+          <h2>{{ appointment.service.name }}</h2>
+          <span class="client-status" [ngClass]="statusClass(appointment.status)">
+            {{ statusLabel(appointment.status) | translate }}
+          </span>
+        </div>
+        <div class="client-appointment-meta">
+          <span>
+            <i class="ti ti-user-star"></i>
+            {{ appointment.specialist.name }}
+          </span>
+          <span>
+            <i class="ti ti-map-pin"></i>
+            {{ appointment.center.name }}
+          </span>
+          <span>
+            <i class="ti ti-clock"></i>
+            {{ appointment.duration }} min
+          </span>
+        </div>
+      </div>
+    </article>
+    }
+  </div>
+  }
 </section>

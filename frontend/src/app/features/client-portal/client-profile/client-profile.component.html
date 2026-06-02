@@ -3,8 +3,42 @@
     <h1>{{ 'client.profile.title' | translate }}</h1>
   </div>
 
+  @if(errorMessage){
+  <div class="client-alert" role="alert">{{ errorMessage | translate }}</div>
+  }
+
+  @if(isLoading){
+  <div class="client-panel">
+    <i class="ti ti-loader-2"></i>
+    <span>{{ 'client.profile.loading' | translate }}</span>
+  </div>
+  } @else if(profile){
+  <div class="client-profile-card">
+    <div class="client-profile-avatar">
+      <i class="ti ti-user"></i>
+    </div>
+    <div class="client-profile-data">
+      <h2>{{ profile.name }}</h2>
+      <dl>
+        <div>
+          <dt>{{ 'common.email' | translate }}</dt>
+          <dd>{{ profile.email || '-' }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'clients.fields.phone' | translate }}</dt>
+          <dd>{{ profile.phone }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'common.center' | translate }}</dt>
+          <dd>{{ profile.center?.name || ('centers.none' | translate) }}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+  } @else {
   <div class="client-panel">
     <i class="ti ti-user-circle"></i>
     <span>{{ 'client.profile.pending' | translate }}</span>
   </div>
+  }
 </section>
