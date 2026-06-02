@@ -94,17 +94,27 @@ export class UsersService implements OnModuleInit {
     const user = await this.usersRepository.findOne({
       relations: {
         centers: true,
+        activeCenter: true,
       },
       where: { id },
     });
 
     if (!user) throw new NotFoundException('No se ha encontrado el usuario');
 
+    const activeCenter = await this.ensureActiveCenter(user);
+
     return {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
+      activeCenter: activeCenter
+        ? {
+            id: activeCenter.id,
+            name: activeCenter.name,
+          }
+        : null,
+      activeCenterId: activeCenter?.id ?? null,
       centers:
         user.centers?.map((center) => ({
           id: center.id,
@@ -253,6 +263,29 @@ export class UsersService implements OnModuleInit {
     return this.findProfile(id);
   }
 
+  async updateActiveCenter(id: number, centerId: number) {
+    const user = await this.usersRepository.findOne({
+      relations: {
+        centers: true,
+        activeCenter: true,
+      },
+      where: { id },
+    });
+
+    if (!user) throw new NotFoundException('No se ha encontrado el usuario');
+
+    const allowedCenters = await this.getSelectableCenters(user);
+    const activeCenter = allowedCenters.find((center) => center.id === centerId);
+
+    if (!activeCenter)
+      throw new ForbiddenException('No puedes seleccionar este centro');
+
+    user.activeCenter = activeCenter;
+    await this.usersRepository.save(user);
+
+    return this.findProfile(id);
+  }
+
   async remove(id: number, authUser?: AuthUser) {
     const user = await this.findManageableUser(id, authUser);
 
@@ -318,6 +351,58 @@ export class UsersService implements OnModuleInit {
     return this.centerAccessService.findCentersByIds(uniqueCenterIds);
   }
 
+  private async ensureActiveCenter(user: User): Promise<Center | null> {
+    const allowedCenters = await this.getSelectableCenters(user);
+
+    if (allowedCenters.length === 0) {
+      if (user.activeCenter) {
+        user.activeCenter = null;
+        await this.usersRepository.save(user);
+      }
+
+      return null;
+    }
+
+    const activeCenter = allowedCenters.find(
+      (center) => center.id === user.activeCenter?.id,
+    );
+
+    if (activeCenter) return activeCenter;
+
+    const [firstAllowedCenter] = allowedCenters;
+    user.activeCenter = firstAllowedCenter;
+    await this.usersRepository.save(user);
+
+    return firstAllowedCenter;
+  }
+
+  private async getSelectableCenters(user: User): Promise<Center[]> {
+    if (user.role === UserRole.ADMIN) {
+      return this.centersRepository.find({
+        where: {
+          active: true,
+        },
+        order: {
+          name: 'ASC',
+        },
+      });
+    }
+
+    const centerIds = user.centers?.map((center) => center.id) ?? [];
+
+    if (centerIds.length === 0) return [];
+
+    return this.centersRepository.find({
+      where: {
+        id: In(centerIds),
+        active: true,
+      },
+      order: {
+        name: 'ASC',
+      },
+    });
+  }
+
   private async resolveCenterIdsForRole(
     role: UserRole,
     centerIds: number[] | undefined,
@@ -329,7 +414,7 @@ export class UsersService implements OnModuleInit {
     const hasAssignedCenters = (currentUser?.centers?.length ?? 0) > 0;
 
     if (
-      role === UserRole.GESTOR &&
+      [UserRole.GESTOR, UserRole.CLIENT].includes(role) &&
       ((centerIds !== undefined && centerIds.length === 0) ||
         (centerIds === undefined && !hasAssignedCenters))
     ) {
@@ -340,13 +425,13 @@ export class UsersService implements OnModuleInit {
   }
 
   private async getDefaultAssignableCenterId(authUser?: AuthUser) {
-    if (authUser?.role === UserRole.GESTOR) {
+    if (authUser && authUser.role !== UserRole.ADMIN) {
       const managedCenterIds =
         await this.centerAccessService.getManagedCenterIds(authUser);
 
       if (managedCenterIds.length === 0)
         throw new BadRequestException(
-          'No hay centros disponibles para asignar al gestor',
+          'No hay centros disponibles para asignar al usuario',
         );
 
       return managedCenterIds[0];
@@ -366,7 +451,7 @@ export class UsersService implements OnModuleInit {
 
     if (!center)
       throw new BadRequestException(
-        'No hay centros disponibles para asignar al gestor',
+        'No hay centros disponibles para asignar al usuario',
       );
 
     return center.id;
@@ -419,7 +504,7 @@ export class UsersService implements OnModuleInit {
       centerIds.length === 0
     )
       throw new ForbiddenException(
-        'Un gestor debe asignar al menos uno de sus centros',
+        'Debes asignar al menos uno de tus centros',
       );
   }
 

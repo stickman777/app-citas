@@ -33,7 +33,7 @@ export class CenterAccessService {
     centerId?: number,
     options: CenterAccessOptions = {},
   ): Promise<number[] | undefined> {
-    if (authUser?.role !== UserRole.GESTOR) {
+    if (authUser?.role === UserRole.ADMIN || !authUser) {
       if (centerId) return [centerId];
 
       if (options.includeActiveCentersForAdmin) {
@@ -43,7 +43,7 @@ export class CenterAccessService {
       return undefined;
     }
 
-    const managedCenterIds = await this.getManagedCenterIds(authUser);
+    const managedCenterIds = await this.getAssignedCenterIds(authUser);
 
     if (centerId) {
       if (!managedCenterIds.includes(centerId))
@@ -59,15 +59,19 @@ export class CenterAccessService {
     centerId: number,
     authUser?: AuthUser,
   ): Promise<void> {
-    if (authUser?.role !== UserRole.GESTOR) return;
+    if (authUser?.role === UserRole.ADMIN || !authUser) return;
 
-    const managedCenterIds = await this.getManagedCenterIds(authUser);
+    const managedCenterIds = await this.getAssignedCenterIds(authUser);
 
     if (!managedCenterIds.includes(centerId))
       throw new ForbiddenException('No puedes gestionar este centro');
   }
 
   async getManagedCenterIds(authUser?: AuthUser): Promise<number[]> {
+    return this.getAssignedCenterIds(authUser);
+  }
+
+  async getAssignedCenterIds(authUser?: AuthUser): Promise<number[]> {
     if (!authUser) return [];
 
     const user = await this.usersRepository.findOne({

@@ -13,6 +13,7 @@ import { UpdateCenterDto } from './dto/update-center.dto';
 export class CentersController {
   constructor(private readonly centersService: CentersService) {}
 
+  @Roles(UserRole.ADMIN, UserRole.GESTOR, UserRole.CLIENT)
   @Get()
   findAll(@Req() request: { user: { id: number; role: UserRole } }) {
     return this.centersService.findAll(request.user);

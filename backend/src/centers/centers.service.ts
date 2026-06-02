@@ -37,7 +37,7 @@ export class CentersService {
   ) {}
 
   async findAll(authUser?: AuthUser) {
-    if (authUser?.role === UserRole.GESTOR)
+    if (authUser && authUser.role !== UserRole.ADMIN)
       return this.findManagedCenters(authUser, true);
 
     const centers = await this.centersRepository.find({
@@ -53,7 +53,7 @@ export class CentersService {
   }
 
   async findAllIncludingInactive(authUser?: AuthUser) {
-    if (authUser?.role === UserRole.GESTOR)
+    if (authUser && authUser.role !== UserRole.ADMIN)
       return this.findManagedCenters(authUser, false);
 
     const centers = await this.centersRepository.find({
@@ -99,7 +99,7 @@ export class CentersService {
       },
     );
 
-    if (authUser?.role === UserRole.GESTOR)
+    if (authUser && authUser.role !== UserRole.ADMIN)
       await this.assignCenterToManager(savedCenter, authUser);
 
     return this.attachSchedule(savedCenter);

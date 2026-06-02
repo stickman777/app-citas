@@ -42,4 +42,8 @@ export class AuthService {
   updateCurrentUser(id: number, profileData: UpdateProfileDto) {
     return this.usersService.updateProfile(id, profileData);
   }
+
+  updateActiveCenter(id: number, centerId: number) {
+    return this.usersService.updateActiveCenter(id, centerId);
+  }
 }

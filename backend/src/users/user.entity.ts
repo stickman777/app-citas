@@ -2,6 +2,7 @@ import {
   Column,
   Entity,
   JoinTable,
+  ManyToOne,
   ManyToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -37,4 +38,7 @@ export class User {
   @ManyToMany(() => Center)
   @JoinTable()
   centers?: Center[];
+
+  @ManyToOne(() => Center, { nullable: true })
+  activeCenter?: Center | null;
 }
