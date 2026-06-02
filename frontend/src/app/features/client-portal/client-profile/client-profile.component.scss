@@ -1,0 +1,29 @@
+.client-section {
+  display: grid;
+  gap: 16px;
+}
+
+.client-section-header h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.client-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 120px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.client-panel i {
+  color: #2e37a4;
+  font-size: 24px;
+}

@@ -1,0 +1,21 @@
+<section class="client-page client-home">
+  <div class="client-page-header">
+    <span class="client-kicker">{{ 'client.home.kicker' | translate }}</span>
+    <h1>{{ 'client.home.title' | translate }}</h1>
+  </div>
+
+  <div class="client-actions-grid">
+    <a class="client-action" [routerLink]="routes.clientBook">
+      <i class="ti ti-calendar-plus"></i>
+      <span>{{ 'client.nav.book' | translate }}</span>
+    </a>
+    <a class="client-action" [routerLink]="routes.clientAppointments">
+      <i class="ti ti-calendar-check"></i>
+      <span>{{ 'client.nav.appointments' | translate }}</span>
+    </a>
+    <a class="client-action" [routerLink]="routes.clientProfile">
+      <i class="ti ti-user-circle"></i>
+      <span>{{ 'client.nav.profile' | translate }}</span>
+    </a>
+  </div>
+</section>

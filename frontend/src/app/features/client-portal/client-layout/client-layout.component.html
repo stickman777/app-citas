@@ -1,0 +1,40 @@
+<div class="client-shell">
+  <header class="client-header">
+    <a class="client-brand" [routerLink]="routes.clientHome">
+      <span class="client-brand-mark">
+        <i class="ti ti-calendar-heart"></i>
+      </span>
+      <span>{{ 'auth.brandName' | translate }}</span>
+    </a>
+
+    <nav class="client-nav" aria-label="Client navigation">
+      <a [routerLink]="routes.clientHome" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <i class="ti ti-home"></i>
+        <span>{{ 'client.nav.home' | translate }}</span>
+      </a>
+      <a [routerLink]="routes.clientAppointments" routerLinkActive="active">
+        <i class="ti ti-calendar-check"></i>
+        <span>{{ 'client.nav.appointments' | translate }}</span>
+      </a>
+      <a [routerLink]="routes.clientBook" routerLinkActive="active">
+        <i class="ti ti-plus"></i>
+        <span>{{ 'client.nav.book' | translate }}</span>
+      </a>
+      <a [routerLink]="routes.clientProfile" routerLinkActive="active">
+        <i class="ti ti-user-circle"></i>
+        <span>{{ 'client.nav.profile' | translate }}</span>
+      </a>
+    </nav>
+
+    <div class="client-account">
+      <span class="client-account-name">{{ accountAlias }}</span>
+      <button type="button" class="client-logout" (click)="logout()" [attr.aria-label]="'account.logout' | translate">
+        <i class="ti ti-logout"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="client-main">
+    <router-outlet></router-outlet>
+  </main>
+</div>
