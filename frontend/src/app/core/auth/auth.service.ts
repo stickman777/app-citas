@@ -42,6 +42,7 @@ export interface CurrentUser {
 }
 
 export interface UpdateCurrentUserPayload {
+  name?: string;
   email?: string;
   currentPassword?: string;
   password?: string;

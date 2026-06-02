@@ -12,6 +12,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { UserRole } from '../../../core/users/users.service';
 
 interface AccountForm {
+  name: string;
   email: string;
   currentPassword: string;
   password: string;
@@ -54,6 +55,7 @@ export class MyAccountComponent {
       next: user => {
         this.currentUser = user;
         this.form = {
+          name: user.name,
           email: user.email,
           currentPassword: '',
           password: '',
@@ -74,6 +76,7 @@ export class MyAccountComponent {
 
     this.clearMessages();
     this.form = {
+      name: this.currentUser.name,
       email: this.currentUser.email,
       currentPassword: '',
       password: '',
@@ -98,9 +101,16 @@ export class MyAccountComponent {
   }
 
   public get assignedCentersText(): string {
+    if (this.currentUser?.role === 'ADMIN')
+      return this.translate('users.centers.all');
+
     return this.currentUser?.centers?.length
       ? this.currentUser.centers.map(center => center.name).join(', ')
       : this.translate('centers.none');
+  }
+
+  public get activeCenterName(): string {
+    return this.currentUser?.activeCenter?.name ?? this.translate('centers.none');
   }
 
   public trackByCenterId(_: number, center: { id: number }): number {
@@ -115,6 +125,7 @@ export class MyAccountComponent {
       next: user => {
         this.currentUser = user;
         this.form = {
+          name: user.name,
           email: user.email,
           currentPassword: '',
           password: '',
@@ -131,6 +142,7 @@ export class MyAccountComponent {
 
   private getPayload(): UpdateCurrentUserPayload {
     const payload: UpdateCurrentUserPayload = {
+      name: this.form.name.trim(),
       email: this.form.email.trim(),
     };
 
@@ -144,6 +156,7 @@ export class MyAccountComponent {
 
   private getEmptyForm(): AccountForm {
     return {
+      name: '',
       email: '',
       currentPassword: '',
       password: '',

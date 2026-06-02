@@ -26,6 +26,18 @@
         <form #accountForm="ngForm" (ngSubmit)="saveProfile()">
           <div class="card-body">
             <div class="mb-3">
+              <label class="form-label">{{ 'users.fields.name' | translate }}<span class="text-danger ms-1">*</span></label>
+              <input
+                type="text"
+                name="name"
+                [(ngModel)]="form.name"
+                class="form-control"
+                autocomplete="name"
+                required
+              >
+            </div>
+
+            <div class="mb-3">
               <label class="form-label">{{ 'common.email' | translate }}<span class="text-danger ms-1">*</span></label>
               <input
                 type="email"
@@ -79,6 +91,7 @@
                   autocomplete="new-password"
                   minlength="4"
                   [required]="!!form.password"
+                  [placeholder]="'account.passwordPlaceholder' | translate"
                   [class.is-invalid]="passwordMismatch"
                 >
                   @if(passwordMismatch){
@@ -111,8 +124,8 @@
               <i class="ti ti-user text-dark"></i>
             </span>
             <div class="min-w-0">
-              <p class="text-dark fw-semibold mb-0 text-truncate">{{ currentUser?.email }}</p>
-              <span class="text-body fs-13">{{ 'account.currentSession' | translate }}</span>
+              <p class="text-dark fw-semibold mb-0 text-truncate">{{ currentUser?.name }}</p>
+              <span class="text-body fs-13 text-truncate d-block">{{ currentUser?.email }}</span>
             </div>
           </div>
 
@@ -125,8 +138,13 @@
             }
           </div>
 
+          <div class="account-info-row">
+            <span class="text-body fs-13">{{ 'account.activeCenter' | translate }}</span>
+            <span class="text-dark fw-medium text-end">{{ activeCenterName }}</span>
+          </div>
+
           <div class="account-info-row align-items-start">
-            <span class="text-body fs-13">{{ 'users.fields.centers' | translate }}</span>
+            <span class="text-body fs-13">{{ 'account.assignedCenters' | translate }}</span>
             <div class="d-flex flex-wrap justify-content-end gap-1 text-end">
               @for(center of currentUser?.centers ?? []; track trackByCenterId($index, center)){
               <span class="badge badge-soft-primary border border-primary text-primary fw-medium">{{ center.name }}</span>

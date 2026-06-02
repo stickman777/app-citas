@@ -216,6 +216,7 @@ export class UsersService implements OnModuleInit {
   async updateProfile(
     id: number,
     userData: {
+      name?: string;
       email?: string;
       currentPassword?: string;
       password?: string;
@@ -229,6 +230,14 @@ export class UsersService implements OnModuleInit {
     });
 
     if (!user) throw new NotFoundException('No se ha encontrado el usuario');
+
+    if (userData.name !== undefined) {
+      if (!userData.name.trim())
+        throw new BadRequestException('Nombre requerido');
+
+      await this.validateAdminAlias(user.role, userData.name, user.id);
+      user.name = userData.name.trim();
+    }
 
     if (userData.email && userData.email !== user.email) {
       const existingUser = await this.usersRepository.findOne({

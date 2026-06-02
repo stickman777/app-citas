@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 import { routes } from '../../shared/routes/routes';
@@ -12,6 +12,7 @@ import { ToastrService } from 'ngx-toastr';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { Language, SUPPORTED_LANGUAGES } from '../../core/i18n/translations';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-header',
@@ -19,13 +20,14 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
     styleUrls: ['./header.component.scss'],
     imports: [CommonModule,RouterLink,MatSelectModule,NgScrollbarModule,TranslatePipe]
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnDestroy {
   public readonly languageOptions = SUPPORTED_LANGUAGES;
   public routes = routes;
   public currentUser: CurrentUser | null = null;
   public openBox = false;
   public miniSidebar  = false;
   public addClass = false;
+  private currentUserSubscription?: Subscription;
  base = '';
  themeColor: 'light' | 'dark' = 'light';
   mobileSidebar=false;
@@ -93,11 +95,15 @@ export class HeaderComponent {
         
       }
     }
-    ngOnInit(): void {
+  ngOnInit(): void {
     const savedTheme = localStorage.getItem('themeColor') as 'light' | 'dark' | null;
     this.themeColor = savedTheme || 'light';
     this.sideBar.changeThemeColor(this.themeColor);
     this.loadCurrentUser();
+  }
+
+  ngOnDestroy(): void {
+    this.currentUserSubscription?.unsubscribe();
   }
 
   toggleTheme(): void {
@@ -119,7 +125,28 @@ export class HeaderComponent {
     this.authService.logout();
   }
 
+  public get accountAlias(): string {
+    return this.formatAlias(this.currentUser?.name) || 'Usuario';
+  }
+
+  private formatAlias(alias?: string): string {
+    const words = alias?.trim().split(/\s+/).filter(Boolean) ?? [];
+
+    if (words.length <= 1) return words[0] ?? '';
+
+    const [firstWord, ...rest] = words;
+    const initials = rest.map(word => `${word.charAt(0).toUpperCase()}.`);
+
+    return [firstWord, ...initials].join(' ');
+  }
+
   private loadCurrentUser(): void {
+    this.currentUserSubscription = this.authService.currentUser$.subscribe(
+      user => {
+        this.currentUser = user;
+      }
+    );
+
     this.authService.getCurrentUser().subscribe({
       next: user => {
         this.currentUser = user;
