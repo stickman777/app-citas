@@ -14,6 +14,7 @@ import {
 
 import { environment } from '../../../environments/environment';
 import { routes } from '../../shared/routes/routes';
+import { ActiveCenterService } from '../centers/active-center.service';
 
 export interface LoginCredentials {
   email: string;
@@ -34,6 +35,8 @@ export interface CurrentUser {
   email: string;
   name: string;
   role: 'ADMIN' | 'GESTOR' | 'CLIENT';
+  activeCenterId: number | null;
+  activeCenter?: CurrentUserCenter | null;
   centerIds: number[];
   centers?: CurrentUserCenter[];
 }
@@ -62,7 +65,8 @@ export class AuthService {
 
   constructor(
     private readonly http: HttpClient,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly activeCenterService: ActiveCenterService
   ) {}
 
   login(credentials: LoginCredentials): Observable<CurrentUser> {
@@ -83,7 +87,7 @@ export class AuthService {
   updateCurrentUser(payload: UpdateCurrentUserPayload): Observable<CurrentUser> {
     return this.http
       .patch<CurrentUser>(`${environment.apiUrl}/auth/me`, payload)
-      .pipe(tap(user => this.currentUserSubject.next(user)));
+      .pipe(tap(user => this.setCurrentUser(user)));
   }
 
   loadCurrentUser(forceRefresh = false): Observable<CurrentUser> {
@@ -114,11 +118,12 @@ export class AuthService {
   private fetchCurrentUser(): Observable<CurrentUser> {
     return this.http
       .get<CurrentUser>(`${environment.apiUrl}/auth/me`)
-      .pipe(tap(user => this.currentUserSubject.next(user)));
+      .pipe(tap(user => this.setCurrentUser(user)));
   }
 
   logout(): void {
     localStorage.removeItem(this.tokenKey);
+    this.activeCenterService.clearUserContext();
     this.currentUserSubject.next(null);
     void this.router.navigate([routes.login]);
   }
@@ -134,6 +139,7 @@ export class AuthService {
 
     if (this.isTokenExpired(token)) {
       localStorage.removeItem(this.tokenKey);
+      this.activeCenterService.clearUserContext();
       return false;
     }
 
@@ -148,5 +154,10 @@ export class AuthService {
     } catch {
       return true;
     }
+  }
+
+  private setCurrentUser(user: CurrentUser): void {
+    this.currentUserSubject.next(user);
+    this.activeCenterService.setUserContext(user.id, user.activeCenterId);
   }
 }

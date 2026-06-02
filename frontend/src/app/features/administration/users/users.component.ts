@@ -239,7 +239,7 @@ export class UsersComponent implements OnDestroy {
   public onRoleChange(role: UserRole): void {
     this.form.role = role;
 
-    if (role !== 'GESTOR') {
+    if (role === 'ADMIN') {
       this.form.centerIds = [];
       return;
     }
@@ -273,7 +273,7 @@ export class UsersComponent implements OnDestroy {
   }
 
   public get requiresCenters(): boolean {
-    return this.form.role === 'GESTOR';
+    return this.form.role === 'GESTOR' || this.form.role === 'CLIENT';
   }
 
   public get centerSelectionInvalid(): boolean {
@@ -284,7 +284,7 @@ export class UsersComponent implements OnDestroy {
     this.centersService.getCenters().subscribe({
       next: centers => {
         this.centers = centers;
-        if (this.form.role === 'GESTOR') this.selectDefaultCenter();
+        if (this.requiresCenters) this.selectDefaultCenter();
       },
       error: () => {
         this.errorMessage = this.translate('centers.errors.load');
@@ -332,7 +332,7 @@ export class UsersComponent implements OnDestroy {
   }
 
   private getRoleCenterIds(): number[] {
-    return this.form.role === 'GESTOR' ? this.form.centerIds : [];
+    return this.requiresCenters ? this.form.centerIds : [];
   }
 
   private selectDefaultCenter(): void {
