@@ -63,17 +63,15 @@
       <thead class="thead-light">
         <tr>
           <th class="centers-table-actions"></th>
-          <th class="d-none d-md-table-cell">ID</th>
           <th>{{ 'centers.fields.name' | translate }}</th>
           <th>{{ 'centers.fields.city' | translate }}</th>
-          <th>{{ 'centers.fields.logoUrl' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
         </tr>
       </thead>
       <tbody>
         @if(isLoading){
         <tr>
-          <td colspan="6" class="text-center text-dark py-4">{{ 'centers.loading' | translate }}</td>
+          <td colspan="4" class="text-center text-dark py-4">{{ 'centers.loading' | translate }}</td>
         </tr>
         } @else {
           @for(center of filteredCenters; track trackByCenterId($index, center)){
@@ -83,7 +81,6 @@
                 <i class="ti ti-edit"></i>
               </a>
             </td>
-            <td class="fw-medium d-none d-md-table-cell">#{{ center.id }}</td>
             <td>
               <div class="d-flex align-items-center">
                 <span class="avatar avatar-sm rounded-circle bg-light border me-2 d-inline-flex align-items-center justify-content-center">
@@ -97,7 +94,6 @@
               </div>
             </td>
             <td>{{ center.city || '-' }}</td>
-            <td>{{ center.logoUrl || '-' }}</td>
             <td>
               <button
                 type="button"
@@ -111,7 +107,7 @@
           </tr>
           } @empty {
           <tr>
-            <td colspan="6" class="text-center text-dark py-4">{{ 'centers.empty' | translate }}</td>
+            <td colspan="4" class="text-center text-dark py-4">{{ 'centers.empty' | translate }}</td>
           </tr>
           }
         }

@@ -175,7 +175,7 @@ export class CentersComponent {
     this.filteredCenters = this.centers.filter(center => {
       const matchesSearch =
         !search ||
-        `${center.id} ${center.name} ${center.city ?? ''} ${center.logoUrl ?? ''}`
+        `${center.name} ${center.city ?? ''}`
           .toLowerCase()
           .includes(search);
       const matchesStatus =

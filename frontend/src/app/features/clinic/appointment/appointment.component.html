@@ -243,9 +243,6 @@
           <th>{{ 'common.service' | translate }}</th>
           <th>{{ 'common.specialist' | translate }}</th>
           <th>{{ 'common.dateTime' | translate }}</th>
-          @if(isAdmin){
-          <th>{{ 'common.center' | translate }}</th>
-          }
           <th>{{ 'common.status' | translate }}</th>
         </tr>
       </thead>
@@ -295,13 +292,6 @@
               <span class="text-dark fw-medium d-block">{{ appointment.startDateTime | date:'d/M/yyyy HH:mm' }}</span>
               <span class="text-body fs-13">{{ appointment.duration }} min</span>
             </td>
-            @if(isAdmin){
-            <td>
-              <span class="appointments-center-name text-body d-block text-truncate">
-                {{ appointmentCenterName(appointment) }}
-              </span>
-            </td>
-            }
             <td>
               <span class="appointments-status-cell d-inline-flex align-items-center gap-1">
                 <span class="badge border px-2 py-1 fs-13 fw-medium" [ngClass]="statusBadgeClass(appointment.status)">

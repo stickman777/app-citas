@@ -56,7 +56,6 @@ import {
 import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { CalendarWrapperModule } from '../../../shared/calendar/calendar-wrapper.module';
-import { AuthService, CurrentUser } from '../../../core/auth/auth.service';
 
 interface AppointmentForm {
   startDateTime: string;
@@ -188,7 +187,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public specialists: AppointmentSpecialist[] = [];
   public centers: Center[] = [];
   public activeCenter: Center | null = null;
-  public currentUser: CurrentUser | null = null;
   public viewMode: AppointmentViewMode = 'list';
   public calendarView: CalendarView = CalendarView.Week;
   public calendarViewDate = new Date();
@@ -218,7 +216,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public form: AppointmentForm = this.getEmptyForm();
   public exceptionForm: AvailabilityExceptionForm = this.getEmptyExceptionForm();
   private activeCenterSubscription?: Subscription;
-  private currentUserSubscription?: Subscription;
   private queryParamSubscription?: Subscription;
   private loadedCenterId: number | null = null;
   private unavailableSlotHintTimeout?: ReturnType<typeof setTimeout>;
@@ -229,7 +226,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     private readonly appointmentsService: AppointmentsService,
     private readonly availabilityService: AvailabilityService,
     private readonly centersService: CentersService,
-    private readonly authService: AuthService,
     private readonly activeCenterService: ActiveCenterService,
     private readonly i18nService: I18nService
   ) {}
@@ -240,7 +236,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.queryParamSubscription = this.route.queryParamMap.subscribe(params => {
       this.applyNavigationQueryParams(params);
     });
-    this.watchCurrentUser();
     this.loadCenters();
     this.activeCenterSubscription = this.activeCenterService.activeCenter$.subscribe(
       center => {
@@ -265,7 +260,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.activeCenterSubscription?.unsubscribe();
-    this.currentUserSubscription?.unsubscribe();
     this.queryParamSubscription?.unsubscribe();
     this.clearUnavailableSlotHintTimeout();
   }
@@ -683,12 +677,8 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return appointment.id;
   }
 
-  public get isAdmin(): boolean {
-    return this.currentUser?.role === 'ADMIN';
-  }
-
   public get appointmentTableColumnCount(): number {
-    return this.isAdmin ? 7 : 6;
+    return 6;
   }
 
   public setViewMode(viewMode: AppointmentViewMode): void {
@@ -970,10 +960,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return this.translate(`appointments.status.${status.toLowerCase()}`);
   }
 
-  public appointmentCenterName(appointment: Appointment): string {
-    return appointment.center?.name ?? this.translate('centers.none');
-  }
-
   public saveAvailabilityException(): void {
     if (!this.activeCenter || !this.isExceptionFormValid()) {
       this.errorMessage = this.translate('availability.errors.form');
@@ -1109,20 +1095,6 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.errorMessage = this.translate('appointments.errors.references');
-      },
-    });
-  }
-
-  private watchCurrentUser(): void {
-    this.currentUser = this.authService.currentUser;
-    this.currentUserSubscription = this.authService.currentUser$.subscribe(
-      user => {
-        this.currentUser = user;
-      }
-    );
-    this.authService.loadCurrentUser().subscribe({
-      error: () => {
-        this.currentUser = null;
       },
     });
   }
