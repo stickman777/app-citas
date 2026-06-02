@@ -1,40 +1,77 @@
 <div class="client-shell">
-  <header class="client-header">
-    <a class="client-brand" [routerLink]="routes.clientHome">
-      <span class="client-brand-mark">
-        <i class="ti ti-calendar-heart"></i>
-      </span>
-      <span>{{ 'auth.brandName' | translate }}</span>
-    </a>
+  <header class="client-topbar">
+    <div class="client-topbar-inner">
+      <a class="client-brand" [routerLink]="routes.clientHome">
+        <span class="client-brand-mark">
+          <i class="ti ti-calendar-heart"></i>
+        </span>
+        <span>{{ 'auth.brandName' | translate }}</span>
+      </a>
 
-    <nav class="client-nav" aria-label="Client navigation">
-      <a [routerLink]="routes.clientHome" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <i class="ti ti-home"></i>
-        <span>{{ 'client.nav.home' | translate }}</span>
-      </a>
-      <a [routerLink]="routes.clientAppointments" routerLinkActive="active">
-        <i class="ti ti-calendar-check"></i>
-        <span>{{ 'client.nav.appointments' | translate }}</span>
-      </a>
-      <a [routerLink]="routes.clientBook" routerLinkActive="active">
-        <i class="ti ti-plus"></i>
-        <span>{{ 'client.nav.book' | translate }}</span>
-      </a>
-      <a [routerLink]="routes.clientProfile" routerLinkActive="active">
-        <i class="ti ti-user-circle"></i>
-        <span>{{ 'client.nav.profile' | translate }}</span>
-      </a>
-    </nav>
+      <nav class="client-nav" aria-label="Client navigation">
+        <a [routerLink]="routes.clientAppointments" routerLinkActive="active">
+          <i class="ti ti-calendar-check"></i>
+          <span>{{ 'client.nav.appointments' | translate }}</span>
+        </a>
+        <a [routerLink]="routes.clientBook" routerLinkActive="active">
+          <i class="ti ti-calendar-plus"></i>
+          <span>{{ 'client.nav.book' | translate }}</span>
+        </a>
+      </nav>
 
-    <div class="client-account">
-      <span class="client-account-name">{{ accountAlias }}</span>
-      <button type="button" class="client-logout" (click)="logout()" [attr.aria-label]="'account.logout' | translate">
-        <i class="ti ti-logout"></i>
-      </button>
+      <div class="client-account">
+        <button
+          type="button"
+          class="btn btn-icon client-icon-button"
+          (click)="toggleTheme()"
+          [attr.aria-label]="'client.theme.toggle' | translate"
+        >
+          <i class="ti fs-16" [ngClass]="themeColor === 'dark' ? 'ti-sun' : 'ti-moon'"></i>
+        </button>
+        <div class="client-profile-menu" (click)="$event.stopPropagation()">
+          <button
+            type="button"
+            class="client-account-chip"
+            (click)="toggleProfileMenu()"
+            [attr.aria-label]="'account.settings' | translate"
+            [attr.aria-expanded]="isProfileMenuOpen"
+          >
+            <span class="avatar avatar-sm rounded-circle bg-primary text-white">
+              <i class="ti ti-user"></i>
+            </span>
+            <span class="client-account-name">{{ accountAlias }}</span>
+            <i class="ti ti-chevron-down client-account-chevron"></i>
+          </button>
+
+          @if(isProfileMenuOpen){
+          <div class="client-profile-dropdown">
+            <div class="client-profile-summary">
+              <span class="avatar avatar-md rounded-circle bg-primary text-white">
+                <i class="ti ti-user"></i>
+              </span>
+              <div class="min-w-0">
+                <p class="mb-0 fw-medium text-dark text-truncate">{{ accountAlias }}</p>
+                <span class="d-block fs-13 text-body text-truncate">{{ currentUser?.email }}</span>
+              </div>
+            </div>
+            <a class="client-profile-item" [routerLink]="routes.clientProfile" (click)="closeProfileMenu()">
+              <i class="ti ti-user-circle"></i>
+              <span>{{ 'client.nav.profile' | translate }}</span>
+            </a>
+            <button type="button" class="client-profile-item text-danger" (click)="logout()">
+              <i class="ti ti-logout"></i>
+              <span>{{ 'account.logout' | translate }}</span>
+            </button>
+          </div>
+          }
+        </div>
+      </div>
     </div>
   </header>
 
   <main class="client-main">
-    <router-outlet></router-outlet>
+    <div class="client-content">
+      <router-outlet></router-outlet>
+    </div>
   </main>
 </div>

@@ -32,7 +32,8 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        loadComponent: () => import('./features/client-portal/client-home/client-home.component').then(m => m.ClientHomeComponent),
+        redirectTo: 'appointments',
+        pathMatch: 'full',
       },
       {
         path: 'appointments',
