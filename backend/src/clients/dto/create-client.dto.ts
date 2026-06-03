@@ -37,8 +37,7 @@ export class CreateClientDto {
   @Min(0)
   priority?: number;
 
-  @IsOptional()
   @IsInt()
   @Min(1)
-  centerId?: number;
+  centerId: number;
 }

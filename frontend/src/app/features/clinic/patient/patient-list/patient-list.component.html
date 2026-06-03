@@ -197,9 +197,9 @@
             <input type="number" name="priority" [(ngModel)]="form.priority" class="form-control" min="0">
           </div>
           <div class="mb-3">
-            <label class="form-label">{{ 'common.center' | translate }}</label>
-            <select name="centerId" [(ngModel)]="form.centerId" class="form-select">
-              <option [ngValue]="null">{{ 'centers.none' | translate }}</option>
+            <label class="form-label">{{ 'common.center' | translate }}<span class="text-danger ms-1">*</span></label>
+            <select name="centerId" [(ngModel)]="form.centerId" class="form-select" required>
+              <option [ngValue]="null" disabled>{{ 'centers.select' | translate }}</option>
               @for(center of centerOptions; track trackByCenterId($index, center)){
               <option [ngValue]="center.id">{{ center.name }}</option>
               }

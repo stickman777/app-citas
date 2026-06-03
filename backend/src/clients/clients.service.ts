@@ -126,10 +126,10 @@ export class ClientsService {
   async create(clientData: CreateClientDto, authUser?: AuthUser) {
     const { centerId, ...clientPayload } = clientData;
 
-    if (authUser?.role === UserRole.GESTOR && !centerId)
-      throw new ForbiddenException('Un gestor debe asignar un centro');
-
     const center = await this.centerAccessService.getCenter(centerId, authUser);
+
+    if (!center) throw new BadRequestException('Centro requerido');
+
     const client = this.clientsRepository.create({
       ...clientPayload,
       center,

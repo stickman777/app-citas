@@ -139,8 +139,14 @@ export class PatientListComponent implements OnInit, OnDestroy {
   }
 
   public saveClient(): void {
-    this.isSaving = true;
     this.clearMessages();
+
+    if (!this.form.centerId) {
+      this.errorMessage = this.translate('clients.errors.centerRequired');
+      return;
+    }
+
+    this.isSaving = true;
 
     const payload = this.getPayload();
     const request = this.editingClient
@@ -338,7 +344,7 @@ export class PatientListComponent implements OnInit, OnDestroy {
       priority: Number(this.form.priority) || 0,
       email: email || null,
       notes: notes || null,
-      centerId: this.form.centerId ?? undefined,
+      centerId: this.form.centerId,
     };
   }
 
