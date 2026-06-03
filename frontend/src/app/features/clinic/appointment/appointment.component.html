@@ -240,9 +240,9 @@
             <span class="d-md-none">{{ 'common.listing' | translate }}</span>
             <span class="d-none d-md-inline">{{ 'common.client' | translate }}</span>
           </th>
-          <th>{{ 'common.service' | translate }}</th>
-          <th>{{ 'common.specialist' | translate }}</th>
           <th>{{ 'common.dateTime' | translate }}</th>
+          <th>{{ 'common.specialist' | translate }}</th>
+          <th>{{ 'common.service' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
         </tr>
       </thead>
@@ -274,10 +274,8 @@
               <span class="text-body fs-13">{{ appointment.client.phone }}</span>
             </td>
             <td>
-              {{ appointment.service.name }}
-              @if(!appointment.service.active){
-              <span class="badge badge-soft-danger border border-danger text-danger ms-1">{{ 'common.inactive' | translate }}</span>
-              }
+              <span class="text-dark fw-medium d-block">{{ appointment.startDateTime | date:'d/M/yyyy HH:mm' }}</span>
+              <span class="text-body fs-13">{{ appointment.duration }} min</span>
             </td>
             <td>
               {{ appointment.specialist.name }}
@@ -289,8 +287,10 @@
               }
             </td>
             <td>
-              <span class="text-dark fw-medium d-block">{{ appointment.startDateTime | date:'d/M/yyyy HH:mm' }}</span>
-              <span class="text-body fs-13">{{ appointment.duration }} min</span>
+              {{ appointment.service.name }}
+              @if(!appointment.service.active){
+              <span class="badge badge-soft-danger border border-danger text-danger ms-1">{{ 'common.inactive' | translate }}</span>
+              }
             </td>
             <td>
               <span class="appointments-status-cell d-inline-flex align-items-center gap-1">

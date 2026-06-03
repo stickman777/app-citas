@@ -114,7 +114,21 @@
                 </div>
               </div>
             </td>
-            <td class="d-none d-md-table-cell clients-table-cell-text" [title]="client.phone">{{ client.phone }}</td>
+            <td class="d-none d-md-table-cell">
+              <span class="clients-phone-cell">
+                <span class="clients-table-cell-text" [title]="client.phone">{{ client.phone }}</span>
+                <a
+                  class="clients-whatsapp-link"
+                  [href]="whatsappUrl(client.phone)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp"
+                  title="WhatsApp"
+                >
+                  <i class="ti ti-brand-whatsapp"></i>
+                </a>
+              </span>
+            </td>
             <td class="d-none d-xl-table-cell clients-table-cell-text" [title]="client.email || '-'">{{ client.email || '-' }}</td>
             <td>
               <button

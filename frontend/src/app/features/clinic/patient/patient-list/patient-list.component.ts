@@ -336,6 +336,17 @@ export class PatientListComponent implements OnInit, OnDestroy {
       : this.translate('clients.pending');
   }
 
+  public whatsappUrl(phone: string): string {
+    const digits = phone.replace(/\D/g, '');
+    const nationalNumber = digits.startsWith('0034')
+      ? digits.slice(4)
+      : digits.startsWith('34')
+        ? digits.slice(2)
+        : digits;
+
+    return `https://wa.me/34${nationalNumber}`;
+  }
+
   public get accountPasswordMismatch(): boolean {
     return (
       !!this.accountForm.password &&

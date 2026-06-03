@@ -30,6 +30,40 @@
     white-space: nowrap;
   }
 
+  .clients-phone-cell {
+    align-items: center;
+    display: inline-grid;
+    gap: 10px;
+    grid-template-columns: minmax(96px, 118px) 24px;
+    max-width: 100%;
+    min-width: 0;
+
+    .clients-table-cell-text {
+      min-width: 0;
+    }
+  }
+
+  .clients-whatsapp-link {
+    align-items: center;
+    border-radius: 50%;
+    color: #25d366;
+    cursor: pointer;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 18px;
+    height: 24px;
+    justify-content: center;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    width: 24px;
+
+    &:hover,
+    &:focus-visible {
+      background-color: rgba(37, 211, 102, 0.12);
+      color: #128c4a;
+    }
+  }
+
   .clients-table-account {
     width: 190px;
   }
