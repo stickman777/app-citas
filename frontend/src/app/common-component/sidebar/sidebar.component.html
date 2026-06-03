@@ -71,11 +71,15 @@
             }
 
             @for(menu of mainMenu.menu; track menu.menuValue){
-              <li [class.active]="base === menu.base">
-                <a [routerLink]="menu.route" (click)="expandSubMenus(menu)">
-                  <i class="ti" [class]="'ti-' + menu.icon"></i>
-                  <span>{{ (menu.labelKey || menu.menuValue) | translate }}</span>
-                </a>
+              <li>
+                <ul>
+                  <li [class.active]="base === menu.base">
+                    <a [routerLink]="menu.route" [class.active]="base === menu.base" (click)="expandSubMenus(menu)">
+                      <i [ngClass]="['ti', 'ti-' + menu.icon]"></i>
+                      <span>{{ (menu.labelKey || menu.menuValue) | translate }}</span>
+                    </a>
+                  </li>
+                </ul>
               </li>
             }
           }
