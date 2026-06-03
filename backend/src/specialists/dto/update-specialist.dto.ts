@@ -1,13 +1,19 @@
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  MAX_NAME_LENGTH,
+  MAX_SHORT_TEXT_LENGTH,
+} from '../../common/validation.constants';
 import { SpecialistStatus } from '../specialist.entity';
 
 export class UpdateSpecialistDto {
   @IsOptional()
   @IsString()
+  @MaxLength(MAX_NAME_LENGTH)
   name?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(MAX_SHORT_TEXT_LENGTH)
   specialty?: string;
 
   @IsOptional()

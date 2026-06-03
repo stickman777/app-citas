@@ -6,19 +6,23 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
+import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH } from '../../common/validation.constants';
 import { UserRole } from '../user.entity';
 
 export class UpdateUserDto {
   @IsOptional()
   @IsEmail()
+  @MaxLength(MAX_EMAIL_LENGTH)
   email?: string;
 
   @IsOptional()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(MAX_NAME_LENGTH)
   name?: string;
 
   @IsOptional()

@@ -1,20 +1,37 @@
-import { IsEmail, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsEmail,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
+import {
+  MAX_EMAIL_LENGTH,
+  MAX_LONG_TEXT_LENGTH,
+  MAX_NAME_LENGTH,
+  MAX_PHONE_LENGTH,
+} from '../../common/validation.constants';
 
 export class UpdateClientDto {
   @IsOptional()
   @IsString()
+  @MaxLength(MAX_NAME_LENGTH)
   name?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(MAX_PHONE_LENGTH)
   phone?: string;
 
   @IsOptional()
   @IsEmail()
+  @MaxLength(MAX_EMAIL_LENGTH)
   email?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(MAX_LONG_TEXT_LENGTH)
   notes?: string;
 
   @IsOptional()
