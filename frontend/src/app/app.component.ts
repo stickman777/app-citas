@@ -38,8 +38,7 @@ export class AppComponent {
         ||this.base === 'success basic'||this.base === 'success cover'||this.base === 'success illustration'
         ||this.base ==='reset password basic' ||this.base ==='reset password cover' ||this.base ==='reset password illustration'|| this.base === 'coming soon' ||this.base === 'under maintenance' 
         ||this.base ==='layout fullwidth' || this.base === 'layout hoverview' ||this.base === 'layout rtl' 
-        ||this.base ==='layout mini' || this.base === 'layout hidden' ||this.base === 'layout dark' 
-        ||this.base ==='notifications' 
+        ||this.base ==='layout mini' || this.base === 'layout hidden' ||this.base === 'layout dark'
       ){
         this.page = this.base
       }
