@@ -48,6 +48,13 @@ export interface UpdateCurrentUserPayload {
   password?: string;
 }
 
+export interface RegisterClientPayload {
+  invitationToken: string;
+  name: string;
+  email: string;
+  password: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -75,6 +82,19 @@ export class AuthService {
 
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, credentials)
+      .pipe(
+        tap(response =>
+          localStorage.setItem(this.tokenKey, response.access_token)
+        ),
+        switchMap(() => this.loadCurrentUser(true))
+      );
+  }
+
+  registerClient(payload: RegisterClientPayload): Observable<CurrentUser> {
+    this.clearSession();
+
+    return this.http
+      .post<LoginResponse>(`${environment.apiUrl}/auth/register-client`, payload)
       .pipe(
         tap(response =>
           localStorage.setItem(this.tokenKey, response.access_token)

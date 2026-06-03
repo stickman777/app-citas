@@ -1,5 +1,6 @@
 export const routes = {
   login: '/login',
+  registerClient: '/register-client',
   index: '/index',
   clients: '/clients',
   centers: '/centers',

@@ -27,13 +27,6 @@ interface ClientForm {
   centerId: number | null;
 }
 
-interface ClientAccountForm {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
 @Component({
   selector: 'app-patient-list',
   templateUrl: './patient-list.component.html',
@@ -53,7 +46,7 @@ export class PatientListComponent implements OnInit, OnDestroy {
   public successMessage = '';
   public isLoading = false;
   public isSaving = false;
-  public isCreatingAccount = false;
+  public isCreatingInvitation = false;
   public isChangingStatus = false;
   public isFormModalOpen = false;
   public isAccountModalOpen = false;
@@ -63,7 +56,8 @@ export class PatientListComponent implements OnInit, OnDestroy {
   public clientToChangeStatus: Client | null = null;
   public selectedStatus = true;
   public form: ClientForm = this.getEmptyForm();
-  public accountForm: ClientAccountForm = this.getEmptyAccountForm();
+  public invitationLink = '';
+  public invitationExpiresAt = '';
   private activeCenterSubscription?: Subscription;
   private currentUserSubscription?: Subscription;
   private loadedCenterId?: number | null;
@@ -181,17 +175,13 @@ export class PatientListComponent implements OnInit, OnDestroy {
 
     this.clearMessages();
     this.clientToCreateAccount = client;
-    this.accountForm = {
-      name: client.name,
-      email: client.email ?? '',
-      password: '',
-      confirmPassword: '',
-    };
+    this.invitationLink = '';
+    this.invitationExpiresAt = '';
     this.isAccountModalOpen = true;
   }
 
   public closeAccountModal(): void {
-    if (this.isCreatingAccount) return;
+    if (this.isCreatingInvitation) return;
 
     this.isAccountModalOpen = false;
   }
@@ -209,34 +199,25 @@ export class PatientListComponent implements OnInit, OnDestroy {
     if (this.isStatusModalOpen) this.closeStatusModal();
   }
 
-  public createClientAccount(): void {
+  public createClientInvitation(): void {
     if (!this.clientToCreateAccount) return;
 
-    if (this.accountPasswordMismatch) {
-      this.errorMessage = this.translate('clients.errors.passwordMismatch');
-      return;
-    }
-
-    this.isCreatingAccount = true;
+    this.isCreatingInvitation = true;
     this.clearMessages();
 
     this.clientsService
-      .createClientUserAccount(this.clientToCreateAccount.id, {
-        name: this.accountForm.name.trim(),
-        email: this.accountForm.email.trim(),
-        password: this.accountForm.password,
-      })
+      .createClientInvitation(this.clientToCreateAccount.id)
       .subscribe({
-        next: () => {
-          this.successMessage = this.translate('clients.success.accountCreated');
-          this.isCreatingAccount = false;
-          this.isAccountModalOpen = false;
-          this.clientToCreateAccount = null;
+        next: invitation => {
+          this.invitationLink = this.buildInvitationLink(invitation.token);
+          this.invitationExpiresAt = this.formatDate(invitation.expiresAt);
+          this.successMessage = this.translate('clients.success.invitationCreated');
+          this.isCreatingInvitation = false;
           this.loadClients(false);
         },
         error: () => {
-          this.errorMessage = this.translate('clients.errors.account');
-          this.isCreatingAccount = false;
+          this.errorMessage = this.translate('clients.errors.invitation');
+          this.isCreatingInvitation = false;
         },
       });
   }
@@ -347,13 +328,6 @@ export class PatientListComponent implements OnInit, OnDestroy {
     return `https://wa.me/34${nationalNumber}`;
   }
 
-  public get accountPasswordMismatch(): boolean {
-    return (
-      !!this.accountForm.password &&
-      this.accountForm.password !== this.accountForm.confirmPassword
-    );
-  }
-
   private getPayload(): ClientPayload {
     const email = this.form.email.trim();
     const notes = this.form.notes.trim();
@@ -376,15 +350,6 @@ export class PatientListComponent implements OnInit, OnDestroy {
       notes: '',
       priority: 0,
       centerId: this.activeCenter?.id ?? null,
-    };
-  }
-
-  private getEmptyAccountForm(): ClientAccountForm {
-    return {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
     };
   }
 
@@ -432,5 +397,16 @@ export class PatientListComponent implements OnInit, OnDestroy {
 
   private translate(key: string): string {
     return this.i18nService.translate(key);
+  }
+
+  private buildInvitationLink(token: string): string {
+    return `${window.location.origin}/register-client?token=${encodeURIComponent(token)}`;
+  }
+
+  private formatDate(value: string): string {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value));
   }
 }

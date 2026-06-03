@@ -228,56 +228,40 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="text-dark modal-title fw-bold">{{ 'clients.account.create' | translate }}</h4>
+        <h4 class="text-dark modal-title fw-bold">{{ 'clients.invitation.create' | translate }}</h4>
         <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.cancel' | translate" (click)="closeAccountModal()">
           <i class="ti ti-x"></i>
         </button>
       </div>
-      <form #clientAccountForm="ngForm" (ngSubmit)="createClientAccount()">
+      <form (ngSubmit)="createClientInvitation()">
         <div class="modal-body">
           <div class="alert alert-light border py-2 fs-13">
-            {{ 'clients.account.hint' | translate }}
+            {{ 'clients.invitation.hint' | translate }}
             <span class="fw-semibold text-dark">{{ clientToCreateAccount?.name }}</span>
           </div>
+
+          @if(invitationLink){
           <div class="mb-3">
-            <label class="form-label">{{ 'clients.fields.name' | translate }}<span class="text-danger ms-1">*</span></label>
-            <input type="text" name="accountName" [(ngModel)]="accountForm.name" class="form-control" autocomplete="name" required>
+            <label class="form-label">{{ 'clients.invitation.link' | translate }}</label>
+            <input type="text" class="form-control" [value]="invitationLink" readonly>
           </div>
-          <div class="mb-3">
-            <label class="form-label">{{ 'common.email' | translate }}<span class="text-danger ms-1">*</span></label>
-            <input type="email" name="accountEmail" [(ngModel)]="accountForm.email" class="form-control" autocomplete="email" required email>
+          <div class="text-body fs-13">
+            {{ 'clients.invitation.expiresAt' | translate }}:
+            <span class="fw-semibold text-dark">{{ invitationExpiresAt }}</span>
           </div>
-          <div class="row">
-            <div class="col-lg-6">
-              <div class="mb-3">
-                <label class="form-label">{{ 'common.password' | translate }}<span class="text-danger ms-1">*</span></label>
-                <input type="password" name="accountPassword" [(ngModel)]="accountForm.password" class="form-control" autocomplete="new-password" minlength="8" required>
-              </div>
-            </div>
-            <div class="col-lg-6">
-              <div class="mb-3">
-                <label class="form-label">{{ 'users.fields.confirmPassword' | translate }}<span class="text-danger ms-1">*</span></label>
-                <input
-                  type="password"
-                  name="accountConfirmPassword"
-                  [(ngModel)]="accountForm.confirmPassword"
-                  class="form-control"
-                  autocomplete="new-password"
-                  minlength="8"
-                  required
-                  [class.is-invalid]="accountPasswordMismatch"
-                >
-                @if(accountPasswordMismatch){
-                <div class="invalid-feedback d-block">{{ 'clients.errors.passwordMismatch' | translate }}</div>
-                }
-              </div>
-            </div>
+          } @else {
+          <div class="client-empty py-3">
+            <span class="avatar avatar-lg rounded bg-primary-transparent text-primary">
+              <i class="ti ti-mail-plus"></i>
+            </span>
+            <span>{{ 'clients.invitation.pending' | translate }}</span>
           </div>
+          }
         </div>
         <div class="modal-footer d-flex align-items-center gap-1">
           <button type="button" class="btn btn-white border" (click)="closeAccountModal()">{{ 'common.cancel' | translate }}</button>
-          <button type="submit" class="btn btn-primary" [disabled]="clientAccountForm.invalid || accountPasswordMismatch || isCreatingAccount">
-            {{ (isCreatingAccount ? 'common.saving' : 'clients.actions.createAccount') | translate }}
+          <button type="submit" class="btn btn-primary" [disabled]="isCreatingInvitation">
+            {{ (isCreatingInvitation ? 'common.saving' : 'clients.invitation.generate') | translate }}
           </button>
         </div>
       </form>

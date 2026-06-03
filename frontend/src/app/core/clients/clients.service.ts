@@ -32,10 +32,9 @@ export interface ClientPayload {
   centerId?: number | null;
 }
 
-export interface ClientUserAccountPayload {
-  email: string;
-  name: string;
-  password: string;
+export interface ClientInvitation {
+  token: string;
+  expiresAt: string;
 }
 
 @Injectable({
@@ -60,11 +59,8 @@ export class ClientsService {
     return this.http.patch<Client>(`${this.apiUrl}/${id}`, payload);
   }
 
-  createClientUserAccount(
-    id: number,
-    payload: ClientUserAccountPayload,
-  ): Observable<Client> {
-    return this.http.post<Client>(`${this.apiUrl}/${id}/user-account`, payload);
+  createClientInvitation(id: number): Observable<ClientInvitation> {
+    return this.http.post<ClientInvitation>(`${this.apiUrl}/${id}/invitation`, {});
   }
 
   activateClient(id: number): Observable<Client> {

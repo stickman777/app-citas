@@ -1,0 +1,77 @@
+<div class="auth-bg auth-bg-custom position-relative overflow-hidden">
+  <div class="container-fuild position-relative z-1">
+    <div class="w-100 overflow-hidden position-relative flex-wrap d-block vh-100">
+      <div class="row justify-content-center align-items-center vh-100 overflow-auto flex-wrap py-3">
+        <div class="col-lg-4 mx-auto">
+          <form #registerForm="ngForm" (ngSubmit)="register()" class="d-flex justify-content-center align-items-center">
+            <div class="d-flex flex-column justify-content-lg-center p-4 p-lg-0 pb-0 flex-fill">
+              <div class="auth-brand d-inline-flex align-items-center justify-content-center gap-2 mx-auto mb-4">
+                <span class="auth-brand-mark d-inline-flex align-items-center justify-content-center">
+                  <i class="ti ti-calendar-check"></i>
+                </span>
+                <span class="auth-brand-name fw-bold text-dark">{{ 'auth.brandName' | translate }}</span>
+              </div>
+
+              <div class="card border-1 p-lg-3 shadow-md rounded-3 mb-4">
+                <div class="card-body">
+                  <div class="text-center mb-3">
+                    <h5 class="mb-1 fs-20 fw-bold">{{ 'auth.register.title' | translate }}</h5>
+                    <p class="mb-0">{{ 'auth.register.subtitle' | translate }}</p>
+                  </div>
+
+                  @if(errorMessage){
+                  <div class="alert alert-danger py-2 mb-3" role="alert">
+                    {{ errorMessage }}
+                  </div>
+                  }
+
+                  <div class="mb-3">
+                    <label class="form-label">{{ 'clients.fields.name' | translate }}</label>
+                    <input type="text" name="name" [(ngModel)]="name" class="form-control" autocomplete="name" required maxlength="120">
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label">{{ 'common.email' | translate }}</label>
+                    <input type="email" name="email" [(ngModel)]="email" class="form-control" autocomplete="email" required email maxlength="254">
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label">{{ 'common.password' | translate }}</label>
+                    <input type="password" name="password" [(ngModel)]="password" class="form-control" autocomplete="new-password" required minlength="8">
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label">{{ 'account.confirmPassword' | translate }}</label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      [(ngModel)]="confirmPassword"
+                      class="form-control"
+                      autocomplete="new-password"
+                      required
+                      minlength="8"
+                      [class.is-invalid]="passwordMismatch"
+                    >
+                    @if(passwordMismatch){
+                    <div class="invalid-feedback d-block">{{ 'account.errors.passwordMismatch' | translate }}</div>
+                    }
+                  </div>
+
+                  <div class="mb-2">
+                    <button type="submit" class="btn bg-primary text-white w-100" [disabled]="registerForm.invalid || passwordMismatch || isLoading">
+                      {{ (isLoading ? 'auth.register.saving' : 'auth.register.submit') | translate }}
+                    </button>
+                  </div>
+
+                  <div class="text-center mt-3">
+                    <a [routerLink]="routes.login" class="text-primary">{{ 'auth.register.backToLogin' | translate }}</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
