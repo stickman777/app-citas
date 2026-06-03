@@ -12,6 +12,8 @@ import { SpecialistsModule } from './specialists/specialists.module';
 import { DemoSeedService } from './demo-seed.service';
 import { ClientPortalModule } from './client-portal/client-portal.module';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,7 +27,8 @@ import { ClientPortalModule } from './client-portal/client-portal.module';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       autoLoadEntities: true,
-      synchronize: true,
+      synchronize:
+        !isProduction && process.env.TYPEORM_SYNCHRONIZE !== 'false',
     }),
     UsersModule,
     AuthModule,

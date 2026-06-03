@@ -129,7 +129,7 @@ export class DemoSeedService implements OnApplicationBootstrap {
   }
 
   private async seedDemoData() {
-    if (process.env.SEED_DEMO_DATA === 'false') return;
+    if (process.env.SEED_DEMO_DATA !== 'true') return;
 
     const shouldReset = process.env.SEED_RESET_DATA === 'true';
     const centerRepository = this.dataSource.getRepository(Center);
