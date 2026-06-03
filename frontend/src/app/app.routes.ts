@@ -103,51 +103,20 @@ export const routes: Routes = [
       },
       {
         path: 'patient',
-        loadComponent: () => import('./features/clinic/patient/patient.component').then(m => m.PatientComponent),
         children: [
           {
             path: 'patient-list',
-            loadComponent: () => import('./features/clinic/patient/patient-list/patient-list.component').then(m => m.PatientListComponent),
+            redirectTo: '/clients',
+            pathMatch: 'full',
+          },
+          {
+            path: '',
+            redirectTo: '/clients',
+            pathMatch: 'full',
           },
         ],
       },
-      {
-        path: 'layout-default',
-        loadComponent: () => import('./features/modal-dashboard/modal-dashboard.component').then(m => m.ModalDashboardComponent),
-      },
-      {
-        path: 'layout-mini',
-        loadComponent: () => import('./features/modal-dashboard/modal-dashboard.component').then(m => m.ModalDashboardComponent),
-      },
-      {
-        path: 'layout-hover-view',
-        loadComponent: () => import('./features/modal-dashboard/modal-dashboard.component').then(m => m.ModalDashboardComponent),
-      },
-      {
-        path: 'layout-hidden',
-        loadComponent: () => import('./features/modal-dashboard/modal-dashboard.component').then(m => m.ModalDashboardComponent),
-      },
-      {
-        path: 'layout-full-width',
-        loadComponent: () => import('./features/modal-dashboard/modal-dashboard.component').then(m => m.ModalDashboardComponent),
-      },
-      {
-        path: 'layout-rtl',
-        loadComponent: () => import('./features/modal-dashboard/modal-dashboard.component').then(m => m.ModalDashboardComponent),
-      },
-      {
-        path: 'layout-dark',
-        loadComponent: () => import('./features/modal-dashboard/modal-dashboard.component').then(m => m.ModalDashboardComponent),
-      },
     ],
-  },
-  {
-    path: 'coming-soon',
-    loadComponent: () => import('./features/pages/coming-soon/coming-soon.component').then(m => m.ComingSoonComponent),
-  },
-  {
-    path: 'under-maintenance',
-    loadComponent: () => import('./features/pages/under-maintenance/under-maintenance.component').then(m => m.UnderMaintenanceComponent),
   },
   {
     path: 'error',

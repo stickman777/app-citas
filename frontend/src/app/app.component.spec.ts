@@ -1,11 +1,14 @@
-
 import { TestBed } from '@angular/core/testing';
+import { Title } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+
 import { AppComponent } from './app.component';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppComponent]
+      imports: [AppComponent],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
@@ -15,10 +18,9 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, template');
+  it('should set the document title', () => {
+    TestBed.createComponent(AppComponent);
+
+    expect(TestBed.inject(Title).getTitle()).toBe('TFG | App Citas');
   });
 });

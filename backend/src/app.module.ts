@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ClientsModule } from './clients/clients.module';
@@ -16,11 +14,9 @@ import { ClientPortalModule } from './client-portal/client-portal.module';
 
 @Module({
   imports: [
-    // Load environment variables from .env file and make them available globally
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    // Configure TypeORM to connect to the PostgreSQL database using environment variables
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -29,7 +25,6 @@ import { ClientPortalModule } from './client-portal/client-portal.module';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       autoLoadEntities: true,
-      // Automatically synchronize the database schema with the entities (DON'T USE in PRODUCTION)
       synchronize: true,
     }),
     UsersModule,
@@ -42,7 +37,6 @@ import { ClientPortalModule } from './client-portal/client-portal.module';
     SpecialistsModule,
     ClientPortalModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, DemoSeedService],
+  providers: [DemoSeedService],
 })
 export class AppModule {}

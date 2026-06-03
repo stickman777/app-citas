@@ -1,62 +1,50 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { NavigationEnd, Router , RouterLink } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { NgScrollbarModule } from 'ngx-scrollbar';
+import { ActiveCenterService } from '../../core/centers/active-center.service';
+import { Center, CentersService } from '../../core/centers/centers.service';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { CommonService } from '../../shared/common/common.service';
 import { DataService } from '../../shared/data/data.service';
 import { MenuItem, SideBarData } from '../../shared/models/models';
 import { routes } from '../../shared/routes/routes';
 import { SideBarService } from '../../shared/sidebar/sidebar.service';
-import { MatSelectModule } from '@angular/material/select';
-import { CommonModule } from '@angular/common';
-import { NgScrollbarModule } from 'ngx-scrollbar';
-import { CommonService } from '../../shared/common/common.service';
-import { TranslatePipe } from '../../core/i18n/translate.pipe';
-import { ActiveCenterService } from '../../core/centers/active-center.service';
-import { Center, CentersService } from '../../core/centers/centers.service';
 
 @Component({
-    selector: 'app-sidebar',
-    templateUrl: './sidebar.component.html',
-    styleUrls: ['./sidebar.component.scss'],
-    imports: [CommonModule,RouterLink,MatSelectModule,NgScrollbarModule,TranslatePipe]
+  selector: 'app-sidebar',
+  templateUrl: './sidebar.component.html',
+  styleUrls: ['./sidebar.component.scss'],
+  imports: [CommonModule, RouterLink, NgScrollbarModule, TranslatePipe],
 })
 export class SidebarComponent {
-  base = '';
-  page = '';
-  last = '';
-  currentUrl = '';
-  sidebartop = false;
-  sidebarfooter=false;
+  public base = '';
+  public page = '';
+  public last = '';
+  public currentUrl = '';
+  public sidebartop = false;
   public centers: Center[] = [];
   public activeCenter: Center | null = null;
-   openSubmenuOneItem: any = null;
-  togglesidebartop():void{
-    this.sidebartop=!this.sidebartop
-  }
-    footerClose(){
-    this.sidebarfooter=true;
-  }
-  public multilevel: Array<boolean> = [false, false, false];
-
   public routes = routes;
-  public sidebarData: Array<SideBarData> = [];
-  layoutHidden=false;
+  public sidebarData: SideBarData[] = [];
+  public isOpen = false;
 
   constructor(
     private data: DataService,
     private router: Router,
     public sideBar: SideBarService,
-    public common:CommonService,
+    public common: CommonService,
     private centersService: CentersService,
     private activeCenterService: ActiveCenterService
   ) {
-        router.events.subscribe((event) => {
+    router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.getRoutes(event);
       }
     });
- 
 
-      this.data.getSideBarData.subscribe((res:SideBarData[]) => {
-        this.sidebarData = res;
+    this.data.getSideBarData.subscribe((res: SideBarData[]) => {
+      this.sidebarData = res;
     });
     this.activeCenterService.activeCenter$.subscribe(center => {
       this.activeCenter = center;
@@ -67,158 +55,89 @@ export class SidebarComponent {
     });
     this.getRoutes(this.router);
   }
-public toggleSidebar(): void {
-  this.sidebartop = false;
 
-  const wrapper = document.getElementsByClassName('main-wrapper')[0];
-  const overlay = document.getElementsByClassName('sidebar-overlay')[0];
-
-  if (wrapper) {
-    wrapper.classList.remove('slide-nav');
-    if (document.querySelectorAll('main-wrapper')) {
-          document.body.style.overflow = '';
-        }
+  public ngOnInit(): void {
+    this.expandSubMenusActive();
+    this.loadCenters();
   }
 
-  if (overlay) {
-    overlay.classList.remove('opened');
-    if (document.querySelectorAll('main-wrapper')) {
-          document.body.style.overflow = '';
-        }
-  }
-}
-public expandSubMenus(menu: { menuValue: string; showSubRoute: boolean; }): void {
-    
-    sessionStorage.setItem('menuValue', menu.menuValue);
-    this.sidebarData.map((mainMenus: SideBarData) => {
-
-      mainMenus.menu.map((resMenu: MenuItem) => {
-        // collapse other submenus which are open
-        if (resMenu.menuValue == menu.menuValue) {
-          menu.showSubRoute = !menu.showSubRoute;
-        } else {
-          resMenu.showSubRoute = false;
-        }
-      });
-    });
+  public togglesidebartop(): void {
+    this.sidebartop = !this.sidebartop;
   }
 
-  isOpen=false;
-  public expandSubMenusActive(): void {
-    const activeMenu = sessionStorage.getItem('menuValue'); // Was 'base' — changed to 'menuValue'
-  
-    if (!Array.isArray(this.sidebarData)) {
-      console.warn('side_bar_data is not initialized');
-      return;
-    }
-  
-    this.sidebarData.forEach((mainMenu: SideBarData) => {
-      if (!Array.isArray(mainMenu.menu)) return;
-  
-      mainMenu.menu.forEach((resMenu: MenuItem) => {
-        if (activeMenu) {
-          // Show only the menu matching the stored menuValue
-          resMenu.showSubRoute = (resMenu.menuValue === activeMenu);
-        } else {
-          // No session value: Show only 'index' base routes
-          resMenu.showSubRoute = (resMenu.base === 'index');
-        }
-      });
-    });
-  
-    this.isOpen = !activeMenu;
-  }
-  private getRoutes(route: { url: string; urlAfterRedirects?: string }): void {
+  public toggleSidebar(): void {
     this.sidebartop = false;
 
-    const bodyTag = document.body;
+    const wrapper = document.getElementsByClassName('main-wrapper')[0];
+    const overlay = document.getElementsByClassName('sidebar-overlay')[0];
 
-    bodyTag.classList.remove('slide-nav')
-    if (document.querySelectorAll('main-wrapper')) {
-          document.body.style.overflow = '';
-        }
-    bodyTag.classList.remove('opened')
+    wrapper?.classList.remove('slide-nav');
+    overlay?.classList.remove('opened');
+    document.body.style.overflow = '';
+  }
+
+  public expandSubMenus(menu: MenuItem): void {
+    sessionStorage.setItem('menuValue', menu.menuValue);
+    this.sidebarData.forEach((mainMenu: SideBarData) => {
+      mainMenu.menu.forEach((resMenu: MenuItem) => {
+        resMenu.showSubRoute = resMenu.menuValue === menu.menuValue ? !resMenu.showSubRoute : false;
+      });
+    });
+  }
+
+  public expandSubMenusActive(): void {
+    const activeMenu = sessionStorage.getItem('menuValue');
+
+    this.sidebarData.forEach((mainMenu: SideBarData) => {
+      mainMenu.menu.forEach((resMenu: MenuItem) => {
+        resMenu.showSubRoute = activeMenu ? resMenu.menuValue === activeMenu : resMenu.base === 'index';
+      });
+    });
+
+    this.isOpen = !activeMenu;
+  }
+
+  public miniSideBarMouseHover(position: string): void {
+    this.sideBar.expandSideBar.next(position === 'over' ? 'true' : 'false');
+  }
+
+  public selectCenter(center: Center): void {
+    this.activeCenterService.setActiveCenter(center);
+    this.sidebartop = false;
+  }
+
+  public centerLogo(center: Center | null): string | null {
+    return center?.logoUrl?.trim() || null;
+  }
+
+  public centerCity(center: Center | null): string {
+    return center?.city || '';
+  }
+
+  private getRoutes(route: { url: string; urlAfterRedirects?: string }): void {
+    this.sidebartop = false;
+    document.body.classList.remove('slide-nav', 'opened');
+    document.body.style.overflow = '';
+
     const url = this.normalizeRouteUrl(route.urlAfterRedirects ?? route.url);
-
-    this.currentUrl = url;
-
     const splitVal = url.split('/');
 
-
- this.base = splitVal[1] || '';
-this.page = splitVal[2] || '';
-this.last = splitVal[3] || '';
-
-if (this.page.includes('-settings')) {
-  this.base = splitVal[2] || '';
-  this.page = splitVal[3] || '';
-  this.last = splitVal[3] || '';
-}
-if(this.base==='index'){
-  this.page= 'index';
-}
-if(this.base=='layout-default' || this.base=='layout-mini'|| this.base=='layout-hover-view' || this.base=='layout-hidden' || this.base=='layout-full-width' || this.base=='layout-rtl' || this.base=='layout-dark'){
-  this.page=this.base
-
-}
+    this.currentUrl = url;
+    this.base = splitVal[1] || '';
+    this.page = this.base === 'index' ? 'index' : splitVal[2] || '';
+    this.last = splitVal[3] || '';
   }
 
   private normalizeRouteUrl(url: string): string {
     return url.split(/[?#]/)[0] || '/';
   }
-  public miniSideBarMouseHover(position: string): void {
-    if (position == 'over') {
-      this.sideBar.expandSideBar.next("true");
-    } else {
-      this.sideBar.expandSideBar.next("false");
-    }
+
+  private loadCenters(): void {
+    this.centersService.getCenters().subscribe({
+      next: centers => {
+        this.centers = centers;
+        this.activeCenterService.setAvailableCenters(centers);
+      },
+    });
   }
-  openSubmenuOne(subMenus: any): void {
-    if (this.openSubmenuOneItem === subMenus) {
-      this.openSubmenuOneItem = null;
-    } else {
-      this.openSubmenuOneItem = subMenus;
-    }
-  }
-  multiLevel1 = false;
-  multiLevel2 = false;
-  multiLevel3 = false;
-  multiLevelOne() {
-    this.multiLevel1 = !this.multiLevel1;
-  }
-  multiLevelTwo() {
-    this.multiLevel2 = !this.multiLevel2;
-  }
-  multiLevelThree() {
-    this.multiLevel3 = !this.multiLevel3;
-    this.multiLevel2=true;
-  }
-ngOnInit(): void {
-  this.expandSubMenusActive();
-  this.loadCenters();
-
-}
-
-public selectCenter(center: Center): void {
-  this.activeCenterService.setActiveCenter(center);
-  this.sidebartop = false;
-}
-
-public centerLogo(center: Center | null): string | null {
-  return center?.logoUrl?.trim() || null;
-}
-
-public centerCity(center: Center | null): string {
-  return center?.city || '';
-}
-
-private loadCenters(): void {
-  this.centersService.getCenters().subscribe({
-    next: centers => {
-      this.centers = centers;
-      this.activeCenterService.setAvailableCenters(centers);
-    },
-  });
-}
-
 }

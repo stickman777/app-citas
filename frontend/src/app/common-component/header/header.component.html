@@ -32,14 +32,11 @@
 
                 <div class="d-flex align-items-center">
 
-                    <!-- Light/Dark Mode Button -->
-                     @if(base!=='layout-dark'){
                     <div class="header-item d-none d-sm-flex me-2">
                         <button class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button"   (click)="toggleTheme()">
                             <i class="ti  fs-16" [ngClass]="themeColor==='dark'?'ti-sun':'ti-moon'"></i>
                         </button>
                     </div>
-                }
 
                     <!-- Language Selector -->
                     <div class="header-item d-none d-sm-flex me-2">

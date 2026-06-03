@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CenterAccessService } from '../centers/center-access.service';
+import { UsersService } from '../users/users.service';
 import { Client } from './client.entity';
 import { ClientsService } from './clients.service';
 
@@ -17,6 +18,10 @@ describe('ClientsService', () => {
         },
         {
           provide: CenterAccessService,
+          useValue: {},
+        },
+        {
+          provide: UsersService,
           useValue: {},
         },
       ],

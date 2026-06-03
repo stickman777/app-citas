@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { Client } from '../clients/client.entity';
 import { UsersService } from '../users/users.service';
+import { User } from '../users/user.entity';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
@@ -16,6 +20,18 @@ describe('AuthService', () => {
         },
         {
           provide: JwtService,
+          useValue: {},
+        },
+        {
+          provide: getRepositoryToken(User),
+          useValue: {},
+        },
+        {
+          provide: getRepositoryToken(Client),
+          useValue: {},
+        },
+        {
+          provide: DataSource,
           useValue: {},
         },
       ],

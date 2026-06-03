@@ -43,33 +43,15 @@
             ],
             "styles": [
               "node_modules/bootstrap/scss/bootstrap.scss",
-              "node_modules/@fortawesome/fontawesome-free/css/all.css",
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
-              "node_modules/ngx-bootstrap/datepicker/bs-datepicker.css",
               "node_modules/angular-calendar/css/angular-calendar.css",
               "src/assets/icons/feather/css/iconfont.css",
               "src/assets/icons/tabler-icons/tabler-icons.css",
-               "src/assets/icons/ionic/ionicons.css",
-              "src/assets/icons/material/materialdesignicons.css",
-              "src/assets/icons/pe7/pe-icon-7.css",
-              "src/assets/icons/themify/themify.css",
-              "src/assets/icons/typicons/typicons.css",
-              "src/assets/icons/weather/weathericons.css",
-              "node_modules/intl-tel-input/build/css/intlTelInput.css",
-              "src/assets/icons/flags/flags.css",
-              "src/assets/icons/simpleline/simple-line-icons.css",
-              "src/assets/icons/feather/css/iconfont.css",
-              "src/assets/icons/tabler-icons/tabler-icons.css",
-              "node_modules/leaflet/dist/leaflet.css",
-              "node_modules/intl-tel-input/build/css/intlTelInput.css",
-              "./node_modules/ngx-lightbox/lightbox.css",
               "src/assets/scss/main.scss",
               "src/styles.scss"
             ],
             "scripts": [
-              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
-              "node_modules/intl-tel-input/build/js/intlTelInput.min.js",
-              "node_modules/jquery/dist/jquery.min.js"
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
             ]
             
           },
@@ -123,8 +105,7 @@
             "polyfills": 
             [
               "zone.js",
-              "zone.js/testing",
-              "@angular/localize/init"
+              "zone.js/testing"
             ],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",

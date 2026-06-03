@@ -7,8 +7,6 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { CommonService } from '../shared/common/common.service';
 import { filter } from 'rxjs';
 import { SettingsService } from '../shared/settings/settings.service';
-import { ModalComponent } from './modal/modal.component';
-import { LayoutComponent } from '../common-component/layout/layout.component';
 import { CommonModule } from '@angular/common';
 import { SidebarComponent } from '../common-component/sidebar/sidebar.component';
 import { HeaderComponent } from '../common-component/header/header.component';
@@ -27,7 +25,7 @@ export interface RouterObject {
   templateUrl: './features.component.html',
   styleUrl: './features.component.scss',
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule,ModalComponent,LayoutComponent,RouterModule,SidebarComponent,HeaderComponent],
+  imports: [CommonModule, RouterModule, SidebarComponent, HeaderComponent],
 })
 export class FeaturesComponent {
   public miniSidebar = 'false';
