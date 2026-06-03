@@ -93,7 +93,7 @@
             <td>{{ centerNames(user) }}</td>
             <td>
               <span class="badge border px-2 py-1 fs-13 fw-medium" [ngClass]="roleBadgeClass(user.role)">
-                {{ user.role }}
+                {{ roleLabel(user.role) }}
               </span>
             </td>
           </tr>
@@ -147,7 +147,7 @@
             <label class="form-label">{{ 'common.role' | translate }}<span class="text-danger ms-1">*</span></label>
             <select name="role" [(ngModel)]="form.role" (ngModelChange)="onRoleChange($event)" class="form-select" required>
               @for(role of roleOptions; track role){
-              <option [ngValue]="role">{{ role }}</option>
+              <option [ngValue]="role">{{ roleLabel(role) }}</option>
               }
             </select>
           </div>

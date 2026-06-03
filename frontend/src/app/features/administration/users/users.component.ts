@@ -179,7 +179,7 @@ export class UsersComponent {
 
     this.filteredUsers = search
       ? this.users.filter(user =>
-          `${user.name} ${user.email} ${user.role} ${this.centerNames(user)}`
+          `${user.name} ${user.email} ${this.roleLabel(user.role)} ${this.centerNames(user)}`
             .toLowerCase()
             .includes(search)
         )
@@ -194,6 +194,10 @@ export class UsersComponent {
     };
 
     return classes[role];
+  }
+
+  public roleLabel(role: UserRole): string {
+    return this.translate(`users.roles.${role.toLowerCase()}`);
   }
 
   public get userTableColumnCount(): number {
