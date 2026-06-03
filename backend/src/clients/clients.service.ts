@@ -10,11 +10,14 @@ import {
   AuthUser,
   CenterAccessService,
 } from '../centers/center-access.service';
-import { User, UserRole } from '../users/user.entity';
-import { UsersService } from '../users/users.service';
+import {
+  createClientInvitationToken,
+  getClientInvitationExpirationDate,
+  hashClientInvitationToken,
+} from '../common/client-invitation-token';
+import { UserRole } from '../users/user.entity';
 import { Client } from './client.entity';
 import { CreateClientDto } from './dto/create-client.dto';
-import { CreateClientUserAccountDto } from './dto/create-client-user-account.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
 interface OwnClientProfileData {
@@ -31,7 +34,6 @@ export class ClientsService {
     private clientsRepository: Repository<Client>,
 
     private readonly centerAccessService: CenterAccessService,
-    private readonly usersService: UsersService,
   ) {}
 
   // Obtiene todos los clientes, incluyendo los inactivos
@@ -156,11 +158,7 @@ export class ClientsService {
     return this.toClientResponse(savedClient);
   }
 
-  async createUserAccount(
-    id: number,
-    accountData: CreateClientUserAccountDto,
-    authUser?: AuthUser,
-  ) {
+  async createInvitation(id: number, authUser?: AuthUser) {
     const client = await this.findOne(id, authUser);
 
     if (client.user)
@@ -171,24 +169,18 @@ export class ClientsService {
         'El cliente debe tener un centro asignado',
       );
 
-    const user = await this.usersService.create(
-      {
-        email: accountData.email,
-        name: accountData.name,
-        password: accountData.password,
-        role: UserRole.CLIENT,
-        centerIds: [client.center.id],
-      },
-      authUser,
-    );
+    const token = createClientInvitationToken();
+    const expiresAt = getClientInvitationExpirationDate();
 
-    client.user = {
-      id: user.id,
-    } as User;
+    client.invitationTokenHash = hashClientInvitationToken(token);
+    client.invitationExpiresAt = expiresAt;
 
     await this.clientsRepository.save(client);
 
-    return this.toClientResponse(await this.findOne(id, authUser));
+    return {
+      token,
+      expiresAt,
+    };
   }
 
   private getCenterWhere(centerIds: number[]) {
@@ -263,8 +255,12 @@ export class ClientsService {
   }
 
   private toClientResponse(client: Client) {
+    const clientResponse = { ...client };
+    delete clientResponse.invitationTokenHash;
+    delete clientResponse.invitationExpiresAt;
+
     return {
-      ...client,
+      ...clientResponse,
       user: client.user
         ? {
             id: client.user.id,

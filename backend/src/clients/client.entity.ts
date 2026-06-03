@@ -29,6 +29,12 @@ export class Client {
   @Column({ nullable: true })
   notes?: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  invitationTokenHash?: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  invitationExpiresAt?: Date | null;
+
   @Column({ default: 0 })
   priority: number;
 
