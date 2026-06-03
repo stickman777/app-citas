@@ -60,7 +60,7 @@
                     [(ngModel)]="form.currentPassword"
                     class="form-control"
                     autocomplete="current-password"
-                    minlength="4"
+                    minlength="8"
                     [required]="!!form.password"
                     [placeholder]="'account.currentPasswordPlaceholder' | translate"
                   >
@@ -75,7 +75,7 @@
                     [(ngModel)]="form.password"
                     class="form-control"
                     autocomplete="new-password"
-                    minlength="4"
+                    minlength="8"
                     [placeholder]="'account.passwordPlaceholder' | translate"
                   >
                 </div>
@@ -89,7 +89,7 @@
                   [(ngModel)]="form.confirmPassword"
                   class="form-control"
                   autocomplete="new-password"
-                  minlength="4"
+                  minlength="8"
                   [required]="!!form.password"
                   [placeholder]="'account.passwordPlaceholder' | translate"
                   [class.is-invalid]="passwordMismatch"

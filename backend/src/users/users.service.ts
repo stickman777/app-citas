@@ -73,21 +73,16 @@ export class UsersService implements OnModuleInit {
     });
   }
 
-  async findForLogin(identifier: string) {
-    const normalizedIdentifier = identifier.trim();
+  async findForLogin(email: string) {
+    const normalizedEmail = email.trim();
 
-    if (!normalizedIdentifier) return null;
+    if (!normalizedEmail) return null;
 
-    const user = await this.findByEmail(normalizedIdentifier);
-
-    if (user) return user;
-
-    return this.usersRepository.findOne({
-      where: {
-        role: UserRole.ADMIN,
-        name: ILike(normalizedIdentifier),
-      },
-    });
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('LOWER(user.email) = LOWER(:email)', { email: normalizedEmail })
+      .getOne();
   }
 
   async findProfile(id: number) {
@@ -222,12 +217,12 @@ export class UsersService implements OnModuleInit {
       password?: string;
     },
   ) {
-    const user = await this.usersRepository.findOne({
-      relations: {
-        centers: true,
-      },
-      where: { id },
-    });
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .leftJoinAndSelect('user.centers', 'centers')
+      .where('user.id = :id', { id })
+      .getOne();
 
     if (!user) throw new NotFoundException('No se ha encontrado el usuario');
 

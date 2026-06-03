@@ -20,7 +20,7 @@ export class CreateUserDto {
   name: string;
 
   @IsString()
-  @MinLength(4)
+  @MinLength(8)
   password: string;
 
   @IsEnum(UserRole)

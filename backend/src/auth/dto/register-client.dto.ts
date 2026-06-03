@@ -13,6 +13,6 @@ export class RegisterClientDto {
   phone: string;
 
   @IsString()
-  @MinLength(4)
+  @MinLength(8)
   password: string;
 }

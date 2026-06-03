@@ -18,11 +18,11 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(4)
+  @MinLength(8)
   currentPassword?: string;
 
   @IsOptional()
   @IsString()
-  @MinLength(4)
+  @MinLength(8)
   password?: string;
 }

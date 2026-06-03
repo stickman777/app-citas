@@ -251,7 +251,7 @@
             <div class="col-lg-6">
               <div class="mb-3">
                 <label class="form-label">{{ 'common.password' | translate }}<span class="text-danger ms-1">*</span></label>
-                <input type="password" name="accountPassword" [(ngModel)]="accountForm.password" class="form-control" autocomplete="new-password" minlength="4" required>
+                <input type="password" name="accountPassword" [(ngModel)]="accountForm.password" class="form-control" autocomplete="new-password" minlength="8" required>
               </div>
             </div>
             <div class="col-lg-6">
@@ -263,7 +263,7 @@
                   [(ngModel)]="accountForm.confirmPassword"
                   class="form-control"
                   autocomplete="new-password"
-                  minlength="4"
+                  minlength="8"
                   required
                   [class.is-invalid]="accountPasswordMismatch"
                 >
