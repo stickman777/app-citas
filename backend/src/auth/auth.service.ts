@@ -12,6 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from '../clients/client.entity';
 import { DataSource, ILike, Repository } from 'typeorm';
 import { User, UserRole } from '../users/user.entity';
+import { hashClientInvitationToken } from '../common/client-invitation-token';
 
 @Injectable()
 export class AuthService {
@@ -54,10 +55,12 @@ export class AuthService {
 
   async registerClient(registerData: RegisterClientDto) {
     const email = registerData.email.trim().toLowerCase();
-    const phone = registerData.phone.trim();
     const name = registerData.name.trim();
+    const invitationToken = registerData.invitationToken.trim();
 
     if (!name) throw new BadRequestException('Nombre requerido');
+    if (!invitationToken)
+      throw new BadRequestException('Invitacion requerida');
 
     const existingUser = await this.usersRepository.findOne({
       where: {
@@ -68,17 +71,20 @@ export class AuthService {
     if (existingUser)
       throw new BadRequestException('Ya existe un usuario con ese email');
 
-    const client = await this.resolveRegisterClient(email, phone, name);
+    const client = await this.resolveInvitedClient(invitationToken);
     const hashedPassword = await bcrypt.hash(registerData.password, 10);
 
     const savedUser = await this.dataSource.transaction(async (manager) => {
-      const clientToLink = client.id
-        ? client
-        : await manager.save(Client, client);
+      const clientToLink = client;
 
       if (clientToLink.user)
         throw new BadRequestException(
           'La ficha de cliente ya tiene una cuenta vinculada',
+        );
+
+      if (!clientToLink.center?.id)
+        throw new BadRequestException(
+          'La ficha de cliente no tiene centro asignado',
         );
 
       const user = manager.create(User, {
@@ -86,12 +92,16 @@ export class AuthService {
         name,
         password: hashedPassword,
         role: UserRole.CLIENT,
-        centers: clientToLink.center ? [clientToLink.center] : [],
-        activeCenter: clientToLink.center ?? null,
+        centers: [clientToLink.center],
+        activeCenter: clientToLink.center,
       });
       const savedUser = await manager.save(User, user);
 
+      clientToLink.name = name;
+      clientToLink.email = email;
       clientToLink.user = savedUser;
+      clientToLink.invitationTokenHash = null;
+      clientToLink.invitationExpiresAt = null;
       await manager.save(Client, clientToLink);
 
       return savedUser;
@@ -119,34 +129,25 @@ export class AuthService {
     return this.usersService.updateActiveCenter(id, centerId);
   }
 
-  private async resolveRegisterClient(
-    email: string,
-    phone: string,
-    name: string,
-  ): Promise<Client> {
-    const matchingClients = await this.clientsRepository.find({
+  private async resolveInvitedClient(invitationToken: string): Promise<Client> {
+    const client = await this.clientsRepository.findOne({
       relations: {
         user: true,
+        center: true,
       },
       where: {
-        email: ILike(email),
-        phone,
+        invitationTokenHash: hashClientInvitationToken(invitationToken),
       },
     });
 
-    if (matchingClients.length > 1)
-      throw new BadRequestException(
-        'Hay mas de una ficha de cliente con esos datos',
-      );
+    if (!client) throw new BadRequestException('Invitacion no valida');
 
-    const [matchingClient] = matchingClients;
+    if (
+      !client.invitationExpiresAt ||
+      client.invitationExpiresAt.getTime() <= Date.now()
+    )
+      throw new BadRequestException('Invitacion caducada');
 
-    if (matchingClient) return matchingClient;
-
-    return this.clientsRepository.create({
-      name,
-      email,
-      phone,
-    });
+    return client;
   }
 }
