@@ -9,6 +9,10 @@ import { AvailabilityException } from './availability/availability-exception.ent
 import { Availability } from './availability/availability.entity';
 import { Center } from './centers/center.entity';
 import { Client } from './clients/client.entity';
+import {
+  getClientInvitationExpirationDate,
+  hashClientInvitationToken,
+} from './common/client-invitation-token';
 import { ServiceEntity } from './services/service.entity';
 import { Specialist } from './specialists/specialist.entity';
 import { User, UserRole } from './users/user.entity';
@@ -63,6 +67,7 @@ interface SeedClient {
     email: string;
     password: string;
   };
+  invitationToken?: string;
 }
 
 interface SeedAppointment {
@@ -354,6 +359,12 @@ export class DemoSeedService implements OnApplicationBootstrap {
         );
 
         client.user = user;
+        await manager.save(Client, client);
+      } else if (seedClient.invitationToken) {
+        client.invitationTokenHash = hashClientInvitationToken(
+          seedClient.invitationToken,
+        );
+        client.invitationExpiresAt = getClientInvitationExpirationDate();
         await manager.save(Client, client);
       }
 
@@ -691,6 +702,8 @@ export class DemoSeedService implements OnApplicationBootstrap {
           name: 'Luis García',
           phone: '600654321',
           email: 'luis.garcia@example.com',
+          notes: 'Invitacion de registro pendiente',
+          invitationToken: 'seed-invite-luis-garcia',
         },
         {
           key: 'sofia',
@@ -723,6 +736,8 @@ export class DemoSeedService implements OnApplicationBootstrap {
           name: 'Diego Molina',
           phone: '601444555',
           email: 'diego.molina@example.com',
+          notes: 'Invitacion de registro pendiente',
+          invitationToken: 'seed-invite-diego-molina',
         },
         {
           key: 'elena',
@@ -755,6 +770,8 @@ export class DemoSeedService implements OnApplicationBootstrap {
           name: 'Iván Serrano',
           phone: '602222444',
           email: 'ivan.serrano@example.com',
+          notes: 'Invitacion de registro pendiente',
+          invitationToken: 'seed-invite-ivan-serrano',
         },
         {
           key: 'raquel',
