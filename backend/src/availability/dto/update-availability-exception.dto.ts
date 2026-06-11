@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEnum,
   IsInt,
@@ -13,11 +14,21 @@ import {
 } from './create-availability-exception.dto';
 
 export class UpdateAvailabilityExceptionDto {
+  @ApiPropertyOptional({
+    description: 'Centro al que pertenece la excepción.',
+    example: 1,
+    minimum: 1,
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
   centerId?: number;
 
+  @ApiPropertyOptional({
+    description: 'Fecha de la excepción.',
+    example: '2026-06-15',
+    pattern: 'YYYY-MM-DD',
+  })
   @IsOptional()
   @IsString()
   @Matches(DATE_FORMAT_REGEX, {
@@ -25,6 +36,11 @@ export class UpdateAvailabilityExceptionDto {
   })
   date?: string;
 
+  @ApiPropertyOptional({
+    description: 'Hora de inicio de la excepción.',
+    example: '10:00',
+    pattern: 'HH:mm',
+  })
   @IsOptional()
   @IsString()
   @Matches(TIME_FORMAT_REGEX, {
@@ -32,6 +48,11 @@ export class UpdateAvailabilityExceptionDto {
   })
   startTime?: string;
 
+  @ApiPropertyOptional({
+    description: 'Hora de fin de la excepción.',
+    example: '12:00',
+    pattern: 'HH:mm',
+  })
   @IsOptional()
   @IsString()
   @Matches(TIME_FORMAT_REGEX, {
@@ -39,10 +60,19 @@ export class UpdateAvailabilityExceptionDto {
   })
   endTime?: string;
 
+  @ApiPropertyOptional({
+    description: 'Tipo de excepción.',
+    enum: AvailabilityExceptionType,
+    example: AvailabilityExceptionType.EXTRA_AVAILABLE,
+  })
   @IsOptional()
   @IsEnum(AvailabilityExceptionType)
   type?: AvailabilityExceptionType;
 
+  @ApiPropertyOptional({
+    description: 'Etiqueta descriptiva de la excepción.',
+    example: 'Horario ampliado',
+  })
   @IsOptional()
   @IsString()
   label?: string;
