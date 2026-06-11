@@ -10,6 +10,18 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -21,15 +33,34 @@ import { UpdateClientPortalProfileDto } from './dto/update-client-portal-profile
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.CLIENT)
 @Controller('client-portal')
+@ApiTags('Portal cliente')
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token JWT ausente o inválido.' })
+@ApiForbiddenResponse({ description: 'Acceso permitido solo a CLIENT.' })
 export class ClientPortalController {
   constructor(private readonly clientPortalService: ClientPortalService) {}
 
   @Get('me')
+  @ApiOperation({
+    summary: 'Consultar perfil de cliente',
+    description: 'Rol permitido: CLIENT.',
+  })
+  @ApiOkResponse({ description: 'Perfil del cliente autenticado.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
+  @ApiNotFoundResponse({ description: 'No existe cliente vinculado al usuario.' })
   me(@Req() request: { user: { id: number } }) {
     return this.clientPortalService.getProfile(request.user.id);
   }
 
   @Patch('me')
+  @ApiOperation({
+    summary: 'Actualizar perfil de cliente',
+    description: 'Rol permitido: CLIENT.',
+  })
+  @ApiOkResponse({ description: 'Perfil de cliente actualizado.' })
+  @ApiBadRequestResponse({ description: 'Datos no válidos.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
+  @ApiNotFoundResponse({ description: 'No existe cliente vinculado al usuario.' })
   updateMe(
     @Req() request: { user: { id: number } },
     @Body() profileData: UpdateClientPortalProfileDto,
@@ -38,16 +69,38 @@ export class ClientPortalController {
   }
 
   @Get('appointments')
+  @ApiOperation({
+    summary: 'Listar citas del cliente',
+    description: 'Rol permitido: CLIENT.',
+  })
+  @ApiOkResponse({ description: 'Listado de citas propias.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
+  @ApiNotFoundResponse({ description: 'No existe cliente vinculado al usuario.' })
   appointments(@Req() request: { user: { id: number } }) {
     return this.clientPortalService.getAppointments(request.user.id);
   }
 
   @Get('services')
+  @ApiOperation({
+    summary: 'Listar servicios reservables',
+    description: 'Devuelve servicios activos del centro del cliente. Rol permitido: CLIENT.',
+  })
+  @ApiOkResponse({ description: 'Listado de servicios reservables.' })
+  @ApiBadRequestResponse({ description: 'La ficha de cliente no tiene centro asignado.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
   services(@Req() request: { user: { id: number } }) {
     return this.clientPortalService.getServices(request.user.id);
   }
 
   @Get('specialists')
+  @ApiOperation({
+    summary: 'Listar especialistas reservables',
+    description: 'Puede filtrarse por servicio. Rol permitido: CLIENT.',
+  })
+  @ApiQuery({ name: 'serviceId', required: false, type: Number, description: 'Filtra especialistas por servicio.' })
+  @ApiOkResponse({ description: 'Listado de especialistas reservables.' })
+  @ApiBadRequestResponse({ description: 'Servicio no válido o no disponible.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
   specialists(
     @Req() request: { user: { id: number } },
     @Query('serviceId') serviceId?: string,
@@ -59,6 +112,16 @@ export class ClientPortalController {
   }
 
   @Get('available-slots')
+  @ApiOperation({
+    summary: 'Consultar huecos disponibles para cliente',
+    description: 'Calcula horas disponibles para reservar. Rol permitido: CLIENT.',
+  })
+  @ApiQuery({ name: 'date', required: true, type: String, example: '2026-06-15', description: 'Fecha en formato YYYY-MM-DD.' })
+  @ApiQuery({ name: 'serviceId', required: true, type: Number, description: 'Identificador del servicio.' })
+  @ApiQuery({ name: 'specialistId', required: true, type: Number, description: 'Identificador del especialista.' })
+  @ApiOkResponse({ description: 'Listado de horas disponibles en formato HH:mm.' })
+  @ApiBadRequestResponse({ description: 'Fecha inválida, servicio/especialista no disponible o selección incompatible.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
   availableSlots(
     @Req() request: { user: { id: number } },
     @Query('date') date: string,
@@ -78,6 +141,14 @@ export class ClientPortalController {
   }
 
   @Post('appointments')
+  @ApiOperation({
+    summary: 'Crear cita como cliente',
+    description: 'Crea una cita usando la ficha vinculada al usuario autenticado. Rol permitido: CLIENT.',
+  })
+  @ApiCreatedResponse({ description: 'Cita creada correctamente.' })
+  @ApiBadRequestResponse({ description: 'Datos no válidos, fuera de horario, solape o selección no disponible.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
+  @ApiNotFoundResponse({ description: 'No existe cliente vinculado al usuario.' })
   createAppointment(
     @Req() request: { user: { id: number } },
     @Body() appointmentData: CreateClientPortalAppointmentDto,
