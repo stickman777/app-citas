@@ -11,6 +11,19 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -22,10 +35,21 @@ import { SpecialistsService } from './specialists.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN, UserRole.GESTOR)
 @Controller('specialists')
+@ApiTags('Especialistas')
+@ApiBearerAuth()
+@ApiUnauthorizedResponse({ description: 'Token JWT ausente o inválido.' })
+@ApiForbiddenResponse({ description: 'Acceso permitido solo a ADMIN o GESTOR.' })
 export class SpecialistsController {
   constructor(private readonly specialistsService: SpecialistsService) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'Listar especialistas activos',
+    description: 'Roles permitidos: ADMIN y GESTOR.',
+  })
+  @ApiQuery({ name: 'centerId', required: false, type: Number, description: 'Filtra por centro.' })
+  @ApiOkResponse({ description: 'Listado de especialistas activos.' })
+  @ApiBadRequestResponse({ description: 'Centro no válido.' })
   findAll(
     @Req() request: { user: { id: number; role: UserRole } },
     @Query('centerId') centerId?: string,
@@ -37,6 +61,13 @@ export class SpecialistsController {
   }
 
   @Get('all')
+  @ApiOperation({
+    summary: 'Listar todos los especialistas',
+    description: 'Incluye especialistas activos e inactivos. Roles permitidos: ADMIN y GESTOR.',
+  })
+  @ApiQuery({ name: 'centerId', required: false, type: Number, description: 'Filtra por centro.' })
+  @ApiOkResponse({ description: 'Listado de especialistas.' })
+  @ApiBadRequestResponse({ description: 'Centro no válido.' })
   findAllIncludingInactive(
     @Req() request: { user: { id: number; role: UserRole } },
     @Query('centerId') centerId?: string,
@@ -48,6 +79,14 @@ export class SpecialistsController {
   }
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Consultar especialista',
+    description: 'Roles permitidos: ADMIN y GESTOR.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'Identificador del especialista.' })
+  @ApiOkResponse({ description: 'Especialista encontrado.' })
+  @ApiForbiddenResponse({ description: 'No se puede gestionar el especialista indicado.' })
+  @ApiNotFoundResponse({ description: 'Especialista no encontrado.' })
   findOne(
     @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe) id: number,
@@ -56,6 +95,13 @@ export class SpecialistsController {
   }
 
   @Post()
+  @ApiOperation({
+    summary: 'Crear especialista',
+    description: 'Crea un especialista asociado a un centro. Roles permitidos: ADMIN y GESTOR.',
+  })
+  @ApiCreatedResponse({ description: 'Especialista creado correctamente.' })
+  @ApiBadRequestResponse({ description: 'Datos no válidos o centro requerido.' })
+  @ApiForbiddenResponse({ description: 'No se puede gestionar el centro indicado.' })
   create(
     @Req() request: { user: { id: number; role: UserRole } },
     @Body() specialistData: CreateSpecialistDto,
@@ -64,6 +110,15 @@ export class SpecialistsController {
   }
 
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Actualizar especialista',
+    description: 'Roles permitidos: ADMIN y GESTOR.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'Identificador del especialista.' })
+  @ApiOkResponse({ description: 'Especialista actualizado correctamente.' })
+  @ApiBadRequestResponse({ description: 'Datos no válidos o centro requerido.' })
+  @ApiForbiddenResponse({ description: 'No se puede gestionar el especialista indicado.' })
+  @ApiNotFoundResponse({ description: 'Especialista no encontrado.' })
   update(
     @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe) id: number,
@@ -73,6 +128,14 @@ export class SpecialistsController {
   }
 
   @Patch(':id/activate')
+  @ApiOperation({
+    summary: 'Activar especialista',
+    description: 'Roles permitidos: ADMIN y GESTOR.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'Identificador del especialista.' })
+  @ApiOkResponse({ description: 'Especialista activado correctamente.' })
+  @ApiForbiddenResponse({ description: 'No se puede gestionar el especialista indicado.' })
+  @ApiNotFoundResponse({ description: 'Especialista no encontrado.' })
   activate(
     @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe) id: number,
@@ -81,6 +144,14 @@ export class SpecialistsController {
   }
 
   @Patch(':id/deactivate')
+  @ApiOperation({
+    summary: 'Desactivar especialista',
+    description: 'Roles permitidos: ADMIN y GESTOR.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'Identificador del especialista.' })
+  @ApiOkResponse({ description: 'Especialista desactivado correctamente.' })
+  @ApiForbiddenResponse({ description: 'No se puede gestionar el especialista indicado.' })
+  @ApiNotFoundResponse({ description: 'Especialista no encontrado.' })
   deactivate(
     @Req() request: { user: { id: number; role: UserRole } },
     @Param('id', ParseIntPipe) id: number,
