@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEmail,
   IsInt,
@@ -14,31 +15,57 @@ import {
 } from '../../common/validation.constants';
 
 export class UpdateClientDto {
+  @ApiPropertyOptional({
+    description: 'Nombre del cliente.',
+    example: 'Ana Martínez',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(MAX_NAME_LENGTH)
   name?: string;
 
+  @ApiPropertyOptional({
+    description: 'Teléfono de contacto del cliente.',
+    example: '600123456',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(MAX_PHONE_LENGTH)
   phone?: string;
 
+  @ApiPropertyOptional({
+    description: 'Email de contacto del cliente.',
+    example: 'ana.martinez@example.com',
+  })
   @IsOptional()
   @IsEmail()
   @MaxLength(MAX_EMAIL_LENGTH)
   email?: string;
 
+  @ApiPropertyOptional({
+    description: 'Notas internas sobre el cliente.',
+    example: 'Prefiere citas por la mañana.',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(MAX_LONG_TEXT_LENGTH)
   notes?: string;
 
+  @ApiPropertyOptional({
+    description: 'Prioridad interna del cliente.',
+    example: 1,
+    minimum: 0,
+  })
   @IsOptional()
   @IsInt()
   @Min(0)
   priority?: number;
 
+  @ApiPropertyOptional({
+    description: 'Centro al que pertenece el cliente.',
+    example: 1,
+    minimum: 1,
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
