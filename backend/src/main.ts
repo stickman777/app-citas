@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -18,6 +19,20 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('API REST - Sistema de gestión de citas')
+    .setDescription(
+      'Documentación OpenAPI de la API REST utilizada por la aplicación web de gestión de citas.',
+    )
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+
+  SwaggerModule.setup('api/docs', app, swaggerDocument, {
+    jsonDocumentUrl: 'api/docs-json',
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }
