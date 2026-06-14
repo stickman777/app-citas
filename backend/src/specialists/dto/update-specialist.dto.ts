@@ -28,7 +28,7 @@ export class UpdateSpecialistDto {
   @ApiPropertyOptional({
     description: 'Estado del especialista.',
     enum: SpecialistStatus,
-    example: SpecialistStatus.VACATION,
+    example: SpecialistStatus.INACTIVE,
   })
   @IsOptional()
   @IsEnum(SpecialistStatus)

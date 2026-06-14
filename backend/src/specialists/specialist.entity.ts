@@ -11,7 +11,6 @@ import { Center } from '../centers/center.entity';
 export enum SpecialistStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
-  VACATION = 'VACATION',
 }
 
 @Entity()
