@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, FindOptionsWhere, In, Repository } from 'typeorm';
+import { Between, DataSource, FindOptionsWhere, In, Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { Center } from '../centers/center.entity';
@@ -50,9 +50,17 @@ export class AppointmentsService {
     private availabilityExceptionRepository: Repository<AvailabilityException>,
 
     private readonly centerAccessService: CenterAccessService,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   private readonly SLOT_STEP_MINUTES = 15;
+
+  // Espacios de nombres para los advisory locks de reserva. Se usan dos
+  // dimensiones (especialista y cliente) porque una cita no puede solapar ni
+  // con otra del mismo especialista ni con otra del mismo cliente.
+  private readonly SPECIALIST_BOOKING_LOCK = 1;
+  private readonly CLIENT_BOOKING_LOCK = 2;
 
   async findAll(authUser?: AuthUser, date?: string, centerId?: number) {
     await this.completePastScheduledAppointments();
@@ -188,27 +196,30 @@ export class AppointmentsService {
     this.validateServiceSpecialist(service, specialist);
 
     await this.centerAccessService.validateCenterAccess(center.id, authUser);
-    const outsideAvailability = await this.validateAppointmentSlot(
-      startDate,
-      service.durationMinutes,
-      center.id,
-      specialist.id,
-      client.id,
-      undefined,
-      appointmentData.allowOutsideAvailability,
-    );
 
-    const appointment = this.appointmentsRepository.create({
-      startDateTime: startDate,
-      duration: service.durationMinutes,
-      outsideAvailability,
-      client,
-      service,
-      center,
-      specialist,
+    return this.withBookingLock(specialist.id, client.id, async () => {
+      const outsideAvailability = await this.validateAppointmentSlot(
+        startDate,
+        service.durationMinutes,
+        center.id,
+        specialist.id,
+        client.id,
+        undefined,
+        appointmentData.allowOutsideAvailability,
+      );
+
+      const appointment = this.appointmentsRepository.create({
+        startDateTime: startDate,
+        duration: service.durationMinutes,
+        outsideAvailability,
+        client,
+        service,
+        center,
+        specialist,
+      });
+
+      return this.appointmentsRepository.save(appointment);
     });
-
-    return this.appointmentsRepository.save(appointment);
   }
 
   async update(
@@ -252,30 +263,33 @@ export class AppointmentsService {
       this.assertStartDateNotInPast(startDate);
 
     await this.centerAccessService.validateCenterAccess(center.id, authUser);
-    const outsideAvailability =
-      status === AppointmentStatus.SCHEDULED
-        ? await this.validateAppointmentSlot(
-            startDate,
-            service.durationMinutes,
-            center.id,
-            specialist.id,
-            client.id,
-            appointment.id,
-            appointmentData.allowOutsideAvailability ??
-              appointment.outsideAvailability,
-          )
-        : appointment.outsideAvailability;
 
-    appointment.startDateTime = startDate;
-    appointment.duration = service.durationMinutes;
-    appointment.outsideAvailability = outsideAvailability;
-    appointment.client = client;
-    appointment.service = service;
-    appointment.center = center;
-    appointment.specialist = specialist;
-    appointment.status = status;
+    return this.withBookingLock(specialist.id, client.id, async () => {
+      const outsideAvailability =
+        status === AppointmentStatus.SCHEDULED
+          ? await this.validateAppointmentSlot(
+              startDate,
+              service.durationMinutes,
+              center.id,
+              specialist.id,
+              client.id,
+              appointment.id,
+              appointmentData.allowOutsideAvailability ??
+                appointment.outsideAvailability,
+            )
+          : appointment.outsideAvailability;
 
-    return this.appointmentsRepository.save(appointment);
+      appointment.startDateTime = startDate;
+      appointment.duration = service.durationMinutes;
+      appointment.outsideAvailability = outsideAvailability;
+      appointment.client = client;
+      appointment.service = service;
+      appointment.center = center;
+      appointment.specialist = specialist;
+      appointment.status = status;
+
+      return this.appointmentsRepository.save(appointment);
+    });
   }
 
   async remove(id: number, authUser?: AuthUser) {
@@ -450,6 +464,30 @@ export class AppointmentsService {
       throw new BadRequestException(invalidStatusMessage);
 
     return appointment;
+  }
+
+  // Serializa la comprobación de solapes y el guardado dentro de una misma
+  // transacción usando advisory locks de PostgreSQL, evitando que dos peticiones
+  // concurrentes reserven el mismo hueco (doble reserva). Los locks de
+  // transacción se liberan automáticamente al confirmar. Se adquieren siempre
+  // en el mismo orden (especialista y luego cliente) para no provocar interbloqueos.
+  private async withBookingLock<T>(
+    specialistId: number,
+    clientId: number,
+    work: () => Promise<T>,
+  ): Promise<T> {
+    return this.dataSource.transaction(async (manager) => {
+      await manager.query('SELECT pg_advisory_xact_lock($1, $2)', [
+        this.SPECIALIST_BOOKING_LOCK,
+        specialistId,
+      ]);
+      await manager.query('SELECT pg_advisory_xact_lock($1, $2)', [
+        this.CLIENT_BOOKING_LOCK,
+        clientId,
+      ]);
+
+      return work();
+    });
   }
 
   private assertStartDateNotInPast(startDate: Date): void {
@@ -806,20 +844,26 @@ export class AppointmentsService {
     const startDate = new Date(appointmentData.startDateTime);
     this.assertStartDateNotInPast(startDate);
 
-    const outsideAvailability = await this.validateAppointmentSlot(
-      startDate,
-      appointment.duration,
-      this.getAppointmentCenterId(appointment),
+    return this.withBookingLock(
       this.getAppointmentSpecialistId(appointment),
       appointment.client.id,
-      appointment.id,
-      appointmentData.allowOutsideAvailability ??
-        appointment.outsideAvailability,
+      async () => {
+        const outsideAvailability = await this.validateAppointmentSlot(
+          startDate,
+          appointment.duration,
+          this.getAppointmentCenterId(appointment),
+          this.getAppointmentSpecialistId(appointment),
+          appointment.client.id,
+          appointment.id,
+          appointmentData.allowOutsideAvailability ??
+            appointment.outsideAvailability,
+        );
+
+        appointment.startDateTime = startDate;
+        appointment.outsideAvailability = outsideAvailability;
+
+        return this.appointmentsRepository.save(appointment);
+      },
     );
-
-    appointment.startDateTime = startDate;
-    appointment.outsideAvailability = outsideAvailability;
-
-    return this.appointmentsRepository.save(appointment);
   }
 }
