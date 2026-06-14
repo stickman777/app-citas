@@ -58,7 +58,14 @@
                             </div>
                         </div>
                     </div>
-					
+
+                    <!-- Appointment Requests -->
+                    <div class="header-item d-none d-sm-flex me-2">
+                        <a [routerLink]="routes.appointmentRequests" class="topbar-link btn btn-icon" [title]="'appointmentRequests.title' | translate" [attr.aria-label]="'appointmentRequests.title' | translate">
+                            <i class="ti ti-clipboard-list fs-16"></i>
+                        </a>
+                    </div>
+
 					<!-- User Dropdown -->
 					<div class="dropdown profile-dropdown d-flex align-items-center justify-content-center">
                         <a href="javascript:void(0);" class="topbar-link dropdown-toggle drop-arrow-none position-relative" data-bs-toggle="dropdown" data-bs-offset="0,22" aria-haspopup="false" aria-expanded="false">
