@@ -7,6 +7,7 @@ export const routes = {
   services: '/services',
   specialists: '/specialists',
   appointment: '/appointment',
+  appointmentRequests: '/appointment-requests',
   users: '/users',
   myAccount: '/my-account',
   clientHome: '/client',

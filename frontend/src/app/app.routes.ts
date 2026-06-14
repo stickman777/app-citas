@@ -98,6 +98,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/clinic/appointment/appointment.component').then(m => m.AppointmentComponent),
       },
       {
+        path: 'appointment-requests',
+        loadComponent: () => import('./features/clinic/appointment-requests/appointment-requests.component').then(m => m.AppointmentRequestsComponent),
+      },
+      {
         path: 'users',
         loadComponent: () => import('./features/administration/users/users.component').then(m => m.UsersComponent),
       },

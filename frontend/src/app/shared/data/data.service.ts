@@ -35,6 +35,16 @@ export class DataService {
           subMenus: [],
         },
         {
+          menuValue: 'Solicitudes',
+          labelKey: 'sidebar.appointmentRequests',
+          hasSubRoute: false,
+          showSubRoute: false,
+          route: routes.appointmentRequests,
+          base: 'appointment-requests',
+          icon: 'clipboard-list',
+          subMenus: [],
+        },
+        {
           menuValue: 'Servicios',
           labelKey: 'sidebar.services',
           hasSubRoute: false,
