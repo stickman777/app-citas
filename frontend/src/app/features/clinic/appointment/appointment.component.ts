@@ -901,9 +901,10 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   }
 
   public specialistOptionLabel(specialist: AppointmentSpecialist): string {
-    const status = specialist.active
-      ? ''
-      : ` (${this.translate('common.inactive').toLowerCase()})`;
+    const status =
+      specialist.status === 'ACTIVE'
+        ? ''
+        : ` (${this.translate('common.inactive').toLowerCase()})`;
     const specialty = specialist.specialty ? ` - ${specialist.specialty}` : '';
 
     return `${specialist.name}${specialty}${status}`;

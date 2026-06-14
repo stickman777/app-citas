@@ -11,8 +11,7 @@ export interface Specialist {
   id: number;
   name: string;
   specialty?: string | null;
-  active: boolean;
-  status?: SpecialistStatus;
+  status: SpecialistStatus;
   center?: Center | null;
   createdAt: string;
   updatedAt: string;

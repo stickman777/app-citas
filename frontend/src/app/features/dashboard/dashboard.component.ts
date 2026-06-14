@@ -375,7 +375,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private resolveSpecialistStatus(specialist: Specialist): SpecialistStatus {
-    return specialist.status ?? (specialist.active ? 'ACTIVE' : 'INACTIVE');
+    return specialist.status;
   }
 
   private buildSpecialistAppointmentCounts(

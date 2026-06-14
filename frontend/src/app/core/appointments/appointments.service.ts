@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Center } from '../centers/centers.service';
+import { SpecialistStatus } from '../specialists/specialists.service';
 
 export type AppointmentStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
 
@@ -30,7 +31,7 @@ export interface AppointmentSpecialist {
   id: number;
   name: string;
   specialty?: string | null;
-  active: boolean;
+  status: SpecialistStatus;
   center?: Center | null;
 }
 

@@ -282,7 +282,7 @@
               @if(appointment.specialist.specialty){
               <span class="text-body fs-13 d-block">{{ appointment.specialist.specialty }}</span>
               }
-              @if(!appointment.specialist.active){
+              @if(appointment.specialist.status !== 'ACTIVE'){
               <span class="badge badge-soft-danger border border-danger text-danger ms-1">{{ 'common.inactive' | translate }}</span>
               }
             </td>

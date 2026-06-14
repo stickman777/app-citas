@@ -348,7 +348,7 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   }
 
   private resolveStatus(specialist: Specialist): SpecialistStatus {
-    return specialist.status ?? (specialist.active ? 'ACTIVE' : 'INACTIVE');
+    return specialist.status;
   }
 
   private withCurrentOption<T extends { id: number }>(
