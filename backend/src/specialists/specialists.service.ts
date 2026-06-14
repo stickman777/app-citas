@@ -31,7 +31,6 @@ export class SpecialistsService {
 
     return this.specialistsRepository.find({
       where: {
-        active: true,
         status: SpecialistStatus.ACTIVE,
         center: {
           id: In(centerIds),
@@ -86,7 +85,6 @@ export class SpecialistsService {
       name: name.trim(),
       specialty: specialty?.trim() || undefined,
       status: status ?? SpecialistStatus.ACTIVE,
-      active: (status ?? SpecialistStatus.ACTIVE) === SpecialistStatus.ACTIVE,
       center,
     });
 
@@ -117,7 +115,6 @@ export class SpecialistsService {
 
     if (status !== undefined) {
       specialist.status = status;
-      specialist.active = status === SpecialistStatus.ACTIVE;
     }
 
     if (centerId !== undefined) {
@@ -130,7 +127,6 @@ export class SpecialistsService {
   async activate(id: number, authUser?: AuthUser) {
     const specialist = await this.findOne(id, authUser);
 
-    specialist.active = true;
     specialist.status = SpecialistStatus.ACTIVE;
 
     return this.specialistsRepository.save(specialist);
@@ -139,7 +135,6 @@ export class SpecialistsService {
   async deactivate(id: number, authUser?: AuthUser) {
     const specialist = await this.findOne(id, authUser);
 
-    specialist.active = false;
     specialist.status = SpecialistStatus.INACTIVE;
 
     return this.specialistsRepository.save(specialist);

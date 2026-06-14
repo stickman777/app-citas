@@ -91,7 +91,6 @@ export class ClientPortalService {
 
     const specialists = await this.specialistsRepository.find({
       where: {
-        active: true,
         status: SpecialistStatus.ACTIVE,
         center: {
           id: centerId,
@@ -207,7 +206,6 @@ export class ClientPortalService {
     const specialist = await this.specialistsRepository.findOne({
       where: {
         id,
-        active: true,
         status: SpecialistStatus.ACTIVE,
         center: {
           id: centerId,

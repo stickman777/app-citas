@@ -432,7 +432,7 @@ export class AppointmentsService implements OnModuleInit {
   }
 
   private isSpecialistSchedulable(specialist: Specialist): boolean {
-    return specialist.active && specialist.status === SpecialistStatus.ACTIVE;
+    return specialist.status === SpecialistStatus.ACTIVE;
   }
 
   private async findAppointment(

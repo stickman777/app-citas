@@ -25,9 +25,6 @@ export class Specialist {
   @Column({ nullable: true })
   specialty?: string;
 
-  @Column({ default: true })
-  active: boolean;
-
   @Column({
     type: 'enum',
     enum: SpecialistStatus,
