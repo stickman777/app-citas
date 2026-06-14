@@ -11,6 +11,7 @@ import { CentersModule } from './centers/centers.module';
 import { SpecialistsModule } from './specialists/specialists.module';
 import { DemoSeedService } from './demo-seed.service';
 import { ClientPortalModule } from './client-portal/client-portal.module';
+import { AppointmentRequestsModule } from './appointment-requests/appointment-requests.module';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -39,6 +40,7 @@ const isProduction = process.env.NODE_ENV === 'production';
     CentersModule,
     SpecialistsModule,
     ClientPortalModule,
+    AppointmentRequestsModule,
   ],
   providers: [DemoSeedService],
 })
