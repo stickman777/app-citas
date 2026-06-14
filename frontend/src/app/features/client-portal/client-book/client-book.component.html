@@ -148,4 +148,60 @@
       </button>
     </div>
   </form>
+
+  <div class="card client-card mt-3">
+    <div class="card-body">
+      <h5 class="text-dark mb-1">{{ 'client.book.request.title' | translate }}</h5>
+      <p class="text-body fs-13 mb-3">{{ 'client.book.request.description' | translate }}</p>
+
+      @if(requestErrorMessage){
+      <div class="alert alert-danger py-2" role="alert">{{ requestErrorMessage | translate }}</div>
+      }
+
+      @if(requestSuccessMessage){
+      <div class="alert alert-success py-2" role="alert">{{ requestSuccessMessage | translate }}</div>
+      }
+
+      <div class="row g-3">
+        <div class="col-12 col-lg-5">
+          <label class="form-label">{{ 'client.book.request.datetime' | translate }}</label>
+          <input
+            type="datetime-local"
+            name="requestDateTime"
+            class="form-control"
+            [(ngModel)]="requestDateTime"
+            [min]="minDateTime"
+            [disabled]="isRequesting || !selectedServiceId || !selectedSpecialistId"
+          >
+        </div>
+
+        <div class="col-12 col-lg-7">
+          <label class="form-label">{{ 'client.book.request.notes' | translate }}</label>
+          <input
+            type="text"
+            name="requestNotes"
+            class="form-control"
+            [(ngModel)]="requestNotes"
+            [disabled]="isRequesting || !selectedServiceId || !selectedSpecialistId"
+            maxlength="500"
+          >
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end mt-3">
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-md d-inline-flex align-items-center"
+          (click)="submitRequest()"
+          [disabled]="isRequesting || !selectedServiceId || !selectedSpecialistId || !requestDateTime"
+        >
+          @if(isRequesting){
+          <i class="ti ti-loader-2 me-1"></i>{{ 'common.saving' | translate }}
+          } @else {
+          <i class="ti ti-send me-1"></i>{{ 'client.book.request.submit' | translate }}
+          }
+        </button>
+      </div>
+    </div>
+  </div>
 </section>

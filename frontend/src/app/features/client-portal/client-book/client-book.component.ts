@@ -27,11 +27,17 @@ export class ClientBookComponent implements OnInit {
   selectedDate = '';
   selectedSlot = '';
   minDate = this.toDateInputValue(new Date());
+  minDateTime = this.toDateTimeInputValue(new Date());
+  requestDateTime = '';
+  requestNotes = '';
   isLoading = false;
   isLoadingSlots = false;
   isSaving = false;
+  isRequesting = false;
   errorMessage = '';
   successMessage = '';
+  requestErrorMessage = '';
+  requestSuccessMessage = '';
 
   constructor(
     private readonly clientPortalService: ClientPortalService,
@@ -153,6 +159,36 @@ export class ClientBookComponent implements OnInit {
       });
   }
 
+  submitRequest(): void {
+    if (!this.selectedServiceId || !this.selectedSpecialistId || !this.requestDateTime) {
+      this.requestErrorMessage = 'client.book.request.errors.form';
+      return;
+    }
+
+    this.isRequesting = true;
+    this.requestErrorMessage = '';
+    this.requestSuccessMessage = '';
+
+    this.clientPortalService
+      .createAppointmentRequest({
+        serviceId: this.selectedServiceId,
+        specialistId: this.selectedSpecialistId,
+        startDateTime: `${this.requestDateTime}:00`,
+        notes: this.requestNotes.trim() || undefined,
+      })
+      .pipe(finalize(() => (this.isRequesting = false)))
+      .subscribe({
+        next: () => {
+          this.requestSuccessMessage = 'client.book.request.success';
+          this.requestDateTime = '';
+          this.requestNotes = '';
+        },
+        error: () => {
+          this.requestErrorMessage = 'client.book.request.errors.save';
+        },
+      });
+  }
+
   trackByServiceId(_: number, service: ClientPortalServiceOption): number {
     return service.id;
   }
@@ -171,5 +207,12 @@ export class ClientBookComponent implements OnInit {
     const day = String(date.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
+  }
+
+  private toDateTimeInputValue(date: Date): string {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${this.toDateInputValue(date)}T${hours}:${minutes}`;
   }
 }
