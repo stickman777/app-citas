@@ -60,6 +60,13 @@ export interface ClientPortalAppointmentPayload {
   specialistId: number;
 }
 
+export interface ClientPortalAppointmentRequestPayload {
+  startDateTime: string;
+  serviceId: number;
+  specialistId: number;
+  notes?: string;
+}
+
 export interface UpdateClientPortalProfilePayload {
   name: string;
   phone: string;
@@ -127,5 +134,11 @@ export class ClientPortalService {
       `${this.apiUrl}/appointments`,
       payload,
     );
+  }
+
+  createAppointmentRequest(
+    payload: ClientPortalAppointmentRequestPayload,
+  ): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/appointment-requests`, payload);
   }
 }
