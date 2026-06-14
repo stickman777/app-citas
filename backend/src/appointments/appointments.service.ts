@@ -1,10 +1,19 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, FindOptionsWhere, In, Repository } from 'typeorm';
+import {
+  Between,
+  FindOptionsWhere,
+  In,
+  QueryFailedError,
+  Repository,
+} from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { Center } from '../centers/center.entity';
@@ -29,7 +38,9 @@ import {
 } from './appointment-status';
 
 @Injectable()
-export class AppointmentsService {
+export class AppointmentsService implements OnModuleInit {
+  private readonly logger = new Logger(AppointmentsService.name);
+
   constructor(
     @InjectRepository(Appointment)
     private appointmentsRepository: Repository<Appointment>,
@@ -50,17 +61,13 @@ export class AppointmentsService {
     private availabilityExceptionRepository: Repository<AvailabilityException>,
 
     private readonly centerAccessService: CenterAccessService,
-
-    private readonly dataSource: DataSource,
   ) {}
 
   private readonly SLOT_STEP_MINUTES = 15;
 
-  // Espacios de nombres para los advisory locks de reserva. Se usan dos
-  // dimensiones (especialista y cliente) porque una cita no puede solapar ni
-  // con otra del mismo especialista ni con otra del mismo cliente.
-  private readonly SPECIALIST_BOOKING_LOCK = 1;
-  private readonly CLIENT_BOOKING_LOCK = 2;
+  async onModuleInit() {
+    await this.ensureOverlapConstraints();
+  }
 
   async findAll(authUser?: AuthUser, date?: string, centerId?: number) {
     await this.completePastScheduledAppointments();
@@ -197,29 +204,27 @@ export class AppointmentsService {
 
     await this.centerAccessService.validateCenterAccess(center.id, authUser);
 
-    return this.withBookingLock(specialist.id, client.id, async () => {
-      const outsideAvailability = await this.validateAppointmentSlot(
-        startDate,
-        service.durationMinutes,
-        center.id,
-        specialist.id,
-        client.id,
-        undefined,
-        appointmentData.allowOutsideAvailability,
-      );
+    const outsideAvailability = await this.validateAppointmentSlot(
+      startDate,
+      service.durationMinutes,
+      center.id,
+      specialist.id,
+      client.id,
+      undefined,
+      appointmentData.allowOutsideAvailability,
+    );
 
-      const appointment = this.appointmentsRepository.create({
-        startDateTime: startDate,
-        duration: service.durationMinutes,
-        outsideAvailability,
-        client,
-        service,
-        center,
-        specialist,
-      });
-
-      return this.appointmentsRepository.save(appointment);
+    const appointment = this.appointmentsRepository.create({
+      startDateTime: startDate,
+      duration: service.durationMinutes,
+      outsideAvailability,
+      client,
+      service,
+      center,
+      specialist,
     });
+
+    return this.persistAppointment(appointment);
   }
 
   async update(
@@ -264,32 +269,30 @@ export class AppointmentsService {
 
     await this.centerAccessService.validateCenterAccess(center.id, authUser);
 
-    return this.withBookingLock(specialist.id, client.id, async () => {
-      const outsideAvailability =
-        status === AppointmentStatus.SCHEDULED
-          ? await this.validateAppointmentSlot(
-              startDate,
-              service.durationMinutes,
-              center.id,
-              specialist.id,
-              client.id,
-              appointment.id,
-              appointmentData.allowOutsideAvailability ??
-                appointment.outsideAvailability,
-            )
-          : appointment.outsideAvailability;
+    const outsideAvailability =
+      status === AppointmentStatus.SCHEDULED
+        ? await this.validateAppointmentSlot(
+            startDate,
+            service.durationMinutes,
+            center.id,
+            specialist.id,
+            client.id,
+            appointment.id,
+            appointmentData.allowOutsideAvailability ??
+              appointment.outsideAvailability,
+          )
+        : appointment.outsideAvailability;
 
-      appointment.startDateTime = startDate;
-      appointment.duration = service.durationMinutes;
-      appointment.outsideAvailability = outsideAvailability;
-      appointment.client = client;
-      appointment.service = service;
-      appointment.center = center;
-      appointment.specialist = specialist;
-      appointment.status = status;
+    appointment.startDateTime = startDate;
+    appointment.duration = service.durationMinutes;
+    appointment.outsideAvailability = outsideAvailability;
+    appointment.client = client;
+    appointment.service = service;
+    appointment.center = center;
+    appointment.specialist = specialist;
+    appointment.status = status;
 
-      return this.appointmentsRepository.save(appointment);
-    });
+    return this.persistAppointment(appointment);
   }
 
   async remove(id: number, authUser?: AuthUser) {
@@ -466,28 +469,85 @@ export class AppointmentsService {
     return appointment;
   }
 
-  // Serializa la comprobación de solapes y el guardado dentro de una misma
-  // transacción usando advisory locks de PostgreSQL, evitando que dos peticiones
-  // concurrentes reserven el mismo hueco (doble reserva). Los locks de
-  // transacción se liberan automáticamente al confirmar. Se adquieren siempre
-  // en el mismo orden (especialista y luego cliente) para no provocar interbloqueos.
-  private async withBookingLock<T>(
-    specialistId: number,
-    clientId: number,
-    work: () => Promise<T>,
-  ): Promise<T> {
-    return this.dataSource.transaction(async (manager) => {
-      await manager.query('SELECT pg_advisory_xact_lock($1, $2)', [
-        this.SPECIALIST_BOOKING_LOCK,
-        specialistId,
-      ]);
-      await manager.query('SELECT pg_advisory_xact_lock($1, $2)', [
-        this.CLIENT_BOOKING_LOCK,
-        clientId,
-      ]);
+  // Crea (de forma idempotente) las restricciones de exclusión que impiden a
+  // nivel de base de datos que dos citas programadas se solapen para un mismo
+  // especialista o para un mismo cliente. Es la garantía definitiva frente a la
+  // doble reserva por condiciones de carrera: aunque dos peticiones concurrentes
+  // superen la comprobación previa en memoria, PostgreSQL rechaza la segunda.
+  private async ensureOverlapConstraints(): Promise<void> {
+    try {
+      await this.appointmentsRepository.query(
+        'CREATE EXTENSION IF NOT EXISTS btree_gist',
+      );
+      await this.appointmentsRepository.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'appointment_no_overlap_specialist'
+          ) THEN
+            ALTER TABLE "appointment"
+              ADD CONSTRAINT "appointment_no_overlap_specialist"
+              EXCLUDE USING gist (
+                "specialistId" WITH =,
+                tsrange(
+                  "startDateTime",
+                  "startDateTime" + ("duration" * interval '1 minute')
+                ) WITH &&
+              )
+              WHERE (status = 'SCHEDULED');
+          END IF;
 
-      return work();
-    });
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'appointment_no_overlap_client'
+          ) THEN
+            ALTER TABLE "appointment"
+              ADD CONSTRAINT "appointment_no_overlap_client"
+              EXCLUDE USING gist (
+                "clientId" WITH =,
+                tsrange(
+                  "startDateTime",
+                  "startDateTime" + ("duration" * interval '1 minute')
+                ) WITH &&
+              )
+              WHERE (status = 'SCHEDULED');
+          END IF;
+        END $$;
+      `);
+    } catch (error) {
+      this.logger.error(
+        'No se pudieron crear las restricciones de exclusión de solape de citas',
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+  }
+
+  // Guarda la cita traduciendo la violación de exclusión de PostgreSQL (código
+  // 23P01) en un conflicto legible para quien perdió la carrera por el hueco.
+  private async persistAppointment(
+    appointment: Appointment,
+  ): Promise<Appointment> {
+    try {
+      return await this.appointmentsRepository.save(appointment);
+    } catch (error) {
+      if (this.isOverlapViolation(error))
+        throw new ConflictException(
+          'El horario seleccionado ya no está disponible',
+        );
+
+      throw error;
+    }
+  }
+
+  private isOverlapViolation(error: unknown): boolean {
+    if (!(error instanceof QueryFailedError)) return false;
+
+    const code =
+      (error as QueryFailedError & { code?: string }).code ??
+      (error.driverError as { code?: string } | undefined)?.code;
+
+    return code === '23P01';
   }
 
   private assertStartDateNotInPast(startDate: Date): void {
@@ -844,26 +904,20 @@ export class AppointmentsService {
     const startDate = new Date(appointmentData.startDateTime);
     this.assertStartDateNotInPast(startDate);
 
-    return this.withBookingLock(
+    const outsideAvailability = await this.validateAppointmentSlot(
+      startDate,
+      appointment.duration,
+      this.getAppointmentCenterId(appointment),
       this.getAppointmentSpecialistId(appointment),
       appointment.client.id,
-      async () => {
-        const outsideAvailability = await this.validateAppointmentSlot(
-          startDate,
-          appointment.duration,
-          this.getAppointmentCenterId(appointment),
-          this.getAppointmentSpecialistId(appointment),
-          appointment.client.id,
-          appointment.id,
-          appointmentData.allowOutsideAvailability ??
-            appointment.outsideAvailability,
-        );
-
-        appointment.startDateTime = startDate;
-        appointment.outsideAvailability = outsideAvailability;
-
-        return this.appointmentsRepository.save(appointment);
-      },
+      appointment.id,
+      appointmentData.allowOutsideAvailability ??
+        appointment.outsideAvailability,
     );
+
+    appointment.startDateTime = startDate;
+    appointment.outsideAvailability = outsideAvailability;
+
+    return this.persistAppointment(appointment);
   }
 }

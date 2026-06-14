@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
 import { AvailabilityException } from '../availability/availability-exception.entity';
 import { Availability } from '../availability/availability.entity';
 import { CenterAccessService } from '../centers/center-access.service';
@@ -57,14 +56,6 @@ describe('AppointmentsService', () => {
         {
           provide: CenterAccessService,
           useValue: {},
-        },
-        {
-          provide: DataSource,
-          useValue: {
-            transaction: jest.fn((work) =>
-              work({ query: jest.fn().mockResolvedValue(undefined) }),
-            ),
-          },
         },
       ],
     }).compile();

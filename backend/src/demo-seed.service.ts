@@ -381,6 +381,15 @@ export class DemoSeedService implements OnApplicationBootstrap {
     services: Map<string, ServiceEntity>,
     specialists: Map<string, Specialist>,
   ) {
+    // Rangos de citas programadas ya creadas, para no generar solapes que
+    // violarían las restricciones de exclusión de la tabla appointment.
+    const scheduledRanges: {
+      specialistId: number;
+      clientId: number;
+      start: number;
+      end: number;
+    }[] = [];
+
     for (const seedAppointment of this.seedAppointments) {
       const client = this.getSeedValue(clients, seedAppointment.clientKey);
       const service = this.getSeedValue(services, seedAppointment.serviceKey);
@@ -393,14 +402,37 @@ export class DemoSeedService implements OnApplicationBootstrap {
         this.getCenterKeyForService(seedAppointment.serviceKey),
       );
 
+      const startDateTime = this.businessDayAt(
+        seedAppointment.dayOffset,
+        seedAppointment.hour,
+        seedAppointment.minutes ?? 0,
+      );
+      const start = startDateTime.getTime();
+      const end = start + service.durationMinutes * 60000;
+
+      if (seedAppointment.status === AppointmentStatus.SCHEDULED) {
+        const overlaps = scheduledRanges.some(
+          (range) =>
+            (range.specialistId === specialist.id ||
+              range.clientId === client.id) &&
+            start < range.end &&
+            range.start < end,
+        );
+
+        if (overlaps) continue;
+
+        scheduledRanges.push({
+          specialistId: specialist.id,
+          clientId: client.id,
+          start,
+          end,
+        });
+      }
+
       await manager.save(
         Appointment,
         manager.create(Appointment, {
-          startDateTime: this.businessDayAt(
-            seedAppointment.dayOffset,
-            seedAppointment.hour,
-            seedAppointment.minutes ?? 0,
-          ),
+          startDateTime,
           duration: service.durationMinutes,
           outsideAvailability: seedAppointment.outsideAvailability ?? false,
           status: seedAppointment.status,
