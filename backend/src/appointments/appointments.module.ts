@@ -9,6 +9,7 @@ import { Availability } from '../availability/availability.entity';
 import { AvailabilityException } from '../availability/availability-exception.entity';
 import { CentersModule } from '../centers/centers.module';
 import { Specialist } from '../specialists/specialist.entity';
+import { SpecialistAbsence } from '../specialists/specialist-absence.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Specialist } from '../specialists/specialist.entity';
       Client,
       ServiceEntity,
       Specialist,
+      SpecialistAbsence,
       Availability,
       AvailabilityException,
     ]),

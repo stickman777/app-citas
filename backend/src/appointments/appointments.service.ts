@@ -11,6 +11,8 @@ import {
   Between,
   FindOptionsWhere,
   In,
+  LessThanOrEqual,
+  MoreThanOrEqual,
   QueryFailedError,
   Repository,
 } from 'typeorm';
@@ -20,6 +22,7 @@ import { Center } from '../centers/center.entity';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
 import { Specialist, SpecialistStatus } from '../specialists/specialist.entity';
+import { SpecialistAbsence } from '../specialists/specialist-absence.entity';
 import { AppointmentStatus } from './appointment.entity';
 import {
   AvailabilityException,
@@ -59,6 +62,9 @@ export class AppointmentsService implements OnModuleInit {
 
     @InjectRepository(AvailabilityException)
     private availabilityExceptionRepository: Repository<AvailabilityException>,
+
+    @InjectRepository(SpecialistAbsence)
+    private specialistAbsenceRepository: Repository<SpecialistAbsence>,
 
     private readonly centerAccessService: CenterAccessService,
   ) {}
@@ -116,6 +122,9 @@ export class AppointmentsService implements OnModuleInit {
     await this.centerAccessService.validateCenterAccess(centerId, authUser);
 
     const targetDate = this.buildDateFromDateQuery(date);
+
+    if (await this.isSpecialistAbsentOn(specialist.id, targetDate)) return [];
+
     const dayOfWeek = targetDate.getDay();
 
     const availabilities = await this.availabilityRepository.find({
@@ -201,6 +210,7 @@ export class AppointmentsService implements OnModuleInit {
     insideAvailability: boolean;
     hasSpecialistOverlap: boolean;
     hasClientOverlap: boolean;
+    specialistAbsent: boolean;
   }> {
     const service = await this.getActiveService(serviceId);
     const centerId = this.getServiceCenterId(service);
@@ -221,8 +231,17 @@ export class AppointmentsService implements OnModuleInit {
       service.durationMinutes,
       clientId,
     );
+    const specialistAbsent = await this.isSpecialistAbsentOn(
+      specialistId,
+      startDate,
+    );
 
-    return { insideAvailability, hasSpecialistOverlap, hasClientOverlap };
+    return {
+      insideAvailability,
+      hasSpecialistOverlap,
+      hasClientOverlap,
+      specialistAbsent,
+    };
   }
 
   async create(appointmentData: CreateAppointmentDto, authUser?: AuthUser) {
@@ -586,6 +605,33 @@ export class AppointmentsService implements OnModuleInit {
     return code === '23P01';
   }
 
+  private async isSpecialistAbsentOn(
+    specialistId: number,
+    date: Date,
+  ): Promise<boolean> {
+    const dateQuery = this.toDateQuery(date);
+
+    const count = await this.specialistAbsenceRepository.count({
+      where: {
+        specialist: { id: specialistId },
+        startDate: LessThanOrEqual(dateQuery),
+        endDate: MoreThanOrEqual(dateQuery),
+      },
+    });
+
+    return count > 0;
+  }
+
+  private async assertSpecialistAvailableOn(
+    specialistId: number,
+    date: Date,
+  ): Promise<void> {
+    if (await this.isSpecialistAbsentOn(specialistId, date))
+      throw new BadRequestException(
+        'El especialista no está disponible en esa fecha',
+      );
+  }
+
   private assertStartDateNotInPast(startDate: Date): void {
     if (startDate.getTime() < Date.now())
       throw new BadRequestException(
@@ -602,6 +648,8 @@ export class AppointmentsService implements OnModuleInit {
     appointmentIdToExclude?: number,
     allowOutsideAvailability = false,
   ): Promise<boolean> {
+    await this.assertSpecialistAvailableOn(specialistId, startDate);
+
     const isAvailable = await this.isInsideAvailability(
       startDate,
       duration,

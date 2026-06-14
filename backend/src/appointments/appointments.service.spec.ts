@@ -6,6 +6,7 @@ import { CenterAccessService } from '../centers/center-access.service';
 import { Client } from '../clients/client.entity';
 import { ServiceEntity } from '../services/service.entity';
 import { Specialist } from '../specialists/specialist.entity';
+import { SpecialistAbsence } from '../specialists/specialist-absence.entity';
 import { Appointment, AppointmentStatus } from './appointment.entity';
 import { AppointmentsService } from './appointments.service';
 
@@ -52,6 +53,12 @@ describe('AppointmentsService', () => {
         {
           provide: getRepositoryToken(AvailabilityException),
           useValue: availabilityExceptionRepository,
+        },
+        {
+          provide: getRepositoryToken(SpecialistAbsence),
+          useValue: {
+            count: jest.fn().mockResolvedValue(0),
+          },
         },
         {
           provide: CenterAccessService,

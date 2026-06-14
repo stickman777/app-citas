@@ -12,7 +12,9 @@ import {
 } from '../centers/center-access.service';
 import { UserRole } from '../users/user.entity';
 import { CreateSpecialistDto } from './dto/create-specialist.dto';
+import { CreateSpecialistAbsenceDto } from './dto/create-specialist-absence.dto';
 import { UpdateSpecialistDto } from './dto/update-specialist.dto';
+import { SpecialistAbsence } from './specialist-absence.entity';
 import { Specialist, SpecialistStatus } from './specialist.entity';
 
 @Injectable()
@@ -21,8 +23,66 @@ export class SpecialistsService {
     @InjectRepository(Specialist)
     private specialistsRepository: Repository<Specialist>,
 
+    @InjectRepository(SpecialistAbsence)
+    private absencesRepository: Repository<SpecialistAbsence>,
+
     private readonly centerAccessService: CenterAccessService,
   ) {}
+
+  async listAbsences(specialistId: number, authUser?: AuthUser) {
+    await this.findOne(specialistId, authUser);
+
+    return this.absencesRepository.find({
+      where: { specialist: { id: specialistId } },
+      order: { startDate: 'ASC' },
+    });
+  }
+
+  async createAbsence(
+    specialistId: number,
+    absenceData: CreateSpecialistAbsenceDto,
+    authUser?: AuthUser,
+  ) {
+    const specialist = await this.findOne(specialistId, authUser);
+
+    if (absenceData.endDate < absenceData.startDate)
+      throw new BadRequestException(
+        'La fecha de fin debe ser igual o posterior a la de inicio',
+      );
+
+    const absence = this.absencesRepository.create({
+      specialist: { id: specialist.id },
+      startDate: absenceData.startDate,
+      endDate: absenceData.endDate,
+      reason: absenceData.reason?.trim() || null,
+    });
+
+    return this.absencesRepository.save(absence);
+  }
+
+  async removeAbsence(absenceId: number, authUser?: AuthUser) {
+    const absence = await this.absencesRepository.findOne({
+      where: { id: absenceId },
+      relations: { specialist: true },
+    });
+
+    if (!absence)
+      throw new NotFoundException('No se ha encontrado la ausencia');
+
+    if (!absence.specialist?.center?.id)
+      throw new BadRequestException(
+        'La ausencia no tiene un centro asignado',
+      );
+
+    await this.centerAccessService.validateCenterAccess(
+      absence.specialist.center.id,
+      authUser,
+    );
+
+    await this.absencesRepository.remove(absence);
+
+    return { message: 'Ausencia eliminada correctamente' };
+  }
 
   async findAll(authUser?: AuthUser, centerId?: number) {
     const centerIds = await this.getAllowedCenterIds(authUser, centerId);

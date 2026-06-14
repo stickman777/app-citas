@@ -46,12 +46,21 @@ export class AppointmentRequestsService {
         'La fecha de la cita no puede estar en el pasado',
       );
 
-    const { insideAvailability, hasSpecialistOverlap, hasClientOverlap } =
-      await this.appointmentsService.describeRequestedSlot(
-        dto.serviceId,
-        dto.specialistId,
-        startDate,
-        client.id,
+    const {
+      insideAvailability,
+      hasSpecialistOverlap,
+      hasClientOverlap,
+      specialistAbsent,
+    } = await this.appointmentsService.describeRequestedSlot(
+      dto.serviceId,
+      dto.specialistId,
+      startDate,
+      client.id,
+    );
+
+    if (specialistAbsent)
+      throw new BadRequestException(
+        'El especialista no está disponible en esas fechas',
       );
 
     if (hasClientOverlap)

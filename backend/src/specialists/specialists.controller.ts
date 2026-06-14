@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -29,6 +30,7 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/user.entity';
 import { CreateSpecialistDto } from './dto/create-specialist.dto';
+import { CreateSpecialistAbsenceDto } from './dto/create-specialist-absence.dto';
 import { UpdateSpecialistDto } from './dto/update-specialist.dto';
 import { SpecialistsService } from './specialists.service';
 
@@ -157,6 +159,56 @@ export class SpecialistsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.specialistsService.deactivate(id, request.user);
+  }
+
+  @Get(':id/absences')
+  @ApiOperation({
+    summary: 'Listar ausencias del especialista',
+    description: 'Periodos en los que el especialista no puede recibir citas. Roles permitidos: ADMIN y GESTOR.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'Identificador del especialista.' })
+  @ApiOkResponse({ description: 'Listado de ausencias.' })
+  @ApiForbiddenResponse({ description: 'No se puede gestionar el especialista indicado.' })
+  @ApiNotFoundResponse({ description: 'Especialista no encontrado.' })
+  listAbsences(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.specialistsService.listAbsences(id, request.user);
+  }
+
+  @Post(':id/absences')
+  @ApiOperation({
+    summary: 'Crear ausencia del especialista',
+    description: 'Bloquea el agendado de citas en el rango de fechas. Roles permitidos: ADMIN y GESTOR.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'Identificador del especialista.' })
+  @ApiCreatedResponse({ description: 'Ausencia creada correctamente.' })
+  @ApiBadRequestResponse({ description: 'Fechas no válidas.' })
+  @ApiForbiddenResponse({ description: 'No se puede gestionar el especialista indicado.' })
+  @ApiNotFoundResponse({ description: 'Especialista no encontrado.' })
+  createAbsence(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('id', ParseIntPipe) id: number,
+    @Body() absenceData: CreateSpecialistAbsenceDto,
+  ) {
+    return this.specialistsService.createAbsence(id, absenceData, request.user);
+  }
+
+  @Delete('absences/:absenceId')
+  @ApiOperation({
+    summary: 'Eliminar ausencia del especialista',
+    description: 'Roles permitidos: ADMIN y GESTOR.',
+  })
+  @ApiParam({ name: 'absenceId', type: Number, description: 'Identificador de la ausencia.' })
+  @ApiOkResponse({ description: 'Ausencia eliminada correctamente.' })
+  @ApiForbiddenResponse({ description: 'No se puede gestionar el centro de la ausencia.' })
+  @ApiNotFoundResponse({ description: 'Ausencia no encontrada.' })
+  removeAbsence(
+    @Req() request: { user: { id: number; role: UserRole } },
+    @Param('absenceId', ParseIntPipe) absenceId: number,
+  ) {
+    return this.specialistsService.removeAbsence(absenceId, request.user);
   }
 
   private parseCenterId(centerId?: string): number | undefined {
