@@ -26,6 +26,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/user.entity';
+import { CreateAppointmentRequestDto } from '../appointment-requests/dto/create-appointment-request.dto';
 import { ClientPortalService } from './client-portal.service';
 import { CreateClientPortalAppointmentDto } from './dto/create-client-portal-appointment.dto';
 import { UpdateClientPortalProfileDto } from './dto/update-client-portal-profile.dto';
@@ -156,6 +157,27 @@ export class ClientPortalController {
     return this.clientPortalService.createAppointment(
       request.user.id,
       appointmentData,
+    );
+  }
+
+  @Post('appointment-requests')
+  @ApiOperation({
+    summary: 'Solicitar una cita fuera de horario u ocupada',
+    description:
+      'Crea una solicitud cuando el horario deseado no es auto-reservable, ' +
+      'para que la revise un gestor. Rol permitido: CLIENT.',
+  })
+  @ApiCreatedResponse({ description: 'Solicitud de cita creada correctamente.' })
+  @ApiBadRequestResponse({ description: 'Datos no válidos, horario en el pasado o disponible para reserva directa.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
+  @ApiNotFoundResponse({ description: 'No existe cliente vinculado al usuario.' })
+  createAppointmentRequest(
+    @Req() request: { user: { id: number } },
+    @Body() requestData: CreateAppointmentRequestDto,
+  ) {
+    return this.clientPortalService.createAppointmentRequest(
+      request.user.id,
+      requestData,
     );
   }
 

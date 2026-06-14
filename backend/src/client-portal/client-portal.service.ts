@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { AppointmentRequestsService } from '../appointment-requests/appointment-requests.service';
+import { CreateAppointmentRequestDto } from '../appointment-requests/dto/create-appointment-request.dto';
 import { Appointment } from '../appointments/appointment.entity';
 import { AppointmentsService } from '../appointments/appointments.service';
 import { Client } from '../clients/client.entity';
@@ -22,6 +24,7 @@ export class ClientPortalService {
   constructor(
     private readonly clientsService: ClientsService,
     private readonly appointmentsService: AppointmentsService,
+    private readonly appointmentRequestsService: AppointmentRequestsService,
 
     @InjectRepository(ServiceEntity)
     private servicesRepository: Repository<ServiceEntity>,
@@ -139,6 +142,22 @@ export class ClientPortalService {
     });
 
     return this.toAppointmentResponse(appointment);
+  }
+
+  // Crea una solicitud de cita cuando el horario deseado no es auto-reservable
+  // (fuera del horario del centro o con el hueco ocupado). El gestor la revisará.
+  async createAppointmentRequest(
+    userId: number,
+    requestData: CreateAppointmentRequestDto,
+  ) {
+    const client = await this.getActiveClientForUser(userId);
+    await this.validateBookableSelection(
+      client,
+      requestData.serviceId,
+      requestData.specialistId,
+    );
+
+    return this.appointmentRequestsService.createForClient(client, requestData);
   }
 
   private async getActiveClientForUser(userId: number): Promise<Client> {

@@ -189,6 +189,42 @@ export class AppointmentsService implements OnModuleInit {
     return [...slots].sort();
   }
 
+  // Describe si un horario deseado es auto-reservable, distinguiendo si cae
+  // fuera de la disponibilidad del centro y si solapa con el especialista o con
+  // el propio cliente. Lo usa el módulo de solicitudes de cita.
+  async describeRequestedSlot(
+    serviceId: number,
+    specialistId: number,
+    startDate: Date,
+    clientId: number,
+  ): Promise<{
+    insideAvailability: boolean;
+    hasSpecialistOverlap: boolean;
+    hasClientOverlap: boolean;
+  }> {
+    const service = await this.getActiveService(serviceId);
+    const centerId = this.getServiceCenterId(service);
+
+    const insideAvailability = await this.isInsideAvailability(
+      startDate,
+      service.durationMinutes,
+      centerId,
+    );
+    const hasSpecialistOverlap = await this.hasOverlappingAppointment(
+      startDate,
+      service.durationMinutes,
+      centerId,
+      specialistId,
+    );
+    const hasClientOverlap = await this.hasOverlappingClientAppointment(
+      startDate,
+      service.durationMinutes,
+      clientId,
+    );
+
+    return { insideAvailability, hasSpecialistOverlap, hasClientOverlap };
+  }
+
   async create(appointmentData: CreateAppointmentDto, authUser?: AuthUser) {
     await this.completePastScheduledAppointments();
 
