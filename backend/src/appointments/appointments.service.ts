@@ -23,6 +23,10 @@ import {
   AuthUser,
   CenterAccessService,
 } from '../centers/center-access.service';
+import {
+  assertAppointmentCanBeCompleted,
+  assertAppointmentStatusTransition,
+} from './appointment-status';
 
 @Injectable()
 export class AppointmentsService {
@@ -234,6 +238,11 @@ export class AppointmentsService {
     const center = this.validateAppointmentCenter(client, service, specialist);
     this.validateServiceSpecialist(service, specialist);
     const status = appointmentData.status ?? appointment.status;
+
+    assertAppointmentStatusTransition(appointment.status, status);
+
+    if (status === AppointmentStatus.COMPLETED)
+      assertAppointmentCanBeCompleted(startDate);
 
     await this.centerAccessService.validateCenterAccess(center.id, authUser);
     const outsideAvailability =
@@ -756,6 +765,8 @@ export class AppointmentsService {
       'Solo se pueden completar citas programadas',
       authUser,
     );
+
+    assertAppointmentCanBeCompleted(appointment.startDateTime);
 
     appointment.status = AppointmentStatus.COMPLETED;
 
