@@ -1,3 +1,5 @@
+// Debe ir antes que cualquier otro import: fija la zona horaria del proceso.
+import './config/app-timezone';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
