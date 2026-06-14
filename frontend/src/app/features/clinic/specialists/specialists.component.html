@@ -71,8 +71,8 @@
             <span class="d-none d-md-inline">{{ 'specialists.title' | translate }}</span>
           </th>
           <th>{{ 'specialists.fields.specialty' | translate }}</th>
-          <th>{{ 'specialists.absences.column' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
+          <th class="specialists-table-absences text-center">{{ 'specialists.absences.column' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -100,22 +100,22 @@
             <td>
               <button
                 type="button"
+                class="badge rounded border fs-13 fw-medium bg-transparent"
+                [ngClass]="statusBadgeClass(specialist)"
+                (click)="openStatusModal(specialist)"
+              >
+                {{ specialistStatusLabel(specialist) }}
+              </button>
+            </td>
+            <td class="specialists-table-absences text-center">
+              <button
+                type="button"
                 class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 bg-white"
                 (click)="openAbsenceModal(specialist)"
                 [attr.aria-label]="'specialists.absences.manage' | translate"
                 [attr.title]="'specialists.absences.manage' | translate"
               >
                 <i class="ti ti-calendar-off"></i>
-              </button>
-            </td>
-            <td>
-              <button
-                type="button"
-                class="badge rounded border fs-13 fw-medium bg-transparent"
-                [ngClass]="statusBadgeClass(specialist)"
-                (click)="openStatusModal(specialist)"
-              >
-                {{ specialistStatusLabel(specialist) }}
               </button>
             </td>
           </tr>
@@ -129,6 +129,10 @@
     </table>
   </div>
 </div>
+
+@if(absenceToastMessage){
+<div class="alert alert-success py-2 specialist-absence-toast" role="alert">{{ absenceToastMessage }}</div>
+}
 
 @if(isFormModalOpen){
 <div class="modal fade show d-block specialist-modal" tabindex="-1" role="dialog" aria-modal="true">
@@ -217,44 +221,21 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="text-dark modal-title fw-bold">{{ 'specialists.absences.title' | translate }}</h4>
+        <h4 class="text-dark modal-title fw-bold">
+          {{ 'specialists.absences.title' | translate }}
+          <span class="text-primary fw-semibold">{{ absenceSpecialist.name }}</span>
+        </h4>
         <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.cancel' | translate" (click)="closeAbsenceModal()">
           <i class="ti ti-x"></i>
         </button>
       </div>
       <div class="modal-body">
-        <!-- Datos del especialista (solo lectura, feedback) -->
-        <div class="bg-light rounded-2 p-3 mb-3">
-          <div class="d-flex align-items-center mb-2">
-            <span class="avatar avatar-sm rounded-circle bg-white border me-2 d-inline-flex align-items-center justify-content-center">
-              <i class="ti ti-user-star text-dark"></i>
-            </span>
-            <div class="min-w-0">
-              <span class="text-dark fw-semibold d-block">{{ absenceSpecialist.name }}</span>
-              <span class="text-body fs-13">{{ absenceSpecialist.specialty || '-' }}</span>
-            </div>
-          </div>
-          <div class="d-flex flex-wrap gap-2">
-            <span class="badge rounded border fs-13 fw-medium bg-transparent" [ngClass]="statusBadgeClass(absenceSpecialist)">
-              {{ specialistStatusLabel(absenceSpecialist) }}
-            </span>
-            @if(absenceSpecialist.center?.name){
-            <span class="badge badge-soft-dark border fs-13 fw-medium">
-              <i class="ti ti-building-hospital me-1"></i>{{ absenceSpecialist.center?.name }}
-            </span>
-            }
-          </div>
-        </div>
-
         @if(absenceError){
         <div class="alert alert-danger py-2" role="alert">{{ absenceError }}</div>
         }
-        @if(absenceSuccess){
-        <div class="alert alert-success py-2" role="alert">{{ absenceSuccess }}</div>
-        }
 
+        <div class="mb-3">
         <!-- Ausencias registradas -->
-        <h6 class="text-dark mb-2">{{ 'specialists.absences.registered' | translate }}</h6>
         @if(isLoadingAbsences){
         <div class="text-body fs-13 mb-3">
           <i class="ti ti-loader-2 me-1"></i>{{ 'common.loading' | translate }}
@@ -294,9 +275,10 @@
           }
         </div>
         }
+        </div>
 
+        <div>
         <!-- Registrar nueva ausencia -->
-        <h6 class="text-dark mb-2">{{ 'specialists.absences.new' | translate }}</h6>
         <div class="row g-2">
           <div class="col-12 col-sm-6">
             <label class="form-label">{{ 'specialists.absences.fields.start' | translate }}</label>
@@ -324,6 +306,7 @@
             <i class="ti ti-plus me-1"></i>{{ 'specialists.absences.add' | translate }}
             }
           </button>
+        </div>
         </div>
       </div>
       <div class="modal-footer d-flex align-items-center gap-1">

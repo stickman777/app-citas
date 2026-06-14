@@ -11,4 +11,20 @@
     width: 1%;
     white-space: nowrap;
   }
+
+  .specialists-table-absences {
+    text-align: center;
+    width: 1%;
+    white-space: nowrap;
+  }
+}
+
+.specialist-absence-toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1080;
+  min-width: 240px;
+  max-width: min(360px, calc(100vw - 2rem));
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12);
 }

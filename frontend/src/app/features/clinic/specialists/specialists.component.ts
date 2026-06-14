@@ -65,12 +65,13 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   public isSavingAbsence = false;
   public deletingAbsenceId: number | null = null;
   public absenceError = '';
-  public absenceSuccess = '';
+  public absenceToastMessage = '';
   public absenceForm: AbsenceForm = this.getEmptyAbsenceForm();
   public readonly minAbsenceDate = this.toDateInputValue(new Date());
   private activeCenterSubscription?: Subscription;
   private currentUserSubscription?: Subscription;
   private loadedCenterId?: number | null;
+  private absenceToastTimeout?: number;
 
   constructor(
     private readonly specialistsService: SpecialistsService,
@@ -98,6 +99,7 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.activeCenterSubscription?.unsubscribe();
     this.currentUserSubscription?.unsubscribe();
+    this.clearAbsenceToastTimeout();
   }
 
   public loadSpecialists(clearMessages = true): void {
@@ -201,7 +203,6 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
     this.absences = [];
     this.absenceForm = this.getEmptyAbsenceForm();
     this.absenceError = '';
-    this.absenceSuccess = '';
     this.isAbsenceModalOpen = true;
     this.loadAbsences();
   }
@@ -243,7 +244,6 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
 
     this.isSavingAbsence = true;
     this.absenceError = '';
-    this.absenceSuccess = '';
 
     this.specialistsService
       .createAbsence(this.absenceSpecialist.id, {
@@ -253,12 +253,9 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
       })
       .pipe(finalize(() => (this.isSavingAbsence = false)))
       .subscribe({
-        next: () => {
-          this.absenceSuccess = this.translate(
-            'specialists.absences.success.created',
-          );
+        next: absence => {
+          this.absences = [...this.absences, absence];
           this.absenceForm = this.getEmptyAbsenceForm();
-          this.loadAbsences();
         },
         error: () => {
           this.absenceError = this.translate('specialists.absences.errors.save');
@@ -269,15 +266,14 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   public removeAbsence(absence: SpecialistAbsence): void {
     this.deletingAbsenceId = absence.id;
     this.absenceError = '';
-    this.absenceSuccess = '';
 
     this.specialistsService
       .removeAbsence(absence.id)
       .pipe(finalize(() => (this.deletingAbsenceId = null)))
       .subscribe({
         next: () => {
-          this.absenceSuccess = this.translate(
-            'specialists.absences.success.deleted',
+          this.showAbsenceToast(
+            this.translate('specialists.absences.success.deleted')
           );
           this.loadAbsences();
         },
@@ -491,6 +487,23 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private showAbsenceToast(message: string): void {
+    this.clearAbsenceToastTimeout();
+    this.absenceToastMessage = message;
+
+    this.absenceToastTimeout = window.setTimeout(() => {
+      this.absenceToastMessage = '';
+      this.absenceToastTimeout = undefined;
+    }, 1500);
+  }
+
+  private clearAbsenceToastTimeout(): void {
+    if (this.absenceToastTimeout === undefined) return;
+
+    window.clearTimeout(this.absenceToastTimeout);
+    this.absenceToastTimeout = undefined;
   }
 
   private translate(key: string): string {
