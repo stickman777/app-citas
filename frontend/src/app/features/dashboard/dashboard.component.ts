@@ -166,8 +166,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     if (status === 'ACTIVE') return 'dashboard-status-dot-active';
 
-    if (status === 'VACATION') return 'dashboard-status-dot-vacation';
-
     return 'dashboard-status-dot-inactive';
   }
 
@@ -176,9 +174,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     if (status === 'ACTIVE')
       return 'badge-soft-success border-success text-success';
-
-    if (status === 'VACATION')
-      return 'badge-soft-warning border-warning text-warning';
 
     return 'badge-soft-danger border-danger text-danger';
   }

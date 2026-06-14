@@ -11,6 +11,7 @@ import { I18nService } from '../../../core/i18n/i18n.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import {
   Specialist,
+  SpecialistAbsence,
   SpecialistPayload,
   SpecialistStatus,
   SpecialistsService,
@@ -23,6 +24,12 @@ interface SpecialistForm {
   specialty: string;
   status: SpecialistStatus;
   centerId: number | null;
+}
+
+interface AbsenceForm {
+  startDate: string;
+  endDate: string;
+  reason: string;
 }
 
 @Component({
@@ -48,13 +55,19 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   public specialistToChangeStatus: Specialist | null = null;
   public activeCenter: Center | null = null;
   public currentUser: CurrentUser | null = null;
-  public readonly statusOptions: SpecialistStatus[] = [
-    'ACTIVE',
-    'INACTIVE',
-    'VACATION',
-  ];
+  public readonly statusOptions: SpecialistStatus[] = ['ACTIVE', 'INACTIVE'];
   public selectedStatus: SpecialistStatus = 'ACTIVE';
   public form: SpecialistForm = this.getEmptyForm();
+  public isAbsenceModalOpen = false;
+  public absenceSpecialist: Specialist | null = null;
+  public absences: SpecialistAbsence[] = [];
+  public isLoadingAbsences = false;
+  public isSavingAbsence = false;
+  public deletingAbsenceId: number | null = null;
+  public absenceError = '';
+  public absenceSuccess = '';
+  public absenceForm: AbsenceForm = this.getEmptyAbsenceForm();
+  public readonly minAbsenceDate = this.toDateInputValue(new Date());
   private activeCenterSubscription?: Subscription;
   private currentUserSubscription?: Subscription;
   private loadedCenterId?: number | null;
@@ -179,6 +192,111 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   public closeOpenModal(): void {
     if (this.isFormModalOpen) this.closeFormModal();
     if (this.isStatusModalOpen) this.closeStatusModal();
+    if (this.isAbsenceModalOpen) this.closeAbsenceModal();
+  }
+
+  public openAbsenceModal(specialist: Specialist): void {
+    this.clearMessages();
+    this.absenceSpecialist = specialist;
+    this.absences = [];
+    this.absenceForm = this.getEmptyAbsenceForm();
+    this.absenceError = '';
+    this.absenceSuccess = '';
+    this.isAbsenceModalOpen = true;
+    this.loadAbsences();
+  }
+
+  public closeAbsenceModal(): void {
+    if (this.isSavingAbsence || this.deletingAbsenceId !== null) return;
+
+    this.isAbsenceModalOpen = false;
+    this.absenceSpecialist = null;
+  }
+
+  public loadAbsences(): void {
+    if (!this.absenceSpecialist) return;
+
+    this.isLoadingAbsences = true;
+
+    this.specialistsService
+      .listAbsences(this.absenceSpecialist.id)
+      .pipe(finalize(() => (this.isLoadingAbsences = false)))
+      .subscribe({
+        next: absences => {
+          this.absences = absences;
+        },
+        error: () => {
+          this.absenceError = this.translate('specialists.absences.errors.load');
+        },
+      });
+  }
+
+  public addAbsence(): void {
+    if (!this.absenceSpecialist) return;
+
+    const { startDate, endDate } = this.absenceForm;
+
+    if (!startDate || !endDate || endDate < startDate) {
+      this.absenceError = this.translate('specialists.absences.errors.form');
+      return;
+    }
+
+    this.isSavingAbsence = true;
+    this.absenceError = '';
+    this.absenceSuccess = '';
+
+    this.specialistsService
+      .createAbsence(this.absenceSpecialist.id, {
+        startDate,
+        endDate,
+        reason: this.absenceForm.reason.trim() || null,
+      })
+      .pipe(finalize(() => (this.isSavingAbsence = false)))
+      .subscribe({
+        next: () => {
+          this.absenceSuccess = this.translate(
+            'specialists.absences.success.created',
+          );
+          this.absenceForm = this.getEmptyAbsenceForm();
+          this.loadAbsences();
+        },
+        error: () => {
+          this.absenceError = this.translate('specialists.absences.errors.save');
+        },
+      });
+  }
+
+  public removeAbsence(absence: SpecialistAbsence): void {
+    this.deletingAbsenceId = absence.id;
+    this.absenceError = '';
+    this.absenceSuccess = '';
+
+    this.specialistsService
+      .removeAbsence(absence.id)
+      .pipe(finalize(() => (this.deletingAbsenceId = null)))
+      .subscribe({
+        next: () => {
+          this.absenceSuccess = this.translate(
+            'specialists.absences.success.deleted',
+          );
+          this.loadAbsences();
+        },
+        error: () => {
+          this.absenceError = this.translate(
+            'specialists.absences.errors.delete',
+          );
+        },
+      });
+  }
+
+  public trackByAbsenceId(_: number, absence: SpecialistAbsence): number {
+    return absence.id;
+  }
+
+  public formatDate(value: string): string {
+    const [year, month, day] = value.split('-');
+
+    return `${day}/${month}/${year}`;
   }
 
   public changeSpecialistStatus(): void {
@@ -257,9 +375,6 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
     if (status === 'ACTIVE')
       return 'badge-soft-success border-success text-success';
 
-    if (status === 'VACATION')
-      return 'badge-soft-warning border-warning text-warning';
-
     return 'badge-soft-danger border-danger text-danger';
   }
 
@@ -290,7 +405,7 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
   }
 
   public get specialistTableColumnCount(): number {
-    return 4;
+    return 5;
   }
 
   public trackByCenterId(_: number, center: Center): number {
@@ -345,6 +460,18 @@ export class SpecialistsComponent implements OnInit, OnDestroy {
       status: 'ACTIVE',
       centerId: this.activeCenter?.id ?? null,
     };
+  }
+
+  private getEmptyAbsenceForm(): AbsenceForm {
+    return { startDate: '', endDate: '', reason: '' };
+  }
+
+  private toDateInputValue(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 
   private resolveStatus(specialist: Specialist): SpecialistStatus {

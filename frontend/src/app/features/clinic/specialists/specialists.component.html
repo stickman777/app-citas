@@ -71,6 +71,7 @@
             <span class="d-none d-md-inline">{{ 'specialists.title' | translate }}</span>
           </th>
           <th>{{ 'specialists.fields.specialty' | translate }}</th>
+          <th>{{ 'specialists.absences.column' | translate }}</th>
           <th>{{ 'common.status' | translate }}</th>
         </tr>
       </thead>
@@ -96,6 +97,17 @@
               </div>
             </td>
             <td>{{ specialist.specialty || '-' }}</td>
+            <td>
+              <button
+                type="button"
+                class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 bg-white"
+                (click)="openAbsenceModal(specialist)"
+                [attr.aria-label]="'specialists.absences.manage' | translate"
+                [attr.title]="'specialists.absences.manage' | translate"
+              >
+                <i class="ti ti-calendar-off"></i>
+              </button>
+            </td>
             <td>
               <button
                 type="button"
@@ -194,6 +206,129 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+}
+
+@if(isAbsenceModalOpen && absenceSpecialist){
+<div class="modal fade show d-block specialist-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="text-dark modal-title fw-bold">{{ 'specialists.absences.title' | translate }}</h4>
+        <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.cancel' | translate" (click)="closeAbsenceModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Datos del especialista (solo lectura, feedback) -->
+        <div class="bg-light rounded-2 p-3 mb-3">
+          <div class="d-flex align-items-center mb-2">
+            <span class="avatar avatar-sm rounded-circle bg-white border me-2 d-inline-flex align-items-center justify-content-center">
+              <i class="ti ti-user-star text-dark"></i>
+            </span>
+            <div class="min-w-0">
+              <span class="text-dark fw-semibold d-block">{{ absenceSpecialist.name }}</span>
+              <span class="text-body fs-13">{{ absenceSpecialist.specialty || '-' }}</span>
+            </div>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="badge rounded border fs-13 fw-medium bg-transparent" [ngClass]="statusBadgeClass(absenceSpecialist)">
+              {{ specialistStatusLabel(absenceSpecialist) }}
+            </span>
+            @if(absenceSpecialist.center?.name){
+            <span class="badge badge-soft-dark border fs-13 fw-medium">
+              <i class="ti ti-building-hospital me-1"></i>{{ absenceSpecialist.center?.name }}
+            </span>
+            }
+          </div>
+        </div>
+
+        @if(absenceError){
+        <div class="alert alert-danger py-2" role="alert">{{ absenceError }}</div>
+        }
+        @if(absenceSuccess){
+        <div class="alert alert-success py-2" role="alert">{{ absenceSuccess }}</div>
+        }
+
+        <!-- Ausencias registradas -->
+        <h6 class="text-dark mb-2">{{ 'specialists.absences.registered' | translate }}</h6>
+        @if(isLoadingAbsences){
+        <div class="text-body fs-13 mb-3">
+          <i class="ti ti-loader-2 me-1"></i>{{ 'common.loading' | translate }}
+        </div>
+        } @else if(absences.length === 0){
+        <div class="d-flex align-items-center gap-2 text-body fs-13 border rounded-2 p-3 mb-3">
+          <i class="ti ti-calendar-check fs-18"></i>
+          <span>{{ 'specialists.absences.empty' | translate }}</span>
+        </div>
+        } @else {
+        <div class="mb-3">
+          @for(absence of absences; track trackByAbsenceId($index, absence)){
+          <div class="d-flex align-items-center justify-content-between border rounded-2 p-2 mb-2">
+            <div class="min-w-0">
+              <span class="text-dark fw-medium d-block">
+                <i class="ti ti-calendar-event me-1"></i>
+                {{ formatDate(absence.startDate) }} – {{ formatDate(absence.endDate) }}
+              </span>
+              @if(absence.reason){
+              <span class="text-body fs-13">{{ absence.reason }}</span>
+              }
+            </div>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger d-inline-flex align-items-center flex-shrink-0"
+              (click)="removeAbsence(absence)"
+              [disabled]="deletingAbsenceId === absence.id"
+              [attr.aria-label]="'specialists.absences.delete' | translate"
+            >
+              @if(deletingAbsenceId === absence.id){
+              <i class="ti ti-loader-2"></i>
+              } @else {
+              <i class="ti ti-trash"></i>
+              }
+            </button>
+          </div>
+          }
+        </div>
+        }
+
+        <!-- Registrar nueva ausencia -->
+        <h6 class="text-dark mb-2">{{ 'specialists.absences.new' | translate }}</h6>
+        <div class="row g-2">
+          <div class="col-12 col-sm-6">
+            <label class="form-label">{{ 'specialists.absences.fields.start' | translate }}</label>
+            <input type="date" name="absenceStart" class="form-control" [(ngModel)]="absenceForm.startDate" [min]="minAbsenceDate" [disabled]="isSavingAbsence">
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="form-label">{{ 'specialists.absences.fields.end' | translate }}</label>
+            <input type="date" name="absenceEnd" class="form-control" [(ngModel)]="absenceForm.endDate" [min]="absenceForm.startDate || minAbsenceDate" [disabled]="isSavingAbsence">
+          </div>
+          <div class="col-12">
+            <label class="form-label">{{ 'specialists.absences.fields.reason' | translate }}</label>
+            <input type="text" name="absenceReason" class="form-control" [(ngModel)]="absenceForm.reason" maxlength="160" [disabled]="isSavingAbsence">
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mt-3">
+          <button
+            type="button"
+            class="btn btn-primary d-inline-flex align-items-center"
+            (click)="addAbsence()"
+            [disabled]="isSavingAbsence || !absenceForm.startDate || !absenceForm.endDate"
+          >
+            @if(isSavingAbsence){
+            <i class="ti ti-loader-2 me-1"></i>{{ 'common.saving' | translate }}
+            } @else {
+            <i class="ti ti-plus me-1"></i>{{ 'specialists.absences.add' | translate }}
+            }
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer d-flex align-items-center gap-1">
+        <button type="button" class="btn btn-white border" (click)="closeAbsenceModal()">{{ 'common.close' | translate }}</button>
+      </div>
     </div>
   </div>
 </div>

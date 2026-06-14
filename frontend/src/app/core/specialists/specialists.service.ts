@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Center } from '../centers/centers.service';
 
-export type SpecialistStatus = 'ACTIVE' | 'INACTIVE' | 'VACATION';
+export type SpecialistStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface Specialist {
   id: number;
@@ -22,6 +22,20 @@ export interface SpecialistPayload {
   specialty?: string | null;
   status?: SpecialistStatus;
   centerId: number;
+}
+
+export interface SpecialistAbsence {
+  id: number;
+  startDate: string;
+  endDate: string;
+  reason?: string | null;
+  createdAt: string;
+}
+
+export interface SpecialistAbsencePayload {
+  startDate: string;
+  endDate: string;
+  reason?: string | null;
 }
 
 @Injectable({
@@ -61,6 +75,28 @@ export class SpecialistsService {
 
   deactivateSpecialist(id: number): Observable<Specialist> {
     return this.http.patch<Specialist>(`${this.apiUrl}/${id}/deactivate`, {});
+  }
+
+  listAbsences(specialistId: number): Observable<SpecialistAbsence[]> {
+    return this.http.get<SpecialistAbsence[]>(
+      `${this.apiUrl}/${specialistId}/absences`,
+    );
+  }
+
+  createAbsence(
+    specialistId: number,
+    payload: SpecialistAbsencePayload,
+  ): Observable<SpecialistAbsence> {
+    return this.http.post<SpecialistAbsence>(
+      `${this.apiUrl}/${specialistId}/absences`,
+      payload,
+    );
+  }
+
+  removeAbsence(absenceId: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.apiUrl}/absences/${absenceId}`,
+    );
   }
 
   private getCenterParams(centerId?: number | null): HttpParams {
