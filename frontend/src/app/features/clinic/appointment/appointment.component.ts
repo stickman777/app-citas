@@ -885,8 +885,9 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     const status = client.active
       ? ''
       : ` (${this.translate('common.inactive').toLowerCase()})`;
+    const priority = ` · ${this.translate('clients.fields.priority')}: ${client.priority}`;
 
-    return `${client.name} - ${client.phone}${status}`;
+    return `${client.name} - ${client.phone}${priority}${status}`;
   }
 
   public serviceOptionLabel(service: AppointmentServiceOption): string {

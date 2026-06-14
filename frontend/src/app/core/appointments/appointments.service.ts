@@ -14,6 +14,7 @@ export interface AppointmentClient {
   phone: string;
   email?: string;
   active: boolean;
+  priority: number;
   center?: Center | null;
 }
 
