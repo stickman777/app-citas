@@ -183,6 +183,7 @@ export class AppointmentsService {
       appointmentData.specialistId,
     );
     const startDate = new Date(appointmentData.startDateTime);
+    this.assertStartDateNotInPast(startDate);
     const center = this.validateAppointmentCenter(client, service, specialist);
     this.validateServiceSpecialist(service, specialist);
 
@@ -243,6 +244,12 @@ export class AppointmentsService {
 
     if (status === AppointmentStatus.COMPLETED)
       assertAppointmentCanBeCompleted(startDate);
+
+    if (
+      status === AppointmentStatus.SCHEDULED &&
+      appointmentData.startDateTime !== undefined
+    )
+      this.assertStartDateNotInPast(startDate);
 
     await this.centerAccessService.validateCenterAccess(center.id, authUser);
     const outsideAvailability =
@@ -443,6 +450,13 @@ export class AppointmentsService {
       throw new BadRequestException(invalidStatusMessage);
 
     return appointment;
+  }
+
+  private assertStartDateNotInPast(startDate: Date): void {
+    if (startDate.getTime() < Date.now())
+      throw new BadRequestException(
+        'La fecha de la cita no puede estar en el pasado',
+      );
   }
 
   private async validateAppointmentSlot(
@@ -790,6 +804,7 @@ export class AppointmentsService {
       );
 
     const startDate = new Date(appointmentData.startDateTime);
+    this.assertStartDateNotInPast(startDate);
 
     const outsideAvailability = await this.validateAppointmentSlot(
       startDate,
