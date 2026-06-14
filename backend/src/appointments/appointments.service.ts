@@ -6,6 +6,7 @@ import {
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Between,
@@ -76,8 +77,6 @@ export class AppointmentsService implements OnModuleInit {
   }
 
   async findAll(authUser?: AuthUser, date?: string, centerId?: number) {
-    await this.completePastScheduledAppointments();
-
     const centerIds = await this.getAllowedCenterIds(authUser, centerId);
 
     if (centerIds?.length === 0) return [];
@@ -91,8 +90,6 @@ export class AppointmentsService implements OnModuleInit {
   }
 
   async findAllForClient(clientId: number) {
-    await this.completePastScheduledAppointments();
-
     return this.appointmentsRepository.find({
       where: {
         client: {
@@ -111,8 +108,6 @@ export class AppointmentsService implements OnModuleInit {
     specialistId: number,
     authUser?: AuthUser,
   ) {
-    await this.completePastScheduledAppointments();
-
     const service = await this.getActiveService(serviceId);
     const centerId = this.getServiceCenterId(service);
     const specialist = await this.getActiveSpecialist(specialistId);
@@ -245,8 +240,6 @@ export class AppointmentsService implements OnModuleInit {
   }
 
   async create(appointmentData: CreateAppointmentDto, authUser?: AuthUser) {
-    await this.completePastScheduledAppointments();
-
     const client = await this.getActiveClient(appointmentData.clientId);
     const service = await this.getActiveService(appointmentData.serviceId);
     const specialist = await this.getActiveSpecialist(
@@ -494,8 +487,6 @@ export class AppointmentsService implements OnModuleInit {
     id: number,
     authUser?: AuthUser,
   ): Promise<Appointment> {
-    await this.completePastScheduledAppointments();
-
     const appointment = await this.appointmentsRepository.findOne({
       where: { id },
     });
@@ -941,6 +932,13 @@ export class AppointmentsService implements OnModuleInit {
         `"startDateTime" + ("duration" * INTERVAL '1 minute') <= CURRENT_TIMESTAMP`,
       )
       .execute();
+  }
+
+  @Cron(CronExpression.EVERY_10_MINUTES, {
+    name: 'completePastScheduledAppointments',
+  })
+  private async completePastScheduledAppointmentsCron(): Promise<void> {
+    await this.completePastScheduledAppointments();
   }
 
   async cancel(id: number, authUser?: AuthUser) {
