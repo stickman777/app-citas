@@ -149,7 +149,7 @@
     </div>
   </form>
 
-  <div class="card client-card mt-3">
+  <form #requestForm="ngForm" class="card client-card mt-3" (ngSubmit)="submitRequest(requestForm)">
     <div class="card-body">
       <h5 class="text-dark mb-1">{{ 'client.book.request.title' | translate }}</h5>
       <p class="text-body fs-13 mb-3">{{ 'client.book.request.description' | translate }}</p>
@@ -168,10 +168,13 @@
           <input
             type="datetime-local"
             name="requestDateTime"
+            #requestDateTimeModel="ngModel"
             class="form-control"
             [(ngModel)]="requestDateTime"
             [min]="minDateTime"
             [disabled]="isRequesting || !selectedServiceId || !selectedSpecialistId"
+            [class.is-invalid]="requestDateTimeModel.invalid && (requestDateTimeModel.touched || requestFormSubmitted)"
+            required
           >
         </div>
 
@@ -190,10 +193,9 @@
 
       <div class="d-flex justify-content-end mt-3">
         <button
-          type="button"
+          type="submit"
           class="btn btn-outline-primary btn-md d-inline-flex align-items-center"
-          (click)="submitRequest()"
-          [disabled]="isRequesting || !selectedServiceId || !selectedSpecialistId || !requestDateTime"
+          [disabled]="isRequesting"
         >
           @if(isRequesting){
           <i class="ti ti-loader-2 me-1"></i>{{ 'common.saving' | translate }}
@@ -203,5 +205,5 @@
         </button>
       </div>
     </div>
-  </div>
+  </form>
 </section>

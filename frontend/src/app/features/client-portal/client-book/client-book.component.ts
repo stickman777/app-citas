@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 
@@ -38,6 +39,7 @@ export class ClientBookComponent implements OnInit {
   successMessage = '';
   requestErrorMessage = '';
   requestSuccessMessage = '';
+  requestFormSubmitted = false;
 
   constructor(
     private readonly clientPortalService: ClientPortalService,
@@ -159,15 +161,18 @@ export class ClientBookComponent implements OnInit {
       });
   }
 
-  submitRequest(): void {
+  submitRequest(form: NgForm): void {
+    this.requestFormSubmitted = true;
+    this.requestErrorMessage = '';
+    this.requestSuccessMessage = '';
+
     if (!this.selectedServiceId || !this.selectedSpecialistId || !this.requestDateTime) {
+      form.control.markAllAsTouched();
       this.requestErrorMessage = 'client.book.request.errors.form';
       return;
     }
 
     this.isRequesting = true;
-    this.requestErrorMessage = '';
-    this.requestSuccessMessage = '';
 
     this.clientPortalService
       .createAppointmentRequest({
@@ -182,9 +187,17 @@ export class ClientBookComponent implements OnInit {
           this.requestSuccessMessage = 'client.book.request.success';
           this.requestDateTime = '';
           this.requestNotes = '';
+          this.requestFormSubmitted = false;
+          form.resetForm({
+            requestDateTime: '',
+            requestNotes: '',
+          });
         },
-        error: () => {
-          this.requestErrorMessage = 'client.book.request.errors.save';
+        error: (error) => {
+          this.requestErrorMessage = this.getApiErrorMessage(
+            error,
+            'client.book.request.errors.save',
+          );
         },
       });
   }
@@ -214,5 +227,27 @@ export class ClientBookComponent implements OnInit {
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${this.toDateInputValue(date)}T${hours}:${minutes}`;
+  }
+
+  private getApiErrorMessage(error: unknown, fallbackKey: string): string {
+    if (!(error instanceof HttpErrorResponse)) return fallbackKey;
+
+    const apiMessage = this.extractApiErrorMessage(
+      error.error?.message ?? error.error,
+    );
+
+    return apiMessage || fallbackKey;
+  }
+
+  private extractApiErrorMessage(message: unknown): string {
+    if (typeof message === 'string') return message;
+
+    if (Array.isArray(message)) {
+      const firstMessage = message.find(item => typeof item === 'string');
+
+      return firstMessage ?? '';
+    }
+
+    return '';
   }
 }
