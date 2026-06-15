@@ -57,6 +57,11 @@ export interface AppointmentPayload {
   status?: AppointmentStatus;
 }
 
+export interface AppointmentReschedulePayload {
+  startDateTime: string;
+  allowOutsideAvailability?: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -87,6 +92,42 @@ export class AppointmentsService {
 
   deleteAppointment(id: number): Observable<Appointment> {
     return this.http.delete<Appointment>(`${this.appointmentsUrl}/${id}`);
+  }
+
+  getAvailableSlots(
+    date: string,
+    serviceId: number,
+    specialistId: number,
+  ): Observable<string[]> {
+    const params = new HttpParams()
+      .set('date', date)
+      .set('serviceId', serviceId)
+      .set('specialistId', specialistId);
+
+    return this.http.get<string[]>(`${this.appointmentsUrl}/available-slots`, {
+      params,
+    });
+  }
+
+  cancel(id: number): Observable<Appointment> {
+    return this.http.patch<Appointment>(`${this.appointmentsUrl}/${id}/cancel`, {});
+  }
+
+  complete(id: number): Observable<Appointment> {
+    return this.http.patch<Appointment>(
+      `${this.appointmentsUrl}/${id}/complete`,
+      {},
+    );
+  }
+
+  reschedule(
+    id: number,
+    payload: AppointmentReschedulePayload,
+  ): Observable<Appointment> {
+    return this.http.patch<Appointment>(
+      `${this.appointmentsUrl}/${id}/reschedule`,
+      payload,
+    );
   }
 
   getClients(centerId?: number | null): Observable<AppointmentClient[]> {

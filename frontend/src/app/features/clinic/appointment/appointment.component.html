@@ -362,7 +362,7 @@
             <select
               name="specialistId"
               [(ngModel)]="form.specialistId"
-              (ngModelChange)="clearAppointmentOverlapWarning()"
+              (ngModelChange)="handleSpecialistChange()"
               class="form-select"
               required
             >
@@ -378,10 +378,36 @@
               type="datetime-local"
               name="startDateTime"
               [(ngModel)]="form.startDateTime"
-              (ngModelChange)="clearOutsideAvailabilityWarningHint(); clearAppointmentOverlapWarning()"
+              (ngModelChange)="handleDateTimeChange()"
               class="form-control"
               required
             >
+            @if(canLoadAvailableSlots){
+            <div class="mt-2">
+              @if(isLoadingAvailableSlots){
+              <div class="text-body fs-13">
+                <i class="ti ti-loader-2 me-1"></i>{{ 'appointments.slots.loading' | translate }}
+              </div>
+              } @else if(availableSlotsError){
+              <div class="text-danger fs-13">{{ availableSlotsError }}</div>
+              } @else if(availableSlots.length > 0){
+              <div class="d-flex flex-wrap gap-2">
+                @for(slot of availableSlots; track trackByAvailableSlot($index, slot)){
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [ngClass]="isSelectedAvailableSlot(slot) ? 'btn-primary' : 'btn-outline-primary'"
+                  (click)="selectAvailableSlot(slot)"
+                >
+                  {{ slot }}
+                </button>
+                }
+              </div>
+              } @else {
+              <div class="text-body fs-13">{{ 'appointments.slots.empty' | translate }}</div>
+              }
+            </div>
+            }
           </div>
           @if(editingAppointment){
           <div class="mb-0 mt-3">

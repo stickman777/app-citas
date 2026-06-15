@@ -9,7 +9,8 @@ import { CommonModule, formatDate } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { finalize, forkJoin, Subscription } from 'rxjs';
+import { finalize, forkJoin, Observable, Subscription } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import {
   CalendarDateFormatter,
   CalendarEvent,
@@ -42,6 +43,7 @@ import {
   Appointment,
   AppointmentClient,
   AppointmentPayload,
+  AppointmentReschedulePayload,
   AppointmentServiceOption,
   AppointmentSpecialist,
   AppointmentStatus,
@@ -198,6 +200,9 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public errorMessage = '';
   public successMessage = '';
   public appointmentOverlapWarning = '';
+  public availableSlots: string[] = [];
+  public isLoadingAvailableSlots = false;
+  public availableSlotsError = '';
   public isLoading = false;
   public isSaving = false;
   public isDeleting = false;
@@ -219,6 +224,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   private queryParamSubscription?: Subscription;
   private loadedCenterId: number | null = null;
   private unavailableSlotHintTimeout?: ReturnType<typeof setTimeout>;
+  private availableSlotsRequestKey = '';
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -227,7 +233,8 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     private readonly availabilityService: AvailabilityService,
     private readonly centersService: CentersService,
     private readonly activeCenterService: ActiveCenterService,
-    private readonly i18nService: I18nService
+    private readonly i18nService: I18nService,
+    private readonly toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
@@ -481,6 +488,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.editingAppointment = null;
     this.forceOutsideAvailabilityWarning = false;
     this.form = this.getEmptyForm();
+    this.resetAvailableSlots();
     this.isFormModalOpen = true;
   }
 
@@ -496,6 +504,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       ...this.getEmptyForm(),
       startDateTime: this.toDateTimeInputValue(date),
     };
+    this.resetAvailableSlots();
     this.isFormModalOpen = true;
   }
 
@@ -511,6 +520,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       specialistId: appointment.specialist.id,
       status: appointment.status,
     };
+    this.loadAvailableSlots();
     this.isFormModalOpen = true;
   }
 
@@ -519,6 +529,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
     this.isFormModalOpen = false;
     this.forceOutsideAvailabilityWarning = false;
+    this.resetAvailableSlots();
   }
 
   public saveAppointment(): void {
@@ -527,16 +538,14 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.isSaving = true;
     this.clearMessages();
 
     const payload = this.getPayload();
-    const request = this.editingAppointment
-      ? this.appointmentsService.updateAppointment(
-          this.editingAppointment.id,
-          payload,
-        )
-      : this.appointmentsService.createAppointment(payload);
+    const request = this.getAppointmentSaveRequest(payload);
+
+    if (!request) return;
+
+    this.isSaving = true;
 
     request
       .pipe(finalize(() => (this.isSaving = false)))
@@ -550,14 +559,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
           this.loadAppointments(false);
         },
         error: (error: unknown) => {
-          if (this.isAppointmentOverlapError(error)) {
-            this.appointmentOverlapWarning = this.translate(
-              'appointments.errors.overlap',
-            );
-            return;
-          }
-
-          this.errorMessage = this.translate('appointments.errors.save');
+          this.handleAppointmentActionError(error, 'appointments.errors.save');
         },
       });
   }
@@ -600,7 +602,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.clearMessages();
 
     this.appointmentsService
-      .deleteAppointment(this.appointmentToDelete.id)
+      .cancel(this.appointmentToDelete.id)
       .pipe(finalize(() => (this.isDeleting = false)))
       .subscribe({
         next: () => {
@@ -609,8 +611,8 @@ export class AppointmentComponent implements OnInit, OnDestroy {
           this.appointmentToDelete = null;
           this.loadAppointments(false);
         },
-        error: () => {
-          this.errorMessage = this.translate('appointments.errors.delete');
+        error: (error: unknown) => {
+          this.handleAppointmentActionError(error, 'appointments.errors.delete');
         },
       });
   }
@@ -745,6 +747,43 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
   public clearAppointmentOverlapWarning(): void {
     this.appointmentOverlapWarning = '';
+  }
+
+  public handleDateTimeChange(): void {
+    this.clearOutsideAvailabilityWarningHint();
+    this.clearAppointmentOverlapWarning();
+    this.loadAvailableSlots();
+  }
+
+  public handleSpecialistChange(): void {
+    this.clearAppointmentOverlapWarning();
+    this.loadAvailableSlots();
+  }
+
+  public selectAvailableSlot(slot: string): void {
+    const date = this.getFormDate();
+
+    if (!date) return;
+
+    this.form.startDateTime = `${date}T${slot}`;
+    this.clearOutsideAvailabilityWarningHint();
+    this.clearAppointmentOverlapWarning();
+  }
+
+  public trackByAvailableSlot(_: number, slot: string): string {
+    return slot;
+  }
+
+  public get canLoadAvailableSlots(): boolean {
+    return (
+      !!this.getFormDate() &&
+      !!this.form.serviceId &&
+      !!this.form.specialistId
+    );
+  }
+
+  public isSelectedAvailableSlot(slot: string): boolean {
+    return this.getFormTime() === slot;
   }
 
   @HostListener('document:mousemove')
@@ -919,10 +958,79 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
     if (service?.specialist?.id) {
       this.form.specialistId = service.specialist.id;
+      this.loadAvailableSlots();
       return;
     }
 
     this.form.specialistId = null;
+    this.loadAvailableSlots();
+  }
+
+  private loadAvailableSlots(): void {
+    const date = this.getFormDate();
+    const serviceId = Number(this.form.serviceId);
+    const specialistId = Number(this.form.specialistId);
+
+    this.availableSlotsError = '';
+
+    if (!date || !serviceId || !specialistId) {
+      this.resetAvailableSlots();
+      return;
+    }
+
+    const requestKey = `${date}|${serviceId}|${specialistId}`;
+    this.availableSlotsRequestKey = requestKey;
+    this.isLoadingAvailableSlots = true;
+
+    this.appointmentsService
+      .getAvailableSlots(date, serviceId, specialistId)
+      .pipe(
+        finalize(() => {
+          if (this.availableSlotsRequestKey === requestKey)
+            this.isLoadingAvailableSlots = false;
+        })
+      )
+      .subscribe({
+        next: slots => {
+          if (this.availableSlotsRequestKey !== requestKey) return;
+
+          this.availableSlots = this.withCurrentAppointmentSlot(slots, date);
+        },
+        error: (error: unknown) => {
+          if (this.availableSlotsRequestKey !== requestKey) return;
+
+          const message = this.getApiErrorMessage(
+            error,
+            'appointments.errors.slots',
+          );
+
+          this.availableSlots = [];
+          this.availableSlotsError = message;
+          this.toastr.error(message);
+        },
+      });
+  }
+
+  private resetAvailableSlots(): void {
+    this.availableSlots = [];
+    this.availableSlotsError = '';
+    this.isLoadingAvailableSlots = false;
+    this.availableSlotsRequestKey = '';
+  }
+
+  private withCurrentAppointmentSlot(slots: string[], date: string): string[] {
+    if (!this.editingAppointment) return slots;
+
+    const currentStart = new Date(this.editingAppointment.startDateTime);
+    const currentDate = this.toDateQuery(currentStart);
+    const currentTime = this.toTimeValue(currentStart);
+
+    if (date !== currentDate || this.getFormTime() !== currentTime)
+      return slots;
+
+    if (slots.includes(currentTime)) return slots;
+
+    return [...slots, currentTime].sort();
   }
 
   private get selectedService(): AppointmentServiceOption | null {
@@ -1122,6 +1230,99 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       specialistId: Number(this.form.specialistId),
       allowOutsideAvailability: this.isOutsideFixedSchedule(),
       ...(this.editingAppointment ? { status: this.form.status } : {}),
+    };
+  }
+
+  private getAppointmentSaveRequest(
+    payload: AppointmentPayload,
+  ): Observable<Appointment> | null {
+    if (!this.editingAppointment)
+      return this.appointmentsService.createAppointment(payload);
+
+    const appointment = this.editingAppointment;
+    const statusChanged = payload.status !== appointment.status;
+    const startChanged = this.hasAppointmentStartChanged(appointment, payload);
+    const detailsChanged = this.hasAppointmentDetailsChanged(
+      appointment,
+      payload,
+    );
+
+    if (statusChanged && (startChanged || detailsChanged)) {
+      this.showAppointmentError('appointments.errors.mixedStatusEdit');
+      return null;
+    }
+
+    if (statusChanged)
+      return this.getStatusChangeRequest(appointment.id, payload.status);
+
+    if (startChanged && detailsChanged) {
+      this.showAppointmentError('appointments.errors.mixedRescheduleEdit');
+      return null;
+    }
+
+    if (startChanged)
+      return this.appointmentsService.reschedule(
+        appointment.id,
+        this.getReschedulePayload(payload),
+      );
+
+    return this.appointmentsService.updateAppointment(
+      appointment.id,
+      this.getAppointmentDataPayload(payload),
+    );
+  }
+
+  private getStatusChangeRequest(
+    id: number,
+    status?: AppointmentStatus,
+  ): Observable<Appointment> | null {
+    if (status === 'CANCELLED') return this.appointmentsService.cancel(id);
+
+    if (status === 'COMPLETED') return this.appointmentsService.complete(id);
+
+    this.showAppointmentError('appointments.errors.unsupportedStatusChange');
+    return null;
+  }
+
+  private hasAppointmentStartChanged(
+    appointment: Appointment,
+    payload: AppointmentPayload,
+  ): boolean {
+    return (
+      new Date(payload.startDateTime).getTime() !==
+      new Date(appointment.startDateTime).getTime()
+    );
+  }
+
+  private hasAppointmentDetailsChanged(
+    appointment: Appointment,
+    payload: AppointmentPayload,
+  ): boolean {
+    return (
+      payload.clientId !== appointment.client.id ||
+      payload.serviceId !== appointment.service.id ||
+      payload.specialistId !== appointment.specialist.id
+    );
+  }
+
+  private getAppointmentDataPayload(
+    payload: AppointmentPayload,
+  ): AppointmentPayload {
+    return {
+      startDateTime: payload.startDateTime,
+      clientId: payload.clientId,
+      serviceId: payload.serviceId,
+      specialistId: payload.specialistId,
+      allowOutsideAvailability: payload.allowOutsideAvailability,
+    };
+  }
+
+  private getReschedulePayload(
+    payload: AppointmentPayload,
+  ): AppointmentReschedulePayload {
+    return {
+      startDateTime: payload.startDateTime,
+      allowOutsideAvailability: payload.allowOutsideAvailability,
     };
   }
 
@@ -1506,6 +1707,14 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return `${year}-${month}-${day}`;
   }
 
+  private getFormDate(): string {
+    return this.form.startDateTime.split('T')[0] ?? '';
+  }
+
+  private getFormTime(): string {
+    return this.form.startDateTime.split('T')[1]?.slice(0, 5) ?? '';
+  }
+
   private resolveSchedule(service: AppointmentServiceOption): CenterScheduleSlot[] {
     return (
       service.center?.schedule ??
@@ -1583,29 +1792,48 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.showUnavailableSlotHint = true;
   }
 
-  private isAppointmentOverlapError(error: unknown): boolean {
-    if (!(error instanceof HttpErrorResponse)) return false;
+  private handleAppointmentActionError(
+    error: unknown,
+    fallbackKey: string,
+  ): void {
+    const message = this.getApiErrorMessage(error, fallbackKey);
 
-    const message = error.error?.message;
-    const messages = Array.isArray(message) ? message : [message];
+    this.errorMessage = message;
 
-    return messages.some(value => {
-      if (typeof value !== 'string') return false;
+    if (error instanceof HttpErrorResponse && error.status === 409)
+      this.appointmentOverlapWarning = message;
 
-      const normalizedValue = this.normalizeErrorText(value);
-
-      return (
-        normalizedValue.includes('horario seleccionado') &&
-        normalizedValue.includes('disponible')
-      );
-    });
+    this.toastr.error(message);
   }
 
-  private normalizeErrorText(value: string): string {
-    return value
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
+  private showAppointmentError(key: string): void {
+    const message = this.translate(key);
+
+    this.errorMessage = message;
+    this.toastr.error(message);
+  }
+
+  private getApiErrorMessage(error: unknown, fallbackKey: string): string {
+    if (!(error instanceof HttpErrorResponse))
+      return this.translate(fallbackKey);
+
+    const apiMessage = this.extractApiErrorMessage(
+      error.error?.message ?? error.error,
+    );
+
+    return apiMessage || this.translate(fallbackKey);
+  }
+
+  private extractApiErrorMessage(message: unknown): string {
+    if (typeof message === 'string') return message;
+
+    if (Array.isArray(message)) {
+      const firstMessage = message.find(item => typeof item === 'string');
+
+      return firstMessage ?? '';
+    }
+
+    return '';
   }
 
   private clearUnavailableSlotHintTimeout(): void {

@@ -96,12 +96,20 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.empty': 'No hay citas para mostrar',
     'appointments.errors.form': 'Completa todos los campos obligatorios.',
     'appointments.errors.load': 'No se han podido cargar las citas.',
+    'appointments.errors.mixedRescheduleEdit':
+      'Reprograma la cita y edita sus datos en pasos separados.',
+    'appointments.errors.mixedStatusEdit':
+      'Cambia el estado y edita los datos de la cita en pasos separados.',
     'appointments.errors.overlap':
       'Ya existe una cita para ese especialista en ese horario. Cambia la fecha, la hora o el especialista para continuar.',
     'appointments.errors.references':
       'No se han podido cargar clientes, servicios o especialistas.',
     'appointments.errors.save': 'No se ha podido guardar la cita.',
     'appointments.errors.delete': 'No se ha podido cancelar la cita.',
+    'appointments.errors.slots':
+      'No se han podido cargar las horas disponibles.',
+    'appointments.errors.unsupportedStatusChange':
+      'Ese cambio de estado no esta disponible desde esta pantalla.',
     'appointments.fields.selectClient': 'Seleccionar cliente',
     'appointments.fields.selectService': 'Seleccionar servicio',
     'appointments.fields.selectSpecialist': 'Seleccionar especialista',
@@ -117,6 +125,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.outsideAvailability.warning':
       'Esta cita queda fuera del horario del centro y se guardara como extrahoraria.',
     'appointments.search': 'Buscar cita',
+    'appointments.slots.empty':
+      'No hay horas disponibles para esa seleccion.',
+    'appointments.slots.loading': 'Cargando horas disponibles...',
     'appointments.status.cancelled': 'Cancelada',
     'appointments.status.completed': 'Completada',
     'appointments.status.scheduled': 'Programada',
@@ -493,12 +504,19 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.empty': 'No appointments to show',
     'appointments.errors.form': 'Complete all required fields.',
     'appointments.errors.load': 'Appointments could not be loaded.',
+    'appointments.errors.mixedRescheduleEdit':
+      'Reschedule the appointment and edit its details in separate steps.',
+    'appointments.errors.mixedStatusEdit':
+      'Change the status and edit appointment details in separate steps.',
     'appointments.errors.overlap':
       'That specialist already has an appointment at that time. Change the date, time or specialist to continue.',
     'appointments.errors.references':
       'Clients, services or specialists could not be loaded.',
     'appointments.errors.save': 'The appointment could not be saved.',
     'appointments.errors.delete': 'The appointment could not be cancelled.',
+    'appointments.errors.slots': 'Available times could not be loaded.',
+    'appointments.errors.unsupportedStatusChange':
+      'That status change is not available from this screen.',
     'appointments.fields.selectClient': 'Select client',
     'appointments.fields.selectService': 'Select service',
     'appointments.fields.selectSpecialist': 'Select specialist',
@@ -514,6 +532,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'appointments.outsideAvailability.warning':
       'This appointment is outside the center schedule and will be saved as outside-hours.',
     'appointments.search': 'Search appointment',
+    'appointments.slots.empty': 'No times available for that selection.',
+    'appointments.slots.loading': 'Loading available times...',
     'appointments.status.cancelled': 'Cancelled',
     'appointments.status.completed': 'Completed',
     'appointments.status.scheduled': 'Scheduled',
