@@ -34,12 +34,10 @@
 .client-brand {
   gap: 10px;
   color: var(--dark);
+  cursor: default;
   font-weight: 700;
   text-decoration: none;
-}
-
-.client-brand:hover {
-  color: var(--primary);
+  user-select: none;
 }
 
 .client-brand-mark {

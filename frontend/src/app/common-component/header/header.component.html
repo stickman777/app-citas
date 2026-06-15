@@ -4,20 +4,12 @@
             <div class="page-container topbar-menu">
                 <div class="d-flex align-items-center gap-2">
 
-                    <!-- Logo -->
-                    <a [routerLink]="routes.index" class="logo">
-
-                        <!-- Logo Normal -->
-                        <span class="logo-light">
-                            <span class="logo-lg"><img src="assets/img/logo.svg" alt="logo"></span>
-                            <span class="logo-sm"><img src="assets/img/logo-small.svg" alt="small logo"></span>
+                    <div class="app-header-brand" [attr.aria-label]="'auth.brandName' | translate">
+                        <span class="app-header-brand-mark">
+                            <i class="ti ti-calendar-check"></i>
                         </span>
-
-                        <!-- Logo Dark -->
-                        <span class="logo-dark">
-                            <span class="logo-lg"><img src="assets/img/logo-white.svg" alt="dark logo"></span>
-                        </span>
-                    </a>
+                        <span class="app-header-brand-name">{{ 'auth.brandName' | translate }}</span>
+                    </div>
 
                     <!-- Sidebar Mobile Button -->
                     <a id="mobile_btn" class="mobile-btn" href="javascript:void(0);" (click)="toggleMobileSideBar()">

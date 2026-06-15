@@ -91,10 +91,7 @@
             </dl>
           </div>
           <div class="card-footer d-flex align-items-center justify-content-end gap-2">
-            <button type="button" class="btn btn-white border" [disabled]="isSavingClient" (click)="resetClientForm()">
-              {{ 'common.cancel' | translate }}
-            </button>
-            <button type="submit" class="btn btn-primary" [disabled]="clientDataForm.invalid || isSavingClient">
+            <button type="submit" class="btn btn-primary" [disabled]="clientDataForm.invalid || !clientProfileChanged || isSavingClient">
               {{ (isSavingClient ? 'common.saving' : 'common.save') | translate }}
             </button>
           </div>
@@ -183,10 +180,7 @@
             </div>
           </div>
           <div class="card-footer d-flex align-items-center justify-content-end gap-2">
-            <button type="button" class="btn btn-white border" [disabled]="isSavingAccount" (click)="resetAccountForm()">
-              {{ 'common.cancel' | translate }}
-            </button>
-            <button type="submit" class="btn btn-primary" [disabled]="accountDataForm.invalid || passwordMismatch || isSavingAccount">
+            <button type="submit" class="btn btn-primary" [disabled]="accountDataForm.invalid || passwordMismatch || !accountChanged || isSavingAccount">
               {{ (isSavingAccount ? 'common.saving' : 'common.save') | translate }}
             </button>
           </div>

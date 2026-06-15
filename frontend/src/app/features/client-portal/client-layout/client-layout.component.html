@@ -1,12 +1,12 @@
 <div class="client-shell">
   <header class="client-topbar">
     <div class="client-topbar-inner">
-      <a class="client-brand" [routerLink]="routes.clientHome">
+      <div class="client-brand" [attr.aria-label]="'auth.brandName' | translate">
         <span class="client-brand-mark">
           <i class="ti ti-calendar-heart"></i>
         </span>
         <span>{{ 'auth.brandName' | translate }}</span>
-      </a>
+      </div>
 
       <nav class="client-nav" aria-label="Client navigation">
         <a [routerLink]="routes.clientAppointments" routerLinkActive="active">

@@ -121,24 +121,32 @@ export class ClientProfileComponent implements OnInit {
       });
   }
 
-  public resetClientForm(): void {
-    if (!this.profile || this.isSavingClient) return;
-
-    this.clearMessages();
-    this.clientForm = this.toClientForm(this.profile);
-  }
-
-  public resetAccountForm(): void {
-    if (!this.currentUser || this.isSavingAccount) return;
-
-    this.clearMessages();
-    this.accountForm = this.toAccountForm(this.currentUser);
-  }
-
   public get passwordMismatch(): boolean {
     return (
       !!this.accountForm.password &&
       this.accountForm.password !== this.accountForm.confirmPassword
+    );
+  }
+
+  public get clientProfileChanged(): boolean {
+    if (!this.profile) return false;
+
+    const payload = this.getClientPayload();
+
+    return (
+      payload.name !== this.profile.name ||
+      payload.phone !== this.profile.phone ||
+      (payload.email ?? '') !== (this.profile.email ?? '')
+    );
+  }
+
+  public get accountChanged(): boolean {
+    if (!this.currentUser) return false;
+
+    return (
+      this.accountForm.name.trim() !== this.currentUser.name ||
+      this.accountForm.email.trim() !== this.currentUser.email ||
+      !!this.accountForm.password.trim()
     );
   }
 
