@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 
 import {
   ClientPortalAppointment,
+  ClientPortalAppointmentRequest,
+  ClientPortalAppointmentRequestStatus,
   ClientPortalService,
 } from '../../../core/client-portal/client-portal.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -17,6 +19,7 @@ import { AppointmentStatus } from '../../../core/appointments/appointments.servi
 })
 export class ClientAppointmentsComponent implements OnInit {
   public appointments: ClientPortalAppointment[] = [];
+  public requests: ClientPortalAppointmentRequest[] = [];
   public selectedAppointment: ClientPortalAppointment | null = null;
   public isLoading = false;
   public errorMessage = '';
@@ -31,15 +34,22 @@ export class ClientAppointmentsComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.clientPortalService
-      .getAppointments()
+    forkJoin({
+      appointments: this.clientPortalService.getAppointments(),
+      requests: this.clientPortalService.getAppointmentRequests(),
+    })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: appointments => {
+        next: ({ appointments, requests }) => {
           this.appointments = [...appointments].sort(
             (first, second) =>
               new Date(second.startDateTime).getTime() -
               new Date(first.startDateTime).getTime(),
+          );
+          this.requests = [...requests].sort(
+            (first, second) =>
+              new Date(second.requestedStartDateTime).getTime() -
+              new Date(first.requestedStartDateTime).getTime(),
           );
         },
         error: () => {
@@ -68,6 +78,36 @@ export class ClientAppointmentsComponent implements OnInit {
     return classes[status];
   }
 
+  public requestStatusLabel(
+    status: ClientPortalAppointmentRequestStatus,
+  ): string {
+    const labels: Record<ClientPortalAppointmentRequestStatus, string> = {
+      PENDING: 'client.requests.status.pending',
+      APPROVED: 'client.requests.status.approved',
+      REJECTED: 'client.requests.status.rejected',
+    };
+
+    return labels[status];
+  }
+
+  public requestStatusClass(
+    status: ClientPortalAppointmentRequestStatus,
+  ): string {
+    const classes: Record<ClientPortalAppointmentRequestStatus, string> = {
+      PENDING: 'client-status-scheduled',
+      APPROVED: 'client-status-completed',
+      REJECTED: 'client-status-cancelled',
+    };
+
+    return classes[status];
+  }
+
+  public requestReasonKey(request: ClientPortalAppointmentRequest): string {
+    return request.outsideAvailability
+      ? 'appointmentRequests.reason.outside'
+      : 'appointmentRequests.reason.occupied';
+  }
+
   public openAppointment(appointment: ClientPortalAppointment): void {
     this.selectedAppointment = appointment;
   }
@@ -81,5 +121,12 @@ export class ClientAppointmentsComponent implements OnInit {
     appointment: ClientPortalAppointment,
   ): number {
     return appointment.id;
+  }
+
+  public trackByRequestId(
+    _: number,
+    request: ClientPortalAppointmentRequest,
+  ): number {
+    return request.id;
   }
 }

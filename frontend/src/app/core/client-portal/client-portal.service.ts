@@ -5,6 +5,11 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AppointmentStatus } from '../appointments/appointments.service';
 
+export type ClientPortalAppointmentRequestStatus =
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED';
+
 export interface ClientPortalCenter {
   id: number;
   name: string;
@@ -37,6 +42,29 @@ export interface ClientPortalAppointment {
     name: string;
     specialty?: string | null;
   };
+}
+
+export interface ClientPortalAppointmentRequest {
+  id: number;
+  requestedStartDateTime: string;
+  outsideAvailability: boolean;
+  notes: string | null;
+  status: ClientPortalAppointmentRequestStatus;
+  resolutionNote: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  appointmentId: number | null;
+  service: {
+    id: number;
+    name: string;
+    durationMinutes: number;
+  };
+  specialist: {
+    id: number;
+    name: string;
+    specialty?: string | null;
+  };
+  center: ClientPortalCenter;
 }
 
 export interface ClientPortalSpecialist {
@@ -94,6 +122,12 @@ export class ClientPortalService {
   getAppointments(): Observable<ClientPortalAppointment[]> {
     return this.http.get<ClientPortalAppointment[]>(
       `${this.apiUrl}/appointments`,
+    );
+  }
+
+  getAppointmentRequests(): Observable<ClientPortalAppointmentRequest[]> {
+    return this.http.get<ClientPortalAppointmentRequest[]>(
+      `${this.apiUrl}/appointment-requests`,
     );
   }
 

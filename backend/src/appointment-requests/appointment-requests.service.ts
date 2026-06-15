@@ -108,6 +108,21 @@ export class AppointmentRequestsService {
     return requests.map((request) => this.toResponse(request));
   }
 
+  async findForClient(clientId: number) {
+    const requests = await this.requestsRepository.find({
+      where: {
+        client: {
+          id: clientId,
+        },
+      },
+      order: {
+        requestedStartDateTime: 'DESC',
+      },
+    });
+
+    return requests.map((request) => this.toResponse(request));
+  }
+
   async resolve(
     id: number,
     dto: ResolveAppointmentRequestDto,

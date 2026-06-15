@@ -81,6 +81,18 @@ export class ClientPortalController {
     return this.clientPortalService.getAppointments(request.user.id);
   }
 
+  @Get('appointment-requests')
+  @ApiOperation({
+    summary: 'Listar solicitudes de cita del cliente',
+    description: 'Rol permitido: CLIENT.',
+  })
+  @ApiOkResponse({ description: 'Listado de solicitudes propias.' })
+  @ApiForbiddenResponse({ description: 'El cliente no estÃ¡ activo o el rol no estÃ¡ permitido.' })
+  @ApiNotFoundResponse({ description: 'No existe cliente vinculado al usuario.' })
+  appointmentRequests(@Req() request: { user: { id: number } }) {
+    return this.clientPortalService.getAppointmentRequests(request.user.id);
+  }
+
   @Get('services')
   @ApiOperation({
     summary: 'Listar servicios reservables',

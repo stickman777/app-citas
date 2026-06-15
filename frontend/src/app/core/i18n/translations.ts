@@ -242,6 +242,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'client.appointments.errors.load': 'No se han podido cargar tus citas.',
     'client.appointments.loading': 'Cargando citas...',
     'client.appointments.title': 'Mis citas',
+    'client.requests.empty': 'No hay solicitudes para mostrar.',
+    'client.requests.status.approved': 'Aprobada',
+    'client.requests.status.pending': 'Pendiente',
+    'client.requests.status.rejected': 'Rechazada',
+    'client.requests.title': 'Mis solicitudes',
     'client.book.confirm': 'Confirmar cita',
     'client.book.request.title': 'Solicitar otro horario',
     'client.book.request.description':
@@ -650,6 +655,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'client.appointments.errors.load': 'Your appointments could not be loaded.',
     'client.appointments.loading': 'Loading appointments...',
     'client.appointments.title': 'My appointments',
+    'client.requests.empty': 'No requests to show.',
+    'client.requests.status.approved': 'Approved',
+    'client.requests.status.pending': 'Pending',
+    'client.requests.status.rejected': 'Rejected',
+    'client.requests.title': 'My requests',
     'client.book.confirm': 'Confirm appointment',
     'client.book.request.title': 'Request another time',
     'client.book.request.description':

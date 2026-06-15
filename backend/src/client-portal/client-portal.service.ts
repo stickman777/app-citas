@@ -62,6 +62,12 @@ export class ClientPortalService {
     );
   }
 
+  async getAppointmentRequests(userId: number) {
+    const client = await this.getActiveClientForUser(userId);
+
+    return this.appointmentRequestsService.findForClient(client.id);
+  }
+
   async getServices(userId: number) {
     const client = await this.getActiveClientForUser(userId);
     const centerId = this.getClientCenterId(client);
