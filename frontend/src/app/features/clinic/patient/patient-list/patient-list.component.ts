@@ -27,6 +27,11 @@ interface ClientForm {
   centerId: number | null;
 }
 
+interface PendingClientInvitation {
+  link: string;
+  expiresAt: string;
+}
+
 @Component({
   selector: 'app-patient-list',
   templateUrl: './patient-list.component.html',
@@ -61,6 +66,7 @@ export class PatientListComponent implements OnInit, OnDestroy {
   private activeCenterSubscription?: Subscription;
   private currentUserSubscription?: Subscription;
   private loadedCenterId?: number | null;
+  private pendingInvitations = new Map<number, PendingClientInvitation>();
 
   constructor(
     private readonly clientsService: ClientsService,
@@ -101,6 +107,7 @@ export class PatientListComponent implements OnInit, OnDestroy {
     this.clientsService.getClients(this.activeCenter?.id).subscribe({
       next: clients => {
         this.clients = clients;
+        this.clearLinkedInvitations(clients);
         this.applySearch();
         this.isLoading = false;
       },
@@ -181,8 +188,9 @@ export class PatientListComponent implements OnInit, OnDestroy {
 
     this.clearMessages();
     this.clientToCreateAccount = client;
-    this.invitationLink = '';
-    this.invitationExpiresAt = '';
+    const pendingInvitation = this.pendingInvitations.get(client.id);
+    this.invitationLink = pendingInvitation?.link ?? '';
+    this.invitationExpiresAt = pendingInvitation?.expiresAt ?? '';
     this.isAccountModalOpen = true;
   }
 
@@ -208,15 +216,22 @@ export class PatientListComponent implements OnInit, OnDestroy {
   public createClientInvitation(): void {
     if (!this.clientToCreateAccount) return;
 
+    const clientId = this.clientToCreateAccount.id;
     this.isCreatingInvitation = true;
     this.clearMessages();
 
     this.clientsService
-      .createClientInvitation(this.clientToCreateAccount.id)
+      .createClientInvitation(clientId)
       .subscribe({
         next: invitation => {
-          this.invitationLink = this.buildInvitationLink(invitation.token);
-          this.invitationExpiresAt = this.formatDate(invitation.expiresAt);
+          const pendingInvitation = {
+            link: this.buildInvitationLink(invitation.token),
+            expiresAt: this.formatDate(invitation.expiresAt),
+          };
+
+          this.pendingInvitations.set(clientId, pendingInvitation);
+          this.invitationLink = pendingInvitation.link;
+          this.invitationExpiresAt = pendingInvitation.expiresAt;
           this.successMessage = this.translate('clients.success.invitationCreated');
           this.isCreatingInvitation = false;
           this.loadClients(false);
@@ -394,6 +409,12 @@ export class PatientListComponent implements OnInit, OnDestroy {
     }
 
     return [current, ...options];
+  }
+
+  private clearLinkedInvitations(clients: Client[]): void {
+    clients
+      .filter(client => !!client.user)
+      .forEach(client => this.pendingInvitations.delete(client.id));
   }
 
   private clearMessages(): void {
