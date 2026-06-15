@@ -72,8 +72,20 @@
 .client-modal {
   background: rgba(0, 0, 0, 0.05);
 
+  .modal-dialog {
+    max-width: 460px;
+  }
+
   .modal-content {
     background-color: var(--white);
+  }
+
+  .modal-header {
+    padding: 14px 16px;
+  }
+
+  .modal-body {
+    padding: 14px 16px 16px;
   }
 }
 
@@ -85,7 +97,7 @@
 
 .client-detail-list {
   display: grid;
-  gap: 12px;
+  gap: 6px;
   margin: 0;
 }
 
@@ -93,7 +105,7 @@
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
   gap: 12px;
-  padding: 10px 0;
+  padding: 7px 0;
   border-bottom: 1px solid var(--border-color);
 }
 
