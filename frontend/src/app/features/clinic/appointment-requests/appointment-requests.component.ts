@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize, Subscription } from 'rxjs';
@@ -24,7 +25,10 @@ export class AppointmentRequestsComponent implements OnInit, OnDestroy {
   public resolvingId: number | null = null;
   public errorMessage = '';
   public successMessage = '';
+  public requestToApprove: AppointmentRequest | null = null;
   public requestToReject: AppointmentRequest | null = null;
+  public approveErrorMessage = '';
+  public approveNote = '';
   public rejectNote = '';
 
   private activeCenterSubscription?: Subscription;
@@ -69,25 +73,16 @@ export class AppointmentRequestsComponent implements OnInit, OnDestroy {
       });
   }
 
-  public approve(request: AppointmentRequest): void {
-    this.resolvingId = request.id;
-    this.clearMessages();
+  public openApproveModal(request: AppointmentRequest): void {
+    this.requestToApprove = request;
+    this.approveErrorMessage = '';
+    this.approveNote = '';
+  }
 
-    this.appointmentRequestsService
-      .resolve(request.id, { action: 'APPROVE' })
-      .pipe(finalize(() => (this.resolvingId = null)))
-      .subscribe({
-        next: () => {
-          this.successMessage = 'appointmentRequests.success.approved';
-          this.removeRequest(request.id);
-        },
-        error: error => {
-          this.errorMessage =
-            error?.status === 409
-              ? 'appointmentRequests.errors.conflict'
-              : 'appointmentRequests.errors.resolve';
-        },
-      });
+  public closeApproveModal(): void {
+    this.requestToApprove = null;
+    this.approveErrorMessage = '';
+    this.approveNote = '';
   }
 
   public openRejectModal(request: AppointmentRequest): void {
@@ -125,6 +120,36 @@ export class AppointmentRequestsComponent implements OnInit, OnDestroy {
       });
   }
 
+  public confirmApprove(): void {
+    if (!this.requestToApprove) return;
+
+    const requestId = this.requestToApprove.id;
+    const request = this.requestToApprove;
+    this.resolvingId = requestId;
+    this.approveErrorMessage = '';
+    this.clearMessages();
+
+    this.appointmentRequestsService
+      .resolve(requestId, {
+        action: 'APPROVE',
+        resolutionNote: this.approveNote.trim() || undefined,
+      })
+      .pipe(finalize(() => (this.resolvingId = null)))
+      .subscribe({
+        next: () => {
+          this.successMessage = 'appointmentRequests.success.approved';
+          this.removeRequest(requestId);
+          this.closeApproveModal();
+        },
+        error: error => {
+          this.approveErrorMessage = this.getResolveErrorMessage(
+            error,
+            request,
+          );
+        },
+      });
+  }
+
   public reasonKey(request: AppointmentRequest): string {
     return request.outsideAvailability
       ? 'appointmentRequests.reason.outside'
@@ -142,5 +167,39 @@ export class AppointmentRequestsComponent implements OnInit, OnDestroy {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private getResolveErrorMessage(
+    error: unknown,
+    request?: AppointmentRequest | null,
+  ): string {
+    if (!(error instanceof HttpErrorResponse))
+      return 'appointmentRequests.errors.resolve';
+
+    const apiMessage = this.extractApiErrorMessage(
+      error.error?.message ?? error.error,
+    );
+
+    if (
+      error.status === 409 ||
+      (!request?.outsideAvailability &&
+        apiMessage.toLowerCase().includes('horario seleccionado') &&
+        apiMessage.toLowerCase().includes('disponible'))
+    )
+      return 'appointmentRequests.errors.conflict';
+
+    return apiMessage || 'appointmentRequests.errors.resolve';
+  }
+
+  private extractApiErrorMessage(message: unknown): string {
+    if (typeof message === 'string') return message;
+
+    if (Array.isArray(message)) {
+      const firstMessage = message.find(item => typeof item === 'string');
+
+      return firstMessage ?? '';
+    }
+
+    return '';
   }
 }

@@ -19,7 +19,7 @@ export class ResolveAppointmentRequestDto {
   action: AppointmentRequestAction;
 
   @ApiPropertyOptional({
-    description: 'Nota interna sobre la decisión.',
+    description: 'Nota para el cliente sobre la decisión.',
     example: 'Aprobada tras mover la cita anterior.',
   })
   @IsOptional()

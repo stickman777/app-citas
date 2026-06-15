@@ -71,6 +71,10 @@
 
 .client-modal {
   background: rgba(0, 0, 0, 0.05);
+
+  .modal-content {
+    background-color: var(--white);
+  }
 }
 
 .client-detail-summary {
@@ -115,8 +119,33 @@
 }
 
 @media (max-width: 640px) {
+  .client-appointment-card {
+    height: auto !important;
+  }
+
+  .client-appointment-card .card-body {
+    padding: 12px;
+  }
+
   .client-date-box {
-    flex-basis: 72px;
+    flex: 0 0 auto;
+    min-width: 58px;
+    min-height: 0;
+    padding: 8px 10px;
+  }
+
+  .client-date-box span {
+    font-size: 11px;
+    line-height: 1.1;
+  }
+
+  .client-date-box strong {
+    font-size: 16px;
+    line-height: 1.15;
+  }
+
+  .client-meta {
+    gap: 5px 10px;
   }
 
   .client-detail-list div {

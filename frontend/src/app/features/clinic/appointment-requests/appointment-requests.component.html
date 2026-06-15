@@ -96,7 +96,7 @@
           <button
             type="button"
             class="btn btn-primary btn-sm d-inline-flex align-items-center"
-            (click)="approve(request)"
+            (click)="openApproveModal(request)"
             [disabled]="resolvingId === request.id"
           >
             @if(resolvingId === request.id){
@@ -113,6 +113,48 @@
   </div>
   }
 </div>
+
+@if(requestToApprove){
+<div class="modal-backdrop-custom" (click)="closeApproveModal()"></div>
+<div class="modal-custom card">
+  <div class="card-body">
+    <h5 class="text-dark mb-2">{{ 'appointmentRequests.approve.title' | translate }}</h5>
+    <p class="text-body fs-13 mb-2">{{ 'appointmentRequests.approve.description' | translate }}</p>
+    @if(approveErrorMessage){
+    <div class="alert alert-danger py-2 mb-3" role="alert">{{ approveErrorMessage | translate }}</div>
+    }
+    <label class="form-label">{{ 'appointmentRequests.approve.note' | translate }}</label>
+    <textarea
+      class="form-control"
+      rows="3"
+      [(ngModel)]="approveNote"
+      maxlength="500"
+    ></textarea>
+  </div>
+  <div class="card-footer d-flex justify-content-end gap-2">
+    <button
+      type="button"
+      class="btn btn-outline-light border"
+      (click)="closeApproveModal()"
+      [disabled]="resolvingId === requestToApprove.id"
+    >
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary d-inline-flex align-items-center"
+      (click)="confirmApprove()"
+      [disabled]="resolvingId === requestToApprove.id"
+    >
+      @if(resolvingId === requestToApprove.id){
+      <i class="ti ti-loader-2 me-1"></i>{{ 'common.saving' | translate }}
+      } @else {
+      <i class="ti ti-check me-1"></i>{{ 'appointmentRequests.actions.approve' | translate }}
+      }
+    </button>
+  </div>
+</div>
+}
 
 @if(requestToReject){
 <div class="modal-backdrop-custom" (click)="closeRejectModal()"></div>
