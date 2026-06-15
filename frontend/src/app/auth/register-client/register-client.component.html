@@ -3,7 +3,7 @@
     <div class="w-100 overflow-hidden position-relative flex-wrap d-block vh-100">
       <div class="row justify-content-center align-items-center vh-100 overflow-auto flex-wrap py-3">
         <div class="col-lg-4 mx-auto">
-          <form #registerForm="ngForm" (ngSubmit)="register()" class="d-flex justify-content-center align-items-center">
+          <form #registerForm="ngForm" (ngSubmit)="register(registerForm)" class="d-flex justify-content-center align-items-center">
             <div class="d-flex flex-column justify-content-lg-center p-4 p-lg-0 pb-0 flex-fill">
               <div class="auth-brand d-inline-flex align-items-center justify-content-center gap-2 mx-auto mb-4">
                 <span class="auth-brand-mark d-inline-flex align-items-center justify-content-center">
@@ -37,7 +37,20 @@
 
                   <div class="mb-3">
                     <label class="form-label">{{ 'common.password' | translate }}</label>
-                    <input type="password" name="password" [(ngModel)]="password" class="form-control" autocomplete="new-password" required minlength="8">
+                    <input
+                      type="password"
+                      name="password"
+                      #passwordModel="ngModel"
+                      [(ngModel)]="password"
+                      class="form-control"
+                      autocomplete="new-password"
+                      required
+                      minlength="8"
+                      [class.is-invalid]="passwordModel.invalid && (passwordModel.touched || formSubmitted)"
+                    >
+                    @if(passwordModel.errors?.['minlength'] && (passwordModel.touched || formSubmitted)){
+                    <div class="invalid-feedback d-block">{{ 'auth.register.errors.passwordMinLength' | translate }}</div>
+                    }
                   </div>
 
                   <div class="mb-3">
@@ -45,12 +58,13 @@
                     <input
                       type="password"
                       name="confirmPassword"
+                      #confirmPasswordModel="ngModel"
                       [(ngModel)]="confirmPassword"
                       class="form-control"
                       autocomplete="new-password"
                       required
                       minlength="8"
-                      [class.is-invalid]="passwordMismatch"
+                      [class.is-invalid]="passwordMismatch || (confirmPasswordModel.invalid && (confirmPasswordModel.touched || formSubmitted))"
                     >
                     @if(passwordMismatch){
                     <div class="invalid-feedback d-block">{{ 'account.errors.passwordMismatch' | translate }}</div>
@@ -58,7 +72,7 @@
                   </div>
 
                   <div class="mb-2">
-                    <button type="submit" class="btn bg-primary text-white w-100" [disabled]="registerForm.invalid || passwordMismatch || isLoading">
+                    <button type="submit" class="btn bg-primary text-white w-100" [disabled]="isLoading">
                       {{ (isLoading ? 'auth.register.saving' : 'auth.register.submit') | translate }}
                     </button>
                   </div>

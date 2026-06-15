@@ -68,6 +68,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'auth.password': 'Contraseña',
     'auth.rememberMe': 'Recordarme',
     'auth.register.backToLogin': 'Volver al login',
+    'auth.register.errors.form': 'Completa todos los campos correctamente.',
+    'auth.register.errors.passwordMinLength':
+      'La contraseña debe tener al menos 8 caracteres.',
     'auth.register.errors.save': 'No se ha podido completar el registro.',
     'auth.register.errors.token': 'La invitacion no es valida.',
     'auth.register.saving': 'Creando cuenta...',
@@ -475,6 +478,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'auth.password': 'Password',
     'auth.rememberMe': 'Remember me',
     'auth.register.backToLogin': 'Back to login',
+    'auth.register.errors.form': 'Complete all fields correctly.',
+    'auth.register.errors.passwordMinLength':
+      'The password must be at least 8 characters.',
     'auth.register.errors.save': 'Registration could not be completed.',
     'auth.register.errors.token': 'The invitation is not valid.',
     'auth.register.saving': 'Creating account...',

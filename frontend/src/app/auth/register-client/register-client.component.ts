@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -24,6 +24,7 @@ export class RegisterClientComponent {
   public confirmPassword = '';
   public isLoading = false;
   public errorMessage = '';
+  public formSubmitted = false;
 
   constructor(
     private readonly authService: AuthService,
@@ -38,9 +39,24 @@ export class RegisterClientComponent {
     return !!this.password && this.password !== this.confirmPassword;
   }
 
-  public register(): void {
+  public get passwordTooShort(): boolean {
+    return this.password.length > 0 && this.password.length < 8;
+  }
+
+  public register(form: NgForm): void {
+    this.formSubmitted = true;
+    this.errorMessage = '';
+
     if (!this.invitationToken) {
       this.errorMessage = this.translate('auth.register.errors.token');
+      return;
+    }
+
+    if (form.invalid) {
+      form.control.markAllAsTouched();
+      this.errorMessage = this.passwordTooShort
+        ? this.translate('auth.register.errors.passwordMinLength')
+        : this.translate('auth.register.errors.form');
       return;
     }
 
@@ -50,7 +66,6 @@ export class RegisterClientComponent {
     }
 
     this.isLoading = true;
-    this.errorMessage = '';
 
     this.authService
       .registerClient({
