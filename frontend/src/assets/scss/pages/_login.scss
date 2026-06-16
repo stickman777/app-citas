@@ -126,6 +126,11 @@
     background: url(../../../../public/assets/img/auth/auth-bg.jpg);
     background-size: cover;
 }
+
+[data-bs-theme='dark'] .auth-bg-custom {
+    background: #111113;
+}
+
 .ti-eye-slash::before{
     content: '\ea9a';
 }
