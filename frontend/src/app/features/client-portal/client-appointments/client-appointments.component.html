@@ -70,10 +70,21 @@
                 </span>
                 }
               </div>
-              <div class="mt-3">
+              <div class="mt-3 d-inline-flex align-items-center gap-2">
                 <button type="button" class="btn btn-sm btn-outline-primary" (click)="openAppointment(appointment)">
                   <i class="ti ti-eye me-1"></i>{{ 'common.viewDetails' | translate }}
                 </button>
+                @if(canCancelAppointment(appointment)){
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger client-icon-action"
+                  [attr.aria-label]="'client.appointments.cancel.title' | translate"
+                  [attr.title]="'client.appointments.cancel.title' | translate"
+                  (click)="openCancelAppointment(appointment)"
+                >
+                  <i class="ti ti-x"></i>
+                </button>
+                }
               </div>
             </div>
           </div>
@@ -137,9 +148,24 @@
                 <span><i class="ti ti-clock"></i>{{ request.service.durationMinutes }} min</span>
                 <span><i class="ti ti-info-circle"></i>{{ requestReasonKey(request) | translate }}</span>
               </div>
-              @if(request.notes){
-              <p class="text-body fs-13 fst-italic mt-3 mb-0">"{{ request.notes }}"</p>
-              }
+              <div class="client-request-footer mt-3">
+                @if(request.notes){
+                <p class="text-body fs-13 fst-italic mb-0">"{{ request.notes }}"</p>
+                } @else {
+                <span></span>
+                }
+                @if(canCancelRequest(request)){
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger client-icon-action"
+                  [attr.aria-label]="'client.requests.cancel.title' | translate"
+                  [attr.title]="'client.requests.cancel.title' | translate"
+                  (click)="openCancelRequest(request)"
+                >
+                  <i class="ti ti-x"></i>
+                </button>
+                }
+              </div>
               @if(request.resolutionNote){
               <p class="text-body fs-13 mt-2 mb-0">{{ request.resolutionNote }}</p>
               }
@@ -193,6 +219,41 @@
             <dd>{{ selectedAppointment.duration }} min</dd>
           </div>
         </dl>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+}
+
+@if(cancelTarget){
+<div class="modal fade show d-block client-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title fw-bold text-dark">{{ cancelTitleKey() | translate }}</h4>
+        <button type="button" class="btn-close btn-close-modal custom-btn-close" [attr.aria-label]="'common.close' | translate" (click)="closeCancelModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if(cancelErrorMessage){
+        <div class="alert alert-danger py-2 mb-3" role="alert">
+          {{ cancelErrorMessage | translate }}
+        </div>
+        }
+        <p class="mb-0 text-body">{{ cancelMessageKey() | translate }}</p>
+      </div>
+      <div class="modal-footer d-flex align-items-center gap-1">
+        <button type="button" class="btn btn-white border" [disabled]="isCancelling" (click)="closeCancelModal()">
+          {{ 'common.close' | translate }}
+        </button>
+        <button type="button" class="btn btn-danger" [disabled]="isCancelling" (click)="confirmCancellation()">
+          @if(isCancelling){
+          <span class="spinner-border spinner-border-sm me-1"></span>
+          }
+          {{ 'common.cancel' | translate }}
+        </button>
       </div>
     </div>
   </div>

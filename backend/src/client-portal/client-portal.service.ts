@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -66,6 +67,32 @@ export class ClientPortalService {
     const client = await this.getActiveClientForUser(userId);
 
     return this.appointmentRequestsService.findForClient(client.id);
+  }
+
+  async cancelAppointment(userId: number, appointmentId: number) {
+    const client = await this.getActiveClientForUser(userId);
+    const appointments = await this.appointmentsService.findAllForClient(
+      client.id,
+    );
+    const appointment = appointments.find(
+      (clientAppointment) => clientAppointment.id === appointmentId,
+    );
+
+    if (!appointment)
+      throw new NotFoundException('No se ha encontrado la cita');
+
+    return this.toAppointmentResponse(
+      await this.appointmentsService.cancel(appointmentId),
+    );
+  }
+
+  async cancelAppointmentRequest(userId: number, requestId: number) {
+    const client = await this.getActiveClientForUser(userId);
+
+    return this.appointmentRequestsService.cancelForClient(
+      client.id,
+      requestId,
+    );
   }
 
   async getServices(userId: number) {

@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
   ParseIntPipe,
   Post,
@@ -18,6 +19,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -81,6 +83,23 @@ export class ClientPortalController {
     return this.clientPortalService.getAppointments(request.user.id);
   }
 
+  @Patch('appointments/:id/cancel')
+  @ApiOperation({
+    summary: 'Cancelar cita propia',
+    description: 'Cancela una cita programada del cliente autenticado. Rol permitido: CLIENT.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'Identificador de la cita.' })
+  @ApiOkResponse({ description: 'Cita cancelada correctamente.' })
+  @ApiBadRequestResponse({ description: 'La cita no estÃ¡ programada.' })
+  @ApiForbiddenResponse({ description: 'El cliente no estÃ¡ activo o el rol no estÃ¡ permitido.' })
+  @ApiNotFoundResponse({ description: 'Cita no encontrada.' })
+  cancelAppointment(
+    @Req() request: { user: { id: number } },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.clientPortalService.cancelAppointment(request.user.id, id);
+  }
+
   @Get('appointment-requests')
   @ApiOperation({
     summary: 'Listar solicitudes de cita del cliente',
@@ -91,6 +110,26 @@ export class ClientPortalController {
   @ApiNotFoundResponse({ description: 'No existe cliente vinculado al usuario.' })
   appointmentRequests(@Req() request: { user: { id: number } }) {
     return this.clientPortalService.getAppointmentRequests(request.user.id);
+  }
+
+  @Patch('appointment-requests/:id/cancel')
+  @ApiOperation({
+    summary: 'Cancelar solicitud propia',
+    description: 'Cancela una solicitud pendiente del cliente autenticado. Rol permitido: CLIENT.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'Identificador de la solicitud.' })
+  @ApiOkResponse({ description: 'Solicitud cancelada correctamente.' })
+  @ApiBadRequestResponse({ description: 'La solicitud no estÃ¡ pendiente.' })
+  @ApiForbiddenResponse({ description: 'El cliente no estÃ¡ activo o el rol no estÃ¡ permitido.' })
+  @ApiNotFoundResponse({ description: 'Solicitud no encontrada.' })
+  cancelAppointmentRequest(
+    @Req() request: { user: { id: number } },
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.clientPortalService.cancelAppointmentRequest(
+      request.user.id,
+      id,
+    );
   }
 
   @Get('services')

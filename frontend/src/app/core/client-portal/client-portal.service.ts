@@ -132,6 +132,22 @@ export class ClientPortalService {
     );
   }
 
+  cancelAppointment(id: number): Observable<ClientPortalAppointment> {
+    return this.http.patch<ClientPortalAppointment>(
+      `${this.apiUrl}/appointments/${id}/cancel`,
+      {},
+    );
+  }
+
+  cancelAppointmentRequest(
+    id: number,
+  ): Observable<ClientPortalAppointmentRequest> {
+    return this.http.patch<ClientPortalAppointmentRequest>(
+      `${this.apiUrl}/appointment-requests/${id}/cancel`,
+      {},
+    );
+  }
+
   getServices(): Observable<ClientPortalServiceOption[]> {
     return this.http.get<ClientPortalServiceOption[]>(`${this.apiUrl}/services`);
   }

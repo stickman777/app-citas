@@ -123,6 +123,31 @@ export class AppointmentRequestsService {
     return requests.map((request) => this.toResponse(request));
   }
 
+  async cancelForClient(clientId: number, requestId: number) {
+    const request = await this.requestsRepository.findOne({
+      where: {
+        id: requestId,
+        client: {
+          id: clientId,
+        },
+      },
+    });
+
+    if (!request)
+      throw new NotFoundException('No se ha encontrado la solicitud de cita');
+
+    if (request.status !== AppointmentRequestStatus.PENDING)
+      throw new BadRequestException('Solo se pueden cancelar solicitudes pendientes');
+
+    request.status = AppointmentRequestStatus.REJECTED;
+    request.resolvedAt = new Date();
+    request.resolutionNote = null;
+
+    await this.requestsRepository.save(request);
+
+    return this.toResponse(request);
+  }
+
   async resolve(
     id: number,
     dto: ResolveAppointmentRequestDto,

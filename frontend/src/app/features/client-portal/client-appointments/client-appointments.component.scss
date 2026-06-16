@@ -52,6 +52,26 @@
   width: 22px;
 }
 
+.client-icon-action {
+  align-items: center;
+  display: inline-flex;
+  height: 31px;
+  justify-content: center;
+  padding: 0;
+  width: 31px;
+}
+
+.client-request-footer {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.client-request-footer p {
+  min-width: 0;
+}
+
 .client-status-scheduled {
   border-color: var(--primary) !important;
   background: var(--primary-transparent);

@@ -241,6 +241,10 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'clients.invitation.link': 'Enlace de invitacion',
     'clients.invitation.pending': 'Genera el enlace y enviaselo al cliente.',
     'client.appointments.empty': 'No hay citas para mostrar.',
+    'client.appointments.cancel.error': 'No se ha podido cancelar la cita.',
+    'client.appointments.cancel.message':
+      'Seguro que quieres cancelar esta cita?',
+    'client.appointments.cancel.title': 'Cancelar cita',
     'client.appointments.detail.title': 'Detalle de cita',
     'client.appointments.errors.load': 'No se han podido cargar tus citas.',
     'client.appointments.loading': 'Cargando citas...',
@@ -248,6 +252,10 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
       'Mostrando datos guardados. Se actualizaran al recuperar la conexion.',
     'client.appointments.title': 'Mis citas',
     'client.requests.empty': 'No hay solicitudes para mostrar.',
+    'client.requests.cancel.error': 'No se ha podido cancelar la solicitud.',
+    'client.requests.cancel.message':
+      'Seguro que quieres cancelar esta solicitud?',
+    'client.requests.cancel.title': 'Cancelar solicitud',
     'client.requests.status.approved': 'Aprobada',
     'client.requests.status.pending': 'Pendiente',
     'client.requests.status.rejected': 'Rechazada',
@@ -659,6 +667,10 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'clients.invitation.link': 'Invitation link',
     'clients.invitation.pending': 'Generate the link and send it to the client.',
     'client.appointments.empty': 'No appointments to show.',
+    'client.appointments.cancel.error': 'The appointment could not be cancelled.',
+    'client.appointments.cancel.message':
+      'Are you sure you want to cancel this appointment?',
+    'client.appointments.cancel.title': 'Cancel appointment',
     'client.appointments.detail.title': 'Appointment details',
     'client.appointments.errors.load': 'Your appointments could not be loaded.',
     'client.appointments.loading': 'Loading appointments...',
@@ -666,6 +678,10 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
       'Showing saved data. It will update when the connection is restored.',
     'client.appointments.title': 'My appointments',
     'client.requests.empty': 'No requests to show.',
+    'client.requests.cancel.error': 'The request could not be cancelled.',
+    'client.requests.cancel.message':
+      'Are you sure you want to cancel this request?',
+    'client.requests.cancel.title': 'Cancel request',
     'client.requests.status.approved': 'Approved',
     'client.requests.status.pending': 'Pending',
     'client.requests.status.rejected': 'Rejected',
