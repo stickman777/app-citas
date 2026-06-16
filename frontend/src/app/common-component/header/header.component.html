@@ -24,33 +24,6 @@
 
                 <div class="d-flex align-items-center">
 
-                    <div class="header-item d-none d-sm-flex me-2">
-                        <button class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button"   (click)="toggleTheme()">
-                            <i class="ti  fs-16" [ngClass]="themeColor==='dark'?'ti-sun':'ti-moon'"></i>
-                        </button>
-                    </div>
-
-                    <!-- Language Selector -->
-                    <div class="header-item d-none d-sm-flex me-2">
-                        <div class="dropdown">
-                            <button class="topbar-link btn btn-icon dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown" data-bs-offset="0,24" type="button" aria-haspopup="false" aria-expanded="false" [attr.aria-label]="'Idioma actual: ' + currentLanguage.toUpperCase()">
-                                <span class="fw-semibold fs-13">{{ currentLanguage.toUpperCase() }}</span>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-end p-2">
-                                @for(language of languageOptions; track language){
-                                <button
-                                    type="button"
-                                    class="dropdown-item rounded-1"
-                                    [class.active]="language === currentLanguage"
-                                    (click)="setLanguage(language)"
-                                >
-                                    {{ language.toUpperCase() }}
-                                </button>
-                                }
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Appointment Requests -->
                     <div class="header-item d-none d-sm-flex me-2">
                         <a [routerLink]="routes.appointmentRequests" class="topbar-link btn btn-icon" [title]="'appointmentRequests.title' | translate" [attr.aria-label]="'appointmentRequests.title' | translate">
@@ -65,7 +38,6 @@
                             <span class="online text-success"><i class="ti ti-circle-filled d-flex bg-white rounded-circle border border-1 border-white"></i></span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-md p-2">
-                        
                             <div class="d-flex align-items-center bg-light rounded-3 p-2 mb-2">
                                 <img src="assets/img/users/user-01.jpg" class="rounded-circle" width="42" height="42" alt="">
                                 <div class="ms-2">
@@ -73,11 +45,37 @@
                                 </div>
                             </div>
 
-                            <!-- Item-->
-                            <a [routerLink]="routes.centers" class="dropdown-item">
-                                <i class="ti ti-building-hospital me-1 align-middle"></i>
-                                <span class="align-middle">{{ 'account.centers' | translate }}</span>
-                            </a>
+                            <div class="account-menu-controls">
+                                <button type="button" class="dropdown-item account-control-item rounded-1" (click)="toggleTheme()">
+                                    <span class="d-inline-flex align-items-center gap-2">
+                                        <i class="ti fs-16" [ngClass]="themeColor==='dark'?'ti-sun':'ti-moon'"></i>
+                                        <span>{{ 'account.theme' | translate }}</span>
+                                    </span>
+                                    <span class="form-check form-switch m-0">
+                                        <input class="form-check-input m-0" type="checkbox" [checked]="themeColor === 'dark'" tabindex="-1" aria-hidden="true">
+                                    </span>
+                                </button>
+                                <div class="dropdown-item account-control-item rounded-1">
+                                    <span class="d-inline-flex align-items-center gap-2">
+                                        <i class="ti ti-language fs-16"></i>
+                                        <span>{{ 'account.language' | translate }}</span>
+                                    </span>
+                                    <span class="btn-group btn-group-sm" role="group" [attr.aria-label]="'account.language' | translate">
+                                        @for(language of languageOptions; track language){
+                                        <button
+                                            type="button"
+                                            class="btn"
+                                            [ngClass]="language === currentLanguage ? 'btn-primary' : 'btn-white border'"
+                                            (click)="setLanguage(language); $event.stopPropagation()"
+                                        >
+                                            {{ language.toUpperCase() }}
+                                        </button>
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="border-top my-2"></div>
 
                             <!-- Item-->
                             <a [routerLink]="routes.myAccount" class="dropdown-item">

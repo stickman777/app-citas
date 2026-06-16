@@ -65,6 +65,16 @@ export class DataService {
           subMenus: [],
         },
         {
+          menuValue: 'Centros',
+          labelKey: 'sidebar.centers',
+          hasSubRoute: false,
+          showSubRoute: false,
+          route: routes.centers,
+          base: 'centers',
+          icon: 'building-hospital',
+          subMenus: [],
+        },
+        {
           menuValue: 'Usuarios',
           labelKey: 'sidebar.users',
           hasSubRoute: false,
