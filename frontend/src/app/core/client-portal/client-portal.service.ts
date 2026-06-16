@@ -30,6 +30,7 @@ export interface ClientPortalAppointment {
   startDateTime: string;
   duration: number;
   status: AppointmentStatus;
+  outsideAvailability: boolean;
   center: ClientPortalCenter;
   service: {
     id: number;

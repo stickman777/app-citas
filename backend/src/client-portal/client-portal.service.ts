@@ -280,6 +280,7 @@ export class ClientPortalService {
       startDateTime: appointment.startDateTime,
       duration: appointment.duration,
       status: appointment.status,
+      outsideAvailability: appointment.outsideAvailability,
       center: {
         id: appointment.center.id,
         name: appointment.center.name,
