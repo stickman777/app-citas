@@ -60,6 +60,7 @@ export interface RegisterClientPayload {
 })
 export class AuthService {
   private readonly tokenKey = 'auth_token';
+  private readonly currentUserKey = 'auth_current_user';
   private readonly currentUserSubject = new BehaviorSubject<CurrentUser | null>(
     null
   );
@@ -153,6 +154,16 @@ export class AuthService {
     return localStorage.getItem(this.tokenKey);
   }
 
+  restoreCachedCurrentUser(): CurrentUser | null {
+    const cachedUser = this.getCachedCurrentUser();
+
+    if (cachedUser) {
+      this.setCurrentUser(cachedUser);
+    }
+
+    return cachedUser;
+  }
+
   isAuthenticated(): boolean {
     const token = this.getToken();
 
@@ -177,12 +188,38 @@ export class AuthService {
   }
 
   private setCurrentUser(user: CurrentUser): void {
+    localStorage.setItem(this.currentUserKey, JSON.stringify(user));
     this.currentUserSubject.next(user);
     this.activeCenterService.setUserContext(user.id, user.activeCenterId);
   }
 
+  private getCachedCurrentUser(): CurrentUser | null {
+    const rawValue = localStorage.getItem(this.currentUserKey);
+
+    if (!rawValue) return null;
+
+    try {
+      const cachedUser = JSON.parse(rawValue) as CurrentUser;
+      const validRoles: CurrentUser['role'][] = ['ADMIN', 'GESTOR', 'CLIENT'];
+
+      if (
+        typeof cachedUser.id !== 'number' ||
+        typeof cachedUser.email !== 'string' ||
+        typeof cachedUser.name !== 'string' ||
+        !validRoles.includes(cachedUser.role)
+      ) {
+        return null;
+      }
+
+      return cachedUser;
+    } catch {
+      return null;
+    }
+  }
+
   private clearSession(): void {
     localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.currentUserKey);
     this.activeCenterService.clearUserContext();
     this.currentUserSubject.next(null);
   }

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { finalize, forkJoin } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { finalize, forkJoin, fromEvent, Subscription } from 'rxjs';
 
 import {
   ClientPortalAppointment,
@@ -8,8 +8,10 @@ import {
   ClientPortalAppointmentRequestStatus,
   ClientPortalService,
 } from '../../../core/client-portal/client-portal.service';
+import { ClientPortalOfflineCacheService } from '../../../core/client-portal/client-portal-offline-cache.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AppointmentStatus } from '../../../core/appointments/appointments.service';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-client-appointments',
@@ -17,17 +19,31 @@ import { AppointmentStatus } from '../../../core/appointments/appointments.servi
   styleUrls: ['./client-appointments.component.scss'],
   imports: [CommonModule, TranslatePipe],
 })
-export class ClientAppointmentsComponent implements OnInit {
+export class ClientAppointmentsComponent implements OnInit, OnDestroy {
   public appointments: ClientPortalAppointment[] = [];
   public requests: ClientPortalAppointmentRequest[] = [];
   public selectedAppointment: ClientPortalAppointment | null = null;
   public isLoading = false;
+  public isOfflineData = false;
   public errorMessage = '';
 
-  constructor(private readonly clientPortalService: ClientPortalService) {}
+  private onlineSubscription?: Subscription;
+
+  constructor(
+    private readonly clientPortalService: ClientPortalService,
+    private readonly offlineCache: ClientPortalOfflineCacheService,
+    private readonly authService: AuthService,
+  ) {}
 
   ngOnInit(): void {
     this.loadAppointments();
+    this.onlineSubscription = fromEvent(window, 'online').subscribe(() =>
+      this.loadAppointments(),
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.onlineSubscription?.unsubscribe();
   }
 
   public loadAppointments(): void {
@@ -41,21 +57,54 @@ export class ClientAppointmentsComponent implements OnInit {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: ({ appointments, requests }) => {
-          this.appointments = [...appointments].sort(
-            (first, second) =>
-              new Date(second.startDateTime).getTime() -
-              new Date(first.startDateTime).getTime(),
-          );
-          this.requests = [...requests].sort(
-            (first, second) =>
-              new Date(second.requestedStartDateTime).getTime() -
-              new Date(first.requestedStartDateTime).getTime(),
-          );
+          this.setAppointments(appointments, requests);
+          this.isOfflineData = false;
+
+          const userId = this.authService.currentUser?.id;
+
+          if (userId) {
+            this.offlineCache.saveAppointments(
+              userId,
+              this.appointments,
+              this.requests,
+            );
+          }
         },
         error: () => {
+          const userId = this.authService.currentUser?.id;
+          const cachedData = userId
+            ? this.offlineCache.getAppointments(userId)
+            : null;
+
+          if (cachedData) {
+            this.setAppointments(
+              cachedData.appointments,
+              cachedData.requests,
+            );
+            this.isOfflineData = true;
+            return;
+          }
+
+          this.isOfflineData = false;
           this.errorMessage = 'client.appointments.errors.load';
         },
       });
+  }
+
+  private setAppointments(
+    appointments: ClientPortalAppointment[],
+    requests: ClientPortalAppointmentRequest[],
+  ): void {
+    this.appointments = [...appointments].sort(
+      (first, second) =>
+        new Date(second.startDateTime).getTime() -
+        new Date(first.startDateTime).getTime(),
+    );
+    this.requests = [...requests].sort(
+      (first, second) =>
+        new Date(second.requestedStartDateTime).getTime() -
+        new Date(first.requestedStartDateTime).getTime(),
+    );
   }
 
   public statusLabel(status: AppointmentStatus): string {

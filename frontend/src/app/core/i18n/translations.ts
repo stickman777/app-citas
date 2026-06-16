@@ -244,6 +244,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'client.appointments.detail.title': 'Detalle de cita',
     'client.appointments.errors.load': 'No se han podido cargar tus citas.',
     'client.appointments.loading': 'Cargando citas...',
+    'client.appointments.offlineData':
+      'Mostrando datos guardados. Se actualizaran al recuperar la conexion.',
     'client.appointments.title': 'Mis citas',
     'client.requests.empty': 'No hay solicitudes para mostrar.',
     'client.requests.status.approved': 'Aprobada',
@@ -660,6 +662,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'client.appointments.detail.title': 'Appointment details',
     'client.appointments.errors.load': 'Your appointments could not be loaded.',
     'client.appointments.loading': 'Loading appointments...',
+    'client.appointments.offlineData':
+      'Showing saved data. It will update when the connection is restored.',
     'client.appointments.title': 'My appointments',
     'client.requests.empty': 'No requests to show.',
     'client.requests.status.approved': 'Approved',

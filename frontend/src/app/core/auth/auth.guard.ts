@@ -19,6 +19,7 @@ export const authChildGuard: CanActivateChildFn = () => checkAuth();
 const checkRole = (
   allowedRoles: CurrentUser['role'][],
   fallbackRoute: string,
+  allowCachedUser = false,
 ) => {
   const authService = inject(AuthService);
   const router = inject(Router);
@@ -33,7 +34,17 @@ const checkRole = (
         ? true
         : router.createUrlTree([fallbackRoute])
     ),
-    catchError(() => of(router.createUrlTree([routes.login])))
+    catchError(() => {
+      const cachedUser = allowCachedUser
+        ? authService.restoreCachedCurrentUser()
+        : null;
+
+      return of(
+        cachedUser && allowedRoles.includes(cachedUser.role)
+          ? true
+          : router.createUrlTree([routes.login]),
+      );
+    })
   );
 };
 
@@ -41,7 +52,7 @@ const checkAdminArea = () =>
   checkRole(['ADMIN', 'GESTOR'], routes.clientHome);
 
 const checkClientArea = () =>
-  checkRole(['CLIENT'], routes.index);
+  checkRole(['CLIENT'], routes.index, true);
 
 export const adminAreaGuard: CanActivateFn = () => checkAdminArea();
 
