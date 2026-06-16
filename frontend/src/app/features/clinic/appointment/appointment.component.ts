@@ -203,6 +203,9 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public availableSlots: string[] = [];
   public isLoadingAvailableSlots = false;
   public availableSlotsError = '';
+  public clientSearchTerm = '';
+  public isClientPickerOpen = false;
+  public highlightedClientIndex = 0;
   public isLoading = false;
   public isSaving = false;
   public isDeleting = false;
@@ -217,6 +220,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
   public editingAppointment: Appointment | null = null;
   public appointmentToDelete: Appointment | null = null;
   public editingException: AvailabilityException | null = null;
+  private clientPickerBlurTimeout?: ReturnType<typeof setTimeout>;
   private forceOutsideAvailabilityWarning = false;
   public form: AppointmentForm = this.getEmptyForm();
   public exceptionForm: AvailabilityExceptionForm = this.getEmptyExceptionForm();
@@ -269,6 +273,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.activeCenterSubscription?.unsubscribe();
     this.queryParamSubscription?.unsubscribe();
     this.clearUnavailableSlotHintTimeout();
+    this.clearClientPickerBlurTimeout();
   }
 
   private applyNavigationQueryParams(params: ParamMap): void {
@@ -488,6 +493,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     this.editingAppointment = null;
     this.forceOutsideAvailabilityWarning = false;
     this.form = this.getEmptyForm();
+    this.resetClientPicker();
     this.resetAvailableSlots();
     this.isFormModalOpen = true;
   }
@@ -504,6 +510,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       ...this.getEmptyForm(),
       startDateTime: this.toDateTimeInputValue(date),
     };
+    this.resetClientPicker();
     this.resetAvailableSlots();
     this.isFormModalOpen = true;
   }
@@ -520,6 +527,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
       specialistId: appointment.specialist.id,
       status: appointment.status,
     };
+    this.resetClientPicker();
     this.loadAvailableSlots();
     this.isFormModalOpen = true;
   }
@@ -529,6 +537,7 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 
     this.isFormModalOpen = false;
     this.forceOutsideAvailabilityWarning = false;
+    this.closeClientPicker();
     this.resetAvailableSlots();
   }
 
@@ -899,6 +908,16 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     return this.withCurrentOption(this.clients, this.editingAppointment?.client);
   }
 
+  public get filteredClientOptions(): AppointmentClient[] {
+    const term = this.normalizeSearchValue(this.clientSearchTerm);
+
+    if (!term) return this.clientOptions;
+
+    return this.clientOptions.filter(client =>
+      this.normalizeSearchValue(this.clientOptionLabel(client)).includes(term)
+    );
+  }
+
   public get serviceOptions(): AppointmentServiceOption[] {
     return this.withCurrentOption(this.services, this.editingAppointment?.service);
   }
@@ -927,6 +946,69 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     const priority = ` · ${this.translate('clients.fields.priority')}: ${client.priority}`;
 
     return `${client.name} - ${client.phone}${priority}${status}`;
+  }
+
+  public openClientPicker(): void {
+    this.clearClientPickerBlurTimeout();
+    this.isClientPickerOpen = true;
+    this.highlightedClientIndex = this.getSelectedClientIndex();
+  }
+
+  public handleClientSearchChange(value: string): void {
+    this.clientSearchTerm = value;
+    this.form.clientId = null;
+    this.isClientPickerOpen = true;
+    this.highlightedClientIndex = 0;
+  }
+
+  public handleClientSearchKeydown(event: KeyboardEvent): void {
+    const options = this.filteredClientOptions;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.isClientPickerOpen = true;
+      this.highlightedClientIndex = options.length
+        ? Math.min(this.highlightedClientIndex + 1, options.length - 1)
+        : 0;
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.isClientPickerOpen = true;
+      this.highlightedClientIndex = Math.max(this.highlightedClientIndex - 1, 0);
+      return;
+    }
+
+    if (event.key === 'Enter' && this.isClientPickerOpen && options.length) {
+      event.preventDefault();
+      this.selectClientOption(options[this.highlightedClientIndex] ?? options[0]);
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeClientPicker();
+      this.syncClientSearchTerm();
+    }
+  }
+
+  public scheduleCloseClientPicker(): void {
+    this.clearClientPickerBlurTimeout();
+    this.clientPickerBlurTimeout = setTimeout(() => {
+      this.closeClientPicker();
+      this.syncClientSearchTerm();
+    }, 150);
+  }
+
+  public selectClientOption(client: AppointmentClient): void {
+    this.form.clientId = client.id;
+    this.clientSearchTerm = this.clientOptionLabel(client);
+    this.closeClientPicker();
+  }
+
+  public isClientOptionHighlighted(index: number): boolean {
+    return index === this.highlightedClientIndex;
   }
 
   public serviceOptionLabel(service: AppointmentServiceOption): string {
@@ -1351,6 +1433,50 @@ export class AppointmentComponent implements OnInit, OnDestroy {
     ]
       .join(' ')
       .toLowerCase();
+  }
+
+  private resetClientPicker(): void {
+    this.closeClientPicker();
+    this.syncClientSearchTerm();
+    this.highlightedClientIndex = 0;
+  }
+
+  private closeClientPicker(): void {
+    this.clearClientPickerBlurTimeout();
+    this.isClientPickerOpen = false;
+  }
+
+  private syncClientSearchTerm(): void {
+    const selectedClient = this.clientOptions.find(
+      client => client.id === this.form.clientId
+    );
+
+    this.clientSearchTerm = selectedClient
+      ? this.clientOptionLabel(selectedClient)
+      : '';
+  }
+
+  private getSelectedClientIndex(): number {
+    const selectedIndex = this.filteredClientOptions.findIndex(
+      client => client.id === this.form.clientId
+    );
+
+    return selectedIndex >= 0 ? selectedIndex : 0;
+  }
+
+  private clearClientPickerBlurTimeout(): void {
+    if (!this.clientPickerBlurTimeout) return;
+
+    clearTimeout(this.clientPickerBlurTimeout);
+    this.clientPickerBlurTimeout = undefined;
+  }
+
+  private normalizeSearchValue(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
   private getEmptyForm(): AppointmentForm {

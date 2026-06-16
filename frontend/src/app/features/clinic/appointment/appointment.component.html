@@ -335,12 +335,52 @@
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label">{{ 'common.client' | translate }}<span class="text-danger ms-1">*</span></label>
-            <select name="clientId" [(ngModel)]="form.clientId" class="form-select" required>
-              <option [ngValue]="null">{{ 'appointments.fields.selectClient' | translate }}</option>
-              @for(client of clientOptions; track client.id){
-              <option [ngValue]="client.id">{{ clientOptionLabel(client) }}</option>
+            <input type="hidden" name="clientId" [(ngModel)]="form.clientId" required>
+            <div class="appointment-client-picker">
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                  <i class="ti ti-user-search text-dark fs-14"></i>
+                </span>
+                <input
+                  type="text"
+                  class="form-control border-start-0 border-end-0"
+                  [ngModel]="clientSearchTerm"
+                  (ngModelChange)="handleClientSearchChange($event)"
+                  [ngModelOptions]="{standalone: true}"
+                  [placeholder]="'appointments.fields.selectClient' | translate"
+                  autocomplete="off"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  [attr.aria-expanded]="isClientPickerOpen"
+                  (focus)="openClientPicker()"
+                  (blur)="scheduleCloseClientPicker()"
+                  (keydown)="handleClientSearchKeydown($event)"
+                >
+                <span class="input-group-text bg-white border-start-0">
+                  <i class="ti ti-chevron-down text-dark fs-14"></i>
+                </span>
+              </div>
+              @if(isClientPickerOpen){
+              <div class="appointment-client-picker-menu">
+                @for(client of filteredClientOptions; track client.id; let index = $index){
+                <button
+                  type="button"
+                  class="appointment-client-option"
+                  [class.active]="isClientOptionHighlighted(index)"
+                  (mousedown)="selectClientOption(client)"
+                >
+                  <span class="fw-semibold text-dark text-truncate">{{ client.name }}</span>
+                  <span class="text-body fs-13 text-truncate">{{ client.phone }}</span>
+                  <span class="text-body fs-12">{{ 'clients.fields.priority' | translate }}: {{ client.priority }}</span>
+                </button>
+                } @empty {
+                <div class="appointment-client-empty text-body fs-13">
+                  {{ 'clients.empty' | translate }}
+                </div>
+                }
+              </div>
               }
-            </select>
+            </div>
           </div>
           <div class="mb-3">
             <label class="form-label">{{ 'common.service' | translate }}<span class="text-danger ms-1">*</span></label>

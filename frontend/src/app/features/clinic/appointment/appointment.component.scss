@@ -53,6 +53,49 @@
   min-width: 0;
 }
 
+.appointment-client-picker {
+  position: relative;
+
+  .input-group-text {
+    color: var(--body-color);
+  }
+}
+
+.appointment-client-picker-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--white);
+  box-shadow: var(--box-shadow-lg);
+}
+
+.appointment-client-option {
+  display: grid;
+  width: 100%;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  text-align: left;
+
+  &:hover,
+  &.active {
+    background: var(--primary-transparent);
+  }
+}
+
+.appointment-client-empty {
+  padding: 8px 10px;
+}
+
 .appointments-outside-badge {
   align-items: center;
   display: inline-flex;
