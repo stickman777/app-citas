@@ -101,23 +101,7 @@ export class ClientsService {
     if (!client.active)
       throw new ForbiddenException('El cliente no esta activo');
 
-    if (clientData.name !== undefined) {
-      client.name = this.normalizeRequiredText(
-        clientData.name,
-        'Nombre requerido',
-      );
-    }
-
-    if (clientData.phone !== undefined) {
-      client.phone = this.normalizeRequiredText(
-        clientData.phone,
-        'Telefono requerido',
-      );
-    }
-
-    if (clientData.email !== undefined) {
-      client.email = clientData.email?.trim().toLowerCase() || null;
-    }
+    this.applyClientProfileData(client, clientData);
 
     return this.clientsRepository.save(client);
   }
@@ -144,10 +128,11 @@ export class ClientsService {
   async update(id: number, clientData: UpdateClientDto, authUser?: AuthUser) {
     const client = await this.findOne(id, authUser);
 
-    const { centerId, ...clientPayload } = clientData;
+    const { centerId, name, phone, email, ...clientPayload } = clientData;
     const center = await this.centerAccessService.getCenter(centerId, authUser);
 
     Object.assign(client, clientPayload);
+    this.applyClientProfileData(client, { name, phone, email });
 
     if (centerId !== undefined) {
       client.center = center;
@@ -277,5 +262,28 @@ export class ClientsService {
     if (!normalizedValue) throw new BadRequestException(message);
 
     return normalizedValue;
+  }
+
+  private applyClientProfileData(
+    client: Client,
+    clientData: OwnClientProfileData,
+  ): void {
+    if (clientData.name !== undefined) {
+      client.name = this.normalizeRequiredText(
+        clientData.name,
+        'Nombre requerido',
+      );
+    }
+
+    if (clientData.phone !== undefined) {
+      client.phone = this.normalizeRequiredText(
+        clientData.phone,
+        'Telefono requerido',
+      );
+    }
+
+    if (clientData.email !== undefined) {
+      client.email = clientData.email?.trim().toLowerCase() || null;
+    }
   }
 }

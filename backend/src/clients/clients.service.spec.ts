@@ -143,4 +143,44 @@ describe('ClientsService - HU-03 gestion de clientes e invitaciones', () => {
     ).rejects.toThrow('Nombre requerido');
     expect(clientsRepository.save).not.toHaveBeenCalled();
   });
+
+  it('HU-03 RNF-02 clientes: edita un cliente normalizando nombre, telefono y email', async () => {
+    clientsRepository.findOne.mockResolvedValue({
+      id: 10,
+      name: 'Ana',
+      phone: '600000000',
+      email: 'ana@old.test',
+      active: true,
+      center,
+    } as Client);
+    clientsRepository.save.mockImplementation((value) => Promise.resolve(value));
+
+    const result = await service.update(10, {
+      name: '  Ana Garcia  ',
+      phone: '  611222333  ',
+      email: '  ANA@EXAMPLE.COM  ',
+    });
+
+    expect(result).toMatchObject({
+      id: 10,
+      name: 'Ana Garcia',
+      phone: '611222333',
+      email: 'ana@example.com',
+    });
+  });
+
+  it('HU-03 RNF-02 clientes: rechaza una edicion con nombre vacio', async () => {
+    clientsRepository.findOne.mockResolvedValue({
+      id: 10,
+      name: 'Ana',
+      phone: '600000000',
+      active: true,
+      center,
+    } as Client);
+
+    await expect(service.update(10, { name: '   ' })).rejects.toThrow(
+      'Nombre requerido',
+    );
+    expect(clientsRepository.save).not.toHaveBeenCalled();
+  });
 });

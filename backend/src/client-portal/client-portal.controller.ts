@@ -90,8 +90,8 @@ export class ClientPortalController {
   })
   @ApiParam({ name: 'id', type: Number, description: 'Identificador de la cita.' })
   @ApiOkResponse({ description: 'Cita cancelada correctamente.' })
-  @ApiBadRequestResponse({ description: 'La cita no estÃ¡ programada.' })
-  @ApiForbiddenResponse({ description: 'El cliente no estÃ¡ activo o el rol no estÃ¡ permitido.' })
+  @ApiBadRequestResponse({ description: 'La cita no está programada.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
   @ApiNotFoundResponse({ description: 'Cita no encontrada.' })
   cancelAppointment(
     @Req() request: { user: { id: number } },
@@ -106,7 +106,7 @@ export class ClientPortalController {
     description: 'Rol permitido: CLIENT.',
   })
   @ApiOkResponse({ description: 'Listado de solicitudes propias.' })
-  @ApiForbiddenResponse({ description: 'El cliente no estÃ¡ activo o el rol no estÃ¡ permitido.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
   @ApiNotFoundResponse({ description: 'No existe cliente vinculado al usuario.' })
   appointmentRequests(@Req() request: { user: { id: number } }) {
     return this.clientPortalService.getAppointmentRequests(request.user.id);
@@ -119,8 +119,8 @@ export class ClientPortalController {
   })
   @ApiParam({ name: 'id', type: Number, description: 'Identificador de la solicitud.' })
   @ApiOkResponse({ description: 'Solicitud cancelada correctamente.' })
-  @ApiBadRequestResponse({ description: 'La solicitud no estÃ¡ pendiente.' })
-  @ApiForbiddenResponse({ description: 'El cliente no estÃ¡ activo o el rol no estÃ¡ permitido.' })
+  @ApiBadRequestResponse({ description: 'La solicitud no está pendiente.' })
+  @ApiForbiddenResponse({ description: 'El cliente no está activo o el rol no está permitido.' })
   @ApiNotFoundResponse({ description: 'Solicitud no encontrada.' })
   cancelAppointmentRequest(
     @Req() request: { user: { id: number } },
