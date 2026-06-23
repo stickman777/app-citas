@@ -285,6 +285,68 @@ describe('AppointmentsService - HU-06/HU-07 disponibilidad y ciclo de vida de ci
     expect(appointmentsRepository.save).not.toHaveBeenCalled();
   });
 
+  it('HU-07 citas: conserva la duracion propia al actualizar una cita sin cambiar el servicio', async () => {
+    const appointment = {
+      id: 1,
+      startDateTime: new Date('2026-06-15T10:00:00'),
+      duration: 30,
+      outsideAvailability: false,
+      status: AppointmentStatus.SCHEDULED,
+      center,
+      client,
+      service: {
+        ...bookableService,
+        durationMinutes: 45,
+      } as ServiceEntity,
+      specialist,
+    } as Appointment;
+    appointmentsRepository.findOne.mockResolvedValue(appointment);
+
+    const result = await service.update(1, {
+      startDateTime: '2026-06-15T11:00:00',
+    });
+
+    expect(result.duration).toBe(30);
+    expect(appointmentsRepository.save).toHaveBeenCalledWith({
+      ...appointment,
+      startDateTime: new Date('2026-06-15T11:00:00'),
+      duration: 30,
+    });
+  });
+
+  it('HU-07 citas: toma la duracion actual del servicio cuando cambia el servicio de la cita', async () => {
+    const newService = {
+      ...bookableService,
+      id: 21,
+      name: 'Osteopatia',
+      durationMinutes: 45,
+    } as ServiceEntity;
+    const appointment = {
+      id: 1,
+      startDateTime: new Date('2026-06-15T10:00:00'),
+      duration: 30,
+      outsideAvailability: false,
+      status: AppointmentStatus.SCHEDULED,
+      center,
+      client,
+      service: bookableService,
+      specialist,
+    } as Appointment;
+    appointmentsRepository.findOne.mockResolvedValue(appointment);
+    servicesRepository.findOne.mockResolvedValue(newService);
+
+    const result = await service.update(1, {
+      serviceId: 21,
+    });
+
+    expect(result.duration).toBe(45);
+    expect(appointmentsRepository.save).toHaveBeenCalledWith({
+      ...appointment,
+      duration: 45,
+      service: newService,
+    });
+  });
+
   it('HU-07 RNF-02 citas: rechaza en memoria una cita que solapa con el mismo especialista', async () => {
     appointmentsRepository.find.mockImplementation(({ where }) => {
       if (where.specialist?.id === 30) {

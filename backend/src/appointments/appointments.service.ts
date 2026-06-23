@@ -303,6 +303,12 @@ export class AppointmentsService implements OnModuleInit {
     const center = this.validateAppointmentCenter(client, service, specialist);
     this.validateServiceSpecialist(service, specialist);
     const status = appointmentData.status ?? appointment.status;
+    const serviceChanged =
+      appointmentData.serviceId !== undefined &&
+      appointmentData.serviceId !== appointment.service.id;
+    const appointmentDuration = serviceChanged
+      ? service.durationMinutes
+      : appointment.duration;
 
     assertAppointmentStatusTransition(appointment.status, status);
 
@@ -321,7 +327,7 @@ export class AppointmentsService implements OnModuleInit {
       status === AppointmentStatus.SCHEDULED
         ? await this.validateAppointmentSlot(
             startDate,
-            service.durationMinutes,
+            appointmentDuration,
             center.id,
             specialist.id,
             client.id,
@@ -332,7 +338,7 @@ export class AppointmentsService implements OnModuleInit {
         : appointment.outsideAvailability;
 
     appointment.startDateTime = startDate;
-    appointment.duration = service.durationMinutes;
+    appointment.duration = appointmentDuration;
     appointment.outsideAvailability = outsideAvailability;
     appointment.client = client;
     appointment.service = service;
