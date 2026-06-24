@@ -5,7 +5,14 @@ import {
   Appointment,
   AppointmentStatus,
 } from './appointments/appointment.entity';
-import { AvailabilityException } from './availability/availability-exception.entity';
+import {
+  AppointmentRequest,
+  AppointmentRequestStatus,
+} from './appointment-requests/appointment-request.entity';
+import {
+  AvailabilityException,
+  AvailabilityExceptionType,
+} from './availability/availability-exception.entity';
 import { Availability } from './availability/availability.entity';
 import { Center } from './centers/center.entity';
 import { Client } from './clients/client.entity';
@@ -14,6 +21,7 @@ import {
   hashClientInvitationToken,
 } from './common/client-invitation-token';
 import { ServiceEntity } from './services/service.entity';
+import { SpecialistAbsence } from './specialists/specialist-absence.entity';
 import { Specialist } from './specialists/specialist.entity';
 import { User, UserRole } from './users/user.entity';
 
@@ -81,6 +89,35 @@ interface SeedAppointment {
   outsideAvailability?: boolean;
 }
 
+interface SeedAppointmentRequest {
+  clientKey: string;
+  serviceKey: string;
+  specialistKey: string;
+  status: AppointmentRequestStatus;
+  dayOffset: number;
+  hour: number;
+  minutes?: number;
+  outsideAvailability: boolean;
+  notes?: string;
+  resolutionNote?: string;
+}
+
+interface SeedSpecialistAbsence {
+  specialistKey: string;
+  startDayOffset: number;
+  endDayOffset: number;
+  reason: string;
+}
+
+interface SeedAvailabilityException {
+  centerKey: string;
+  dayOffset: number;
+  startTime: string;
+  endTime: string;
+  type: AvailabilityExceptionType;
+  label: string;
+}
+
 @Injectable()
 export class DemoSeedService implements OnApplicationBootstrap {
   private readonly logger = new Logger(DemoSeedService.name);
@@ -121,11 +158,16 @@ export class DemoSeedService implements OnApplicationBootstrap {
       ],
     },
   ];
+  private readonly seedAvailabilityExceptions =
+    this.buildSeedAvailabilityExceptions();
   private readonly seedManagers = this.buildSeedManagers();
   private readonly seedSpecialists = this.buildSeedSpecialists();
+  private readonly seedSpecialistAbsences = this.buildSeedSpecialistAbsences();
   private readonly seedServices = this.buildSeedServices();
   private readonly seedClients = this.buildSeedClients();
   private readonly seedAppointments = this.buildSeedAppointments();
+  private readonly seedAppointmentRequests =
+    this.buildSeedAppointmentRequests();
 
   constructor(private readonly dataSource: DataSource) {}
 
@@ -162,8 +204,18 @@ export class DemoSeedService implements OnApplicationBootstrap {
 
   private async resetFunctionalData(manager: EntityManager) {
     await this.detachAdminFromCenters(manager);
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from(AppointmentRequest)
+      .execute();
     await manager.createQueryBuilder().delete().from(Appointment).execute();
     await manager.createQueryBuilder().delete().from(ServiceEntity).execute();
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from(SpecialistAbsence)
+      .execute();
     await manager.createQueryBuilder().delete().from(Specialist).execute();
     await manager.createQueryBuilder().delete().from(Client).execute();
     await manager
@@ -214,13 +266,23 @@ export class DemoSeedService implements OnApplicationBootstrap {
   private async createDemoData(manager: EntityManager) {
     const centers = await this.createCenters(manager);
 
+    await this.createAvailabilityExceptions(manager, centers);
     await this.createManagers(manager, centers);
 
     const specialists = await this.createSpecialists(manager, centers);
+    await this.createSpecialistAbsences(manager, specialists);
+
     const services = await this.createServices(manager, centers, specialists);
     const clients = await this.createClients(manager, centers);
 
     await this.createAppointments(
+      manager,
+      centers,
+      clients,
+      services,
+      specialists,
+    );
+    await this.createAppointmentRequests(
       manager,
       centers,
       clients,
@@ -463,6 +525,85 @@ export class DemoSeedService implements OnApplicationBootstrap {
     );
   }
 
+  private async createAvailabilityExceptions(
+    manager: EntityManager,
+    centers: Map<string, Center>,
+  ) {
+    if (this.seedAvailabilityExceptions.length === 0) return;
+
+    await manager.save(
+      AvailabilityException,
+      this.seedAvailabilityExceptions.map((exception) =>
+        manager.create(AvailabilityException, {
+          date: this.dateStringAt(exception.dayOffset),
+          startTime: exception.startTime,
+          endTime: exception.endTime,
+          type: exception.type,
+          label: exception.label,
+          center: this.getSeedValue(centers, exception.centerKey),
+        }),
+      ),
+    );
+  }
+
+  private async createSpecialistAbsences(
+    manager: EntityManager,
+    specialists: Map<string, Specialist>,
+  ) {
+    if (this.seedSpecialistAbsences.length === 0) return;
+
+    await manager.save(
+      SpecialistAbsence,
+      this.seedSpecialistAbsences.map((absence) =>
+        manager.create(SpecialistAbsence, {
+          specialist: this.getSeedValue(specialists, absence.specialistKey),
+          startDate: this.dateStringAt(absence.startDayOffset),
+          endDate: this.dateStringAt(absence.endDayOffset),
+          reason: absence.reason,
+        }),
+      ),
+    );
+  }
+
+  private async createAppointmentRequests(
+    manager: EntityManager,
+    centers: Map<string, Center>,
+    clients: Map<string, Client>,
+    services: Map<string, ServiceEntity>,
+    specialists: Map<string, Specialist>,
+  ) {
+    for (const seedRequest of this.seedAppointmentRequests) {
+      const service = this.getSeedValue(services, seedRequest.serviceKey);
+      const status = seedRequest.status;
+      const isResolved = status !== AppointmentRequestStatus.PENDING;
+
+      await manager.save(
+        AppointmentRequest,
+        manager.create(AppointmentRequest, {
+          client: this.getSeedValue(clients, seedRequest.clientKey),
+          service,
+          specialist: this.getSeedValue(specialists, seedRequest.specialistKey),
+          center: this.getSeedValue(
+            centers,
+            this.getCenterKeyForService(seedRequest.serviceKey),
+          ),
+          requestedStartDateTime: this.businessDayAt(
+            seedRequest.dayOffset,
+            seedRequest.hour,
+            seedRequest.minutes ?? 0,
+          ),
+          outsideAvailability: seedRequest.outsideAvailability,
+          notes: seedRequest.notes ?? null,
+          status,
+          resolvedAt: isResolved ? this.businessDayAt(-1, 12, 0) : null,
+          resolutionNote: isResolved
+            ? (seedRequest.resolutionNote ?? 'Solicitud revisada por gestion')
+            : null,
+        }),
+      );
+    }
+  }
+
   private buildSeedManagers(): SeedManager[] {
     const managersByCenter: Record<string, Omit<SeedManager, 'centerKey'>[]> = {
       norte: [
@@ -532,6 +673,11 @@ export class DemoSeedService implements OnApplicationBootstrap {
           name: 'Dra. Irene Navarro',
           specialty: 'Psicología clínica',
         },
+        {
+          key: 'norte-pediatria',
+          name: 'Dra. Beatriz Ramos',
+          specialty: 'Pediatria',
+        },
       ],
       mediterraneo: [
         {
@@ -549,6 +695,11 @@ export class DemoSeedService implements OnApplicationBootstrap {
           name: 'Nuria Ferrer',
           specialty: 'Nutrición',
         },
+        {
+          key: 'mediterraneo-podologia',
+          name: 'Raul Campos',
+          specialty: 'Podologia',
+        },
       ],
       sierra: [
         {
@@ -565,6 +716,11 @@ export class DemoSeedService implements OnApplicationBootstrap {
           key: 'sierra-cardio',
           name: 'Dra. Patricia León',
           specialty: 'Cardiología',
+        },
+        {
+          key: 'sierra-neuro',
+          name: 'Dra. Silvia Herrero',
+          specialty: 'Neurologia',
         },
       ],
     };
@@ -588,11 +744,13 @@ export class DemoSeedService implements OnApplicationBootstrap {
       'norte-general': [
         {
           name: 'Consulta general',
-          description: 'Valoración inicial, síntomas principales y plan básico.',
+          description:
+            'Valoración inicial, síntomas principales y plan básico.',
         },
         {
           name: 'Revisión general',
-          description: 'Seguimiento de evolución, tratamiento y próximos pasos.',
+          description:
+            'Seguimiento de evolución, tratamiento y próximos pasos.',
         },
       ],
       'norte-fisio': [
@@ -648,11 +806,13 @@ export class DemoSeedService implements OnApplicationBootstrap {
       'sierra-general': [
         {
           name: 'Consulta general',
-          description: 'Valoración inicial, síntomas principales y plan básico.',
+          description:
+            'Valoración inicial, síntomas principales y plan básico.',
         },
         {
           name: 'Revisión general',
-          description: 'Seguimiento de evolución, tratamiento y próximos pasos.',
+          description:
+            'Seguimiento de evolución, tratamiento y próximos pasos.',
         },
       ],
       'sierra-trauma': [
@@ -668,11 +828,13 @@ export class DemoSeedService implements OnApplicationBootstrap {
       'sierra-cardio': [
         {
           name: 'Consulta cardio',
-          description: 'Valoración cardiovascular y revisión de factores de riesgo.',
+          description:
+            'Valoración cardiovascular y revisión de factores de riesgo.',
         },
         {
           name: 'Revisión cardio',
-          description: 'Seguimiento de pruebas, tensión y tratamiento indicado.',
+          description:
+            'Seguimiento de pruebas, tensión y tratamiento indicado.',
         },
       ],
     };
@@ -821,47 +983,157 @@ export class DemoSeedService implements OnApplicationBootstrap {
       ],
     };
 
+    const generatedClientsByCenter = this.buildGeneratedClientsByCenter();
+
     return this.seedCenters.flatMap((center) =>
-      clientsByCenter[center.key].map((client) => ({
+      [
+        ...clientsByCenter[center.key],
+        ...generatedClientsByCenter[center.key],
+      ].map((client) => ({
         ...client,
         centerKey: center.key,
       })),
     );
   }
 
+  private buildGeneratedClientsByCenter(): Record<
+    string,
+    Omit<SeedClient, 'centerKey'>[]
+  > {
+    const namesByCenter: Record<string, string[]> = {
+      norte: [
+        'Alba Molina',
+        'Jorge Castro',
+        'Nerea Vidal',
+        'Victor Saez',
+        'Paula Roman',
+        'Daniel Pardo',
+        'Cristina Leon',
+        'Mario Gil',
+        'Teresa Cano',
+        'Adrian Vega',
+        'Natalia Rojas',
+        'Sergio Mora',
+        'Ines Alonso',
+        'Guillermo Marin',
+        'Laura Pons',
+        'David Rey',
+      ],
+      mediterraneo: [
+        'Alicia Navarro',
+        'Hugo Blasco',
+        'Eva Pascual',
+        'Manuel Soto',
+        'Julia Campos',
+        'Ruben Fuentes',
+        'Celia Ferrer',
+        'Oscar Salas',
+        'Irene Pastor',
+        'Alvaro Costa',
+        'Miriam Lozano',
+        'Bruno Rivas',
+        'Lorena Pujol',
+        'Mateo Galan',
+        'Sara Esteve',
+        'Enrique Luna',
+      ],
+      sierra: [
+        'Noelia Cruz',
+        'Javier Nieto',
+        'Rocio Aguilar',
+        'Samuel Arias',
+        'Patricia Vega',
+        'Tomas Bravo',
+        'Carmen Cabello',
+        'Ivan Rubio',
+        'Lidia Santos',
+        'Pablo Merino',
+        'Veronica Solis',
+        'Hector Pena',
+        'Marta Robles',
+        'Raul Ortega',
+        'Beatriz Carmona',
+        'Diego Prieto',
+      ],
+    };
+    const phonePrefixByCenter: Record<string, string> = {
+      norte: '610',
+      mediterraneo: '611',
+      sierra: '612',
+    };
+
+    return Object.fromEntries(
+      Object.entries(namesByCenter).map(([centerKey, names]) => [
+        centerKey,
+        names.map((name, index) => {
+          const slug = this.slugify(`${centerKey}-${name}`);
+          const email = `${slug}@clientes.seed.local`;
+          const accountIndex = index % 8 === 0;
+          const invitationIndex = index % 8 === 3;
+
+          return {
+            key: `${centerKey}-cliente-${index + 1}`,
+            name,
+            phone: `${phonePrefixByCenter[centerKey]}${String(index + 100001).slice(-6)}`,
+            email,
+            notes:
+              index % 5 === 0
+                ? 'Cliente recurrente con varias citas historicas'
+                : undefined,
+            priority: index % 7 === 0 ? 2 : index % 3 === 0 ? 1 : 0,
+            account: accountIndex
+              ? {
+                  email,
+                  password: 'cliente1234',
+                }
+              : undefined,
+            invitationToken: invitationIndex
+              ? `seed-invite-${centerKey}-${index + 1}`
+              : undefined,
+          };
+        }),
+      ]),
+    );
+  }
+
   private buildSeedAppointments(): SeedAppointment[] {
     const appointments: SeedAppointment[] = [];
-    const statuses = [
-      AppointmentStatus.SCHEDULED,
-      AppointmentStatus.COMPLETED,
-      AppointmentStatus.CANCELLED,
-    ];
 
     this.seedClients.forEach((client, clientIndex) => {
       const centerServices = this.seedServices.filter(
         (service) => service.centerKey === client.centerKey,
       );
-      const appointmentCount = (clientIndex % 5) + 1;
+      const appointmentCount = 8 + (clientIndex % 3);
 
       for (let index = 0; index < appointmentCount; index += 1) {
         const service =
-          centerServices[(clientIndex + index) % centerServices.length];
-        const outsideAvailability = appointments.length % 4 === 3;
+          centerServices[(clientIndex * 2 + index) % centerServices.length];
+        const isPastAppointment = index < 5;
+        const status = isPastAppointment
+          ? this.pickPastAppointmentStatus(clientIndex, index)
+          : this.pickFutureAppointmentStatus(clientIndex, index);
+        const dayOffset = isPastAppointment
+          ? -(7 + clientIndex * 2 + index * 9)
+          : 2 + ((clientIndex * 3 + index * 5) % 70);
+        const outsideAvailability = (clientIndex + index) % 9 === 0;
         const appointmentTime = outsideAvailability
-          ? this.pickOutsideAvailabilityTime(client.centerKey, appointments.length)
+          ? this.pickOutsideAvailabilityTime(
+              client.centerKey,
+              appointments.length,
+            )
           : this.pickInsideAvailabilityTime(
               client.centerKey,
-              index % 2 === 0 ? index + 1 : -(index + 1),
+              dayOffset,
               service.durationMinutes,
-              clientIndex + index,
+              clientIndex + index * 3,
             );
 
         appointments.push({
           clientKey: client.key,
           serviceKey: service.key,
           specialistKey: service.specialistKey,
-          status: statuses[(clientIndex + index) % statuses.length],
-          dayOffset: index % 2 === 0 ? index + 1 : -(index + 1),
+          status,
+          dayOffset,
           hour: appointmentTime.hour,
           minutes: appointmentTime.minutes,
           outsideAvailability,
@@ -870,6 +1142,111 @@ export class DemoSeedService implements OnApplicationBootstrap {
     });
 
     return appointments;
+  }
+
+  private pickPastAppointmentStatus(
+    clientIndex: number,
+    appointmentIndex: number,
+  ): AppointmentStatus {
+    return (clientIndex + appointmentIndex) % 5 === 2
+      ? AppointmentStatus.CANCELLED
+      : AppointmentStatus.COMPLETED;
+  }
+
+  private pickFutureAppointmentStatus(
+    clientIndex: number,
+    appointmentIndex: number,
+  ): AppointmentStatus {
+    return (clientIndex + appointmentIndex) % 4 === 0
+      ? AppointmentStatus.CANCELLED
+      : AppointmentStatus.SCHEDULED;
+  }
+
+  private buildSeedAppointmentRequests(): SeedAppointmentRequest[] {
+    return this.seedClients
+      .filter((_, clientIndex) => clientIndex % 2 === 0)
+      .slice(0, 30)
+      .map((client, requestIndex) => {
+        const centerServices = this.seedServices.filter(
+          (service) => service.centerKey === client.centerKey,
+        );
+        const service =
+          centerServices[(requestIndex + 3) % centerServices.length];
+        const outsideAvailability = requestIndex % 2 === 0;
+        const occupiedAppointment = outsideAvailability
+          ? undefined
+          : this.seedAppointments.find(
+              (appointment) =>
+                appointment.serviceKey === service.key &&
+                appointment.status === AppointmentStatus.SCHEDULED,
+            );
+        const dayOffset = occupiedAppointment?.dayOffset ?? 12 + requestIndex;
+        const requestTime = outsideAvailability
+          ? this.pickOutsideAvailabilityTime(client.centerKey, requestIndex)
+          : occupiedAppointment
+            ? {
+                hour: occupiedAppointment.hour,
+                minutes: occupiedAppointment.minutes ?? 0,
+              }
+            : this.pickInsideAvailabilityTime(
+                client.centerKey,
+                dayOffset,
+                service.durationMinutes,
+                requestIndex,
+              );
+        const rejected = requestIndex % 5 === 4;
+
+        return {
+          clientKey: client.key,
+          serviceKey: service.key,
+          specialistKey: service.specialistKey,
+          status: rejected
+            ? AppointmentRequestStatus.REJECTED
+            : AppointmentRequestStatus.PENDING,
+          dayOffset,
+          hour: requestTime.hour,
+          minutes: requestTime.minutes,
+          outsideAvailability,
+          notes: outsideAvailability
+            ? 'Solicitud fuera del horario habitual'
+            : 'Solicitud porque el hueco preferido estaba ocupado',
+          resolutionNote: rejected
+            ? 'No se confirma por falta de disponibilidad'
+            : undefined,
+        };
+      });
+  }
+
+  private buildSeedSpecialistAbsences(): SeedSpecialistAbsence[] {
+    return this.seedSpecialists
+      .filter((_, specialistIndex) => specialistIndex % 2 === 0)
+      .map((specialist, specialistIndex) => ({
+        specialistKey: specialist.key,
+        startDayOffset: 95 + specialistIndex * 4,
+        endDayOffset: 96 + specialistIndex * 4,
+        reason: specialistIndex % 3 === 0 ? 'Formacion externa' : 'Vacaciones',
+      }));
+  }
+
+  private buildSeedAvailabilityExceptions(): SeedAvailabilityException[] {
+    return this.seedCenters.flatMap((center, centerIndex) => [
+      {
+        centerKey: center.key,
+        dayOffset: 90 + centerIndex * 6,
+        startTime: '12:00',
+        endTime: '14:00',
+        type: AvailabilityExceptionType.BLOCKED,
+        label: 'Bloqueo por mantenimiento',
+      },
+      {
+        centerKey: center.key,
+        dayOffset: 93 + centerIndex * 6,
+        startTime: '09:00',
+        endTime: '13:00',
+        type: AvailabilityExceptionType.EXTRA_AVAILABLE,
+        label: 'Apertura extraordinaria',
+      },
+    ]);
   }
 
   private buildWeekdayAvailabilitySlots(
@@ -948,6 +1325,28 @@ export class DemoSeedService implements OnApplicationBootstrap {
     }
 
     return date;
+  }
+
+  private dateStringAt(dayOffset: number) {
+    const date = new Date();
+    date.setDate(date.getDate() + dayOffset);
+
+    return this.toDateString(date);
+  }
+
+  private toDateString(date: Date) {
+    const pad = (value: number) => String(value).padStart(2, '0');
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+
+  private slugify(value: string) {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '.')
+      .replace(/(^\.|\.$)/g, '');
   }
 
   private getCenterKeyForService(serviceKey: string) {
