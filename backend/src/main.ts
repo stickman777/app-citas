@@ -4,12 +4,13 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { getCorsOrigins, isSwaggerEnabled } from './config/environment';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+    origin: getCorsOrigins(),
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
@@ -32,9 +33,11 @@ async function bootstrap() {
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
 
-  SwaggerModule.setup('api/docs', app, swaggerDocument, {
-    jsonDocumentUrl: 'api/docs-json',
-  });
+  if (isSwaggerEnabled()) {
+    SwaggerModule.setup('api/docs', app, swaggerDocument, {
+      jsonDocumentUrl: 'api/docs-json',
+    });
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }

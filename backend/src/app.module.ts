@@ -13,8 +13,15 @@ import { SpecialistsModule } from './specialists/specialists.module';
 import { DemoSeedService } from './demo-seed.service';
 import { ClientPortalModule } from './client-portal/client-portal.module';
 import { AppointmentRequestsModule } from './appointment-requests/appointment-requests.module';
+import {
+  getDatabasePort,
+  getEnvFlag,
+  getRequiredEnv,
+  isProduction,
+  validateEnvironment,
+} from './config/environment';
 
-const isProduction = process.env.NODE_ENV === 'production';
+validateEnvironment();
 
 @Module({
   imports: [
@@ -24,14 +31,14 @@ const isProduction = process.env.NODE_ENV === 'production';
     ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
+      host: getRequiredEnv('DB_HOST'),
+      port: getDatabasePort(),
+      username: getRequiredEnv('DB_USERNAME'),
+      password: getRequiredEnv('DB_PASSWORD'),
+      database: getRequiredEnv('DB_DATABASE'),
       autoLoadEntities: true,
       synchronize:
-        !isProduction && process.env.TYPEORM_SYNCHRONIZE !== 'false',
+        !isProduction && getEnvFlag('TYPEORM_SYNCHRONIZE'),
     }),
     UsersModule,
     AuthModule,
